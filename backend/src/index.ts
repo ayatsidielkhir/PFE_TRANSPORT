@@ -3,6 +3,10 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
+import chauffeurRoutes from './routes/chauffeur.routes';
+import vehiculeRoutes from './routes/vehicule.routes';
+
+
 
 
 dotenv.config();
@@ -18,6 +22,10 @@ mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
     app.use('/auth', authRoutes);
+    app.use('/api/chauffeurs', chauffeurRoutes);
+    app.use('/api/vehicules', vehiculeRoutes);
+
+
 
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
