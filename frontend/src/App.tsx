@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import ProtectedRoute from './router/ProtectedRoute';
+import DocumentsPage from './pages/admin/Documents';
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -36,6 +37,7 @@ function App() {
         <Route path="/admin/trajets" element={<ProtectedRoute><AdminTrajets /></ProtectedRoute>} />
         <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />
         <Route path="/admin/comptabilite" element={<ProtectedRoute><AdminComptabilite /></ProtectedRoute>} />
+        <Route path="/admin/documents" element={<DocumentsPage />} />
 
         {/* Responsable Routes */}
         <Route path="/responsable/dashboard" element={<ProtectedRoute><RespDashboard /></ProtectedRoute>} />

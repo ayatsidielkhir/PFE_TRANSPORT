@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.routes';
 import chauffeurRoutes from './routes/chauffeur.routes';
 import path from 'path';
 import vehiculeRoutes from './routes/vehicule.routes';
+import documentRoutes from './routes/document.routes';
 
 
 
@@ -28,6 +29,7 @@ mongoose.connect(MONGO_URI)
     app.use('/api/vehicules', vehiculeRoutes);
     app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
     app.use('/api/vehicules', vehiculeRoutes);
+    app.use('/api/documents', documentRoutes);
 
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
