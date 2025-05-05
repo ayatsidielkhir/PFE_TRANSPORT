@@ -1,13 +1,28 @@
 import express from 'express';
-import { createChauffeur, getAllChauffeurs, getChauffeurById, updateChauffeur, deleteChauffeur } from '../controllers/chauffeur.controller';
+import multer from 'multer';
+import {
+  addChauffeur,
+  getChauffeurs,
+  deleteChauffeur
+} from '../controllers/chauffeur.controller';
 
 const router = express.Router();
 
-router.post('/', createChauffeur);
-router.get('/', getAllChauffeurs);
-router.get('/:id', getChauffeurById);
-router.put('/:id', updateChauffeur);
-router.delete('/:id', deleteChauffeur);
+// ✅ Configurer le dossier d’upload
+const upload = multer({ dest: 'uploads/' });
 
+router.get('/', getChauffeurs);
+
+router.post(
+  '/',
+  upload.fields([
+    { name: 'scanPermis', maxCount: 1 },
+    { name: 'scanVisa', maxCount: 1 },
+    { name: 'scanCIN', maxCount: 1 }
+  ]),
+  addChauffeur
+);
+
+router.delete('/:id', deleteChauffeur);
 
 export default router;

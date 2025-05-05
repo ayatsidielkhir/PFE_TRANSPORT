@@ -1,18 +1,17 @@
 import express from 'express';
 import {
+  getVehicules,
   createVehicule,
-  getAllVehicules,
-  getVehiculeById,
   updateVehicule,
   deleteVehicule
 } from '../controllers/vehicule.controller';
+import { upload } from '../middleware/upload';
 
 const router = express.Router();
 
-router.post('/', createVehicule);
-router.get('/', getAllVehicules);
-router.get('/:id', getVehiculeById);
-router.put('/:id', updateVehicule);
+router.get('/', getVehicules);
+router.post('/', upload.single('carteGrise'), createVehicule);
+router.put('/:id', upload.single('carteGrise'), updateVehicule);
 router.delete('/:id', deleteVehicule);
 
 export default router;
