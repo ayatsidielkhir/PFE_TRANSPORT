@@ -106,8 +106,8 @@ const VehiculesPage: React.FC = () => {
   };
 
   const filtered = vehicules.filter(v =>
-    v.nom.toLowerCase().includes(search.toLowerCase()) ||
-    v.matricule.toLowerCase().includes(search.toLowerCase())
+    (v.nom?.toLowerCase() || '').includes(search.toLowerCase()) ||
+    (v.matricule?.toLowerCase() || '').includes(search.toLowerCase())
   );
 
   return (
@@ -153,7 +153,7 @@ const VehiculesPage: React.FC = () => {
                   <TableCell>{v.nom}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
                   <TableCell>{v.type}</TableCell>
-                  <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
+                  <TableCell>{v.kilometrage != null ? v.kilometrage.toLocaleString() : 'N/A'}</TableCell>
                   <TableCell style={getDateColor(v.controle_technique)}>{v.controle_technique}</TableCell>
                   <TableCell style={getDateColor(v.assurance)}>{v.assurance}</TableCell>
                   <TableCell>
