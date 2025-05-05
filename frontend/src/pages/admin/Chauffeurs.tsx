@@ -1,11 +1,222 @@
-import DashboardLayout from '../../components/DashboardLayout';
+import React, { useEffect, useState } from 'react';
+import {
+  Box, Typography, Button, TextField, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, InputAdornment, Drawer,
+  FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip
+} from '@mui/material';
+import { Add, Delete, Search, Visibility } from '@mui/icons-material';
+import axios from '../../utils/axios';
+import Layout from '../../components/Layout';
+import jsPDF from 'jspdf';
 
-const Chauffeurs = () => {
+interface Chauffeur {
+  _id?: string;
+  nom: string;
+  prenom: string;
+  telephone: string;
+  cin: string;
+  adresse?: string;
+  observations?: string;
+  permis: { type: string; date_expiration: string };
+  contrat: { type: string; date_expiration: string };
+  visa: { actif: boolean; date_expiration?: string };
+  scanPermis?: string;
+  scanVisa?: string;
+  scanCIN?: string;
+}
+
+const ChauffeursPage: React.FC = () => {
+  const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
+  const [search, setSearch] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedChauffeur, setSelectedChauffeur] = useState<Chauffeur | null>(null);
+  const [form, setForm] = useState<Chauffeur>({
+    _id: '',
+    nom: '', prenom: '', telephone: '', cin: '', adresse: '', observations: '',
+    permis: { type: '', date_expiration: '' },
+    contrat: { type: '', date_expiration: '' },
+    visa: { actif: false, date_expiration: '' }
+  });
+  const [scanPermis, setScanPermis] = useState<File | null>(null);
+  const [scanVisa, setScanVisa] = useState<File | null>(null);
+  const [scanCIN, setScanCIN] = useState<File | null>(null);
+
+  useEffect(() => {
+    fetchChauffeurs();
+  }, []);
+
+  const fetchChauffeurs = async () => {
+    const res = await axios.get('/chauffeurs');
+    setChauffeurs(res.data);
+  };
+
+  const formatDate = (dateStr: string | undefined): string => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toISOString().split('T')[0]; // Récupère uniquement la partie YYYY-MM-DD
+  };
+
+  const handleDelete = async (id?: string) => {
+    if (!id) return;
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce chauffeur ?')) {
+      await axios.delete(`/chauffeurs/${id}`);
+      fetchChauffeurs();
+    }
+  };
+
+  const handleSubmit = async () => {
+    const data = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (typeof value === 'object') {
+        Object.entries(value).forEach(([subKey, subVal]) => {
+          if (subKey === 'date_expiration') {
+            // Remplacer la date d'expiration par la date formatée
+            data.append(`${key}.${subKey}`, formatDate(String(subVal)));
+          } else {
+            data.append(`${key}.${subKey}`, String(subVal));
+          }
+        });
+      } else {
+        data.append(key, String(value));
+      }
+    });
+
+    if (scanPermis) data.append('scanPermis', scanPermis);
+    if (scanVisa) data.append('scanVisa', scanVisa);
+    if (scanCIN) data.append('scanCIN', scanCIN);
+
+    const res = selectedChauffeur && selectedChauffeur._id
+      ? await axios.put(`/chauffeurs/${selectedChauffeur._id}`, data)
+      : await axios.post('/chauffeurs', data);
+      
+    if (res.status === 200 || res.status === 201) {
+      fetchChauffeurs();
+      setDrawerOpen(false);
+    }
+  };
+
+  const generatePdf = (c: Chauffeur) => {
+    const doc = new jsPDF();
+    doc.text(`Fiche du chauffeur ${c.nom} ${c.prenom}`, 14, 16);
+    doc.autoTable({
+      head: [['Champ', 'Valeur']],
+      body: [
+        ['Nom', c.nom],
+        ['Prénom', c.prenom],
+        ['Téléphone', c.telephone],
+        ['CIN', c.cin],
+        ['Adresse', c.adresse || '-'],
+        ['Permis', `${c.permis.type} - ${formatDate(c.permis.date_expiration)}`],
+        ['Contrat', `${c.contrat.type} - ${formatDate(c.contrat.date_expiration)}`],
+        ['Visa Actif', c.visa.actif ? 'Oui' : 'Non'],
+        ['Visa Exp.', formatDate(c.visa.date_expiration || '')],
+        ['Observations', c.observations || '-']
+      ]
+    });
+    doc.save(`chauffeur_${c.nom}_${c.prenom}.pdf`);
+  };
+
+  const getExpirationColor = (dateStr?: string): React.CSSProperties => {
+    if (!dateStr) return {};
+    const diff = (new Date(dateStr).getTime() - Date.now()) / (1000 * 3600 * 24);
+    if (diff < 0) return { color: 'red', fontWeight: 'bold' };
+    if (diff < 30) return { color: 'orange', fontWeight: 'bold' };
+    return {};
+  };
+
+  const filtered = chauffeurs.filter(c =>
+    c.nom.toLowerCase().includes(search.toLowerCase()) ||
+    c.prenom.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <DashboardLayout>
-      <h1>Gestion des Chauffeurs</h1>
-    </DashboardLayout>
+    <Layout>
+      <Box p={4}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h5" fontWeight={600}>Chauffeurs</Typography>
+          <Button variant="contained" startIcon={<Add />} onClick={() => setDrawerOpen(true)}>Ajouter</Button>
+        </Box>
+
+        <TextField
+          fullWidth
+          placeholder="Rechercher"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 2 }}
+        />
+
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#e3f2fd' }}>
+                <TableCell><strong>Nom</strong></TableCell>
+                <TableCell><strong>Prénom</strong></TableCell>
+                <TableCell><strong>Téléphone</strong></TableCell>
+                <TableCell><strong>Permis</strong></TableCell>
+                <TableCell><strong>Contrat</strong></TableCell>
+                <TableCell><strong>Visa Exp.</strong></TableCell>
+                <TableCell><strong>Docs</strong></TableCell>
+                <TableCell><strong>Actions</strong></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filtered.map(c => (
+                <TableRow key={c._id}>
+                  <TableCell>{c.nom}</TableCell>
+                  <TableCell>{c.prenom}</TableCell>
+                  <TableCell>{c.telephone}</TableCell>
+                  <TableCell style={getExpirationColor(c.permis.date_expiration)}>
+                    {c.permis.type} - {formatDate(c.permis.date_expiration)}
+                  </TableCell>
+                  <TableCell style={getExpirationColor(c.contrat.date_expiration)}>
+                    {c.contrat.type} - {formatDate(c.contrat.date_expiration)}
+                  </TableCell>
+                  <TableCell style={getExpirationColor(c.visa.date_expiration)}>
+                    {formatDate(c.visa.date_expiration || '')}
+                  </TableCell>
+                  <TableCell>
+                    {c.scanPermis && <a href={`http://localhost:5000/uploads/${c.scanPermis}`} target="_blank">Permis</a>}<br />
+                    {c.scanVisa && <a href={`http://localhost:5000/uploads/${c.scanVisa}`} target="_blank">Visa</a>}<br />
+                    {c.scanCIN && <a href={`http://localhost:5000/uploads/${c.scanCIN}`} target="_blank">CIN</a>}
+                  </TableCell>
+                  <TableCell>
+                  
+                    <Tooltip title="Supprimer">
+                      <IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton>
+                    </Tooltip>
+                 
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Drawer d'ajout/modification */}
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={400}>
+            <Typography variant="h6" mb={2}>{selectedChauffeur ? 'Modifier Chauffeur' : 'Ajouter Chauffeur'}</Typography>
+            <TextField label="Nom" value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} fullWidth sx={{ mb: 1 }} />
+            <TextField label="Prénom" value={form.prenom} onChange={e => setForm({ ...form, prenom: e.target.value })} fullWidth sx={{ mb: 1 }} />
+            <TextField label="Téléphone" value={form.telephone} onChange={e => setForm({ ...form, telephone: e.target.value })} fullWidth sx={{ mb: 1 }} />
+            <TextField label="CIN" value={form.cin} onChange={e => setForm({ ...form, cin: e.target.value })} fullWidth sx={{ mb: 1 }} />
+            <TextField label="Adresse" value={form.adresse} onChange={e => setForm({ ...form, adresse: e.target.value })} fullWidth sx={{ mb: 1 }} />
+            <TextField type="date" label="Permis Expiration" value={form.permis.date_expiration} onChange={e => setForm({ ...form, permis: { ...form.permis, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+            <TextField type="date" label="Contrat Expiration" value={form.contrat.date_expiration} onChange={e => setForm({ ...form, contrat: { ...form.contrat, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+            <TextField type="date" label="Visa Expiration" value={form.visa.date_expiration} onChange={e => setForm({ ...form, visa: { ...form.visa, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+            <Button variant="contained" fullWidth onClick={handleSubmit}>{selectedChauffeur ? 'Modifier' : 'Ajouter'} Chauffeur</Button>
+          </Box>
+        </Drawer>
+      </Box>
+    </Layout>
   );
 };
 
-export default Chauffeurs;
+export default ChauffeursPage;
