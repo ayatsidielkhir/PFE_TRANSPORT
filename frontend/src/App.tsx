@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import ProtectedRoute from './router/ProtectedRoute';
-import DocumentsPage from './pages/admin/Documents';
+import Layout from './components/Layout'; // 👈 Ajouté
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -10,7 +10,7 @@ import AdminChauffeurs from './pages/admin/Chauffeurs';
 import AdminVehicules from './pages/admin/Vehicules';
 import AdminDocuments from './pages/admin/Documents';
 import AdminFactures from './pages/admin/Factures';
-import AdminTrajets from './pages/admin/Trajets';
+import AdminTrajets from './pages/admin/Trajets'; // 👈
 import AdminPartenaires from './pages/admin/Partenaires';
 import AdminComptabilite from './pages/admin/Comptabilite';
 
@@ -28,18 +28,30 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
-        {/* Admin Routes */}
+
+        {/* Pages Admin avec Layout intégré manuellement */}
         <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/chauffeurs" element={<ProtectedRoute><AdminChauffeurs /></ProtectedRoute>} />
         <Route path="/admin/vehicules" element={<ProtectedRoute><AdminVehicules /></ProtectedRoute>} />
         <Route path="/admin/documents" element={<ProtectedRoute><AdminDocuments /></ProtectedRoute>} />
         <Route path="/admin/factures" element={<ProtectedRoute><AdminFactures /></ProtectedRoute>} />
-        <Route path="/admin/trajets" element={<ProtectedRoute><AdminTrajets /></ProtectedRoute>} />
+
+        {/* ✅ Page Trajets affichée AVEC Layout */}
+        <Route
+          path="/admin/trajets"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AdminTrajets />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />
         <Route path="/admin/comptabilite" element={<ProtectedRoute><AdminComptabilite /></ProtectedRoute>} />
-        <Route path="/admin/documents" element={<DocumentsPage />} />
 
-        {/* Responsable Routes */}
+        {/* Responsable */}
         <Route path="/responsable/dashboard" element={<ProtectedRoute><RespDashboard /></ProtectedRoute>} />
         <Route path="/responsable/chauffeurs" element={<ProtectedRoute><RespChauffeurs /></ProtectedRoute>} />
         <Route path="/responsable/vehicules" element={<ProtectedRoute><RespVehicules /></ProtectedRoute>} />

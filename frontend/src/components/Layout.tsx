@@ -1,4 +1,4 @@
-// ✅ Layout.tsx mis à jour avec toutes les pages + logout
+// ✅ Ancien Layout.tsx qui accepte des children
 
 import {
   AppBar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon,
@@ -53,7 +53,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      {/* Top bar */}
       <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#0379a8' }}>
         <Toolbar>
           <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
@@ -65,7 +64,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar */}
       <Drawer
         variant="persistent"
         open={open}
@@ -105,14 +103,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Logout */}
         <ListItemButton onClick={handleLogout} sx={{ mx: 1, borderRadius: 2 }}>
           <ListItemIcon sx={{ color: '#d32f2f' }}><Logout /></ListItemIcon>
           <ListItemText primary="Déconnexion" primaryTypographyProps={{ fontWeight: 500 }} />
         </ListItemButton>
       </Drawer>
 
-      {/* Main content */}
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Toolbar />
         {children}

@@ -8,6 +8,8 @@ import authRoutes from './routes/auth.routes';
 import chauffeurRoutes from './routes/chauffeur.routes';
 import vehiculeRoutes from './routes/vehicule.routes';
 import documentRoutes from './routes/document.routes';
+import trajetRoutes from './routes/trajet.routes';
+
 
 dotenv.config();
 
@@ -28,6 +30,7 @@ mongoose.connect(MONGO_URI)
     app.use('/api/chauffeur', chauffeurRoutes);  // ✅ corrigé (sans 's')
     app.use('/api/vehicule', vehiculeRoutes);    // ✅ corrigé (sans 's')
     app.use('/api/documents', documentRoutes);
+    app.use('/api/trajets', trajetRoutes);
 
     // Serve static files (e.g. uploaded files)
     app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
