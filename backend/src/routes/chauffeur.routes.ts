@@ -8,7 +8,7 @@ import {
 
 const router = express.Router();
 
-// ✅ Configurer le dossier d’upload
+
 const upload = multer({ dest: 'uploads/' });
 
 router.get('/', getChauffeurs);

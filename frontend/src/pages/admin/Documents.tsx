@@ -1,21 +1,30 @@
 import React, { useEffect, useState } from 'react';
+import {
+  Box, Typography, Button, Drawer, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, IconButton
+} from '@mui/material';
+import { Add, Edit } from '@mui/icons-material';
+import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 import UploadDocumentForm from '../../components/UploadDocumentForm';
-import '../../styles/documents.css';
-import axios from 'axios';
 
 interface DocumentData {
   _id: string;
   type: string;
-  nom: string;
   fichier: string;
-  date_expiration: string;
+  nom: string;
   statut: string;
+  date_expiration: string;
+  entityType: 'chauffeur' | 'vehicule';
+  linkedTo: string;
+  expirationDate: string;
 }
+
 
 const DocumentsPage: React.FC = () => {
   const [documents, setDocuments] = useState<DocumentData[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editData, setEditData] = useState<DocumentData | null>(null);
 
   const fetchDocuments = async () => {
     try {
@@ -30,49 +39,70 @@ const DocumentsPage: React.FC = () => {
     fetchDocuments();
   }, []);
 
+  const handleEdit = (doc: DocumentData) => {
+    setEditData(doc);
+    setDrawerOpen(true);
+  };
+
+  const handleAdd = () => {
+    setEditData(null);
+    setDrawerOpen(true);
+  };
+
   return (
     <AdminLayout>
-      <div className="container">
-        <h2>Documents</h2>
-        <button className="btn-add" onClick={() => setShowForm(true)}>
-          Ajouter un document
-        </button>
+      <Box p={4}>
+        <Box display="flex" justifyContent="space-between" mb={2}>
+          <Typography variant="h5" fontWeight={600}>Documents</Typography>
+          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>Ajouter</Button>
+        </Box>
 
-        {showForm && (
-          <div className="side-form">
-            <button className="btn-close" onClick={() => setShowForm(false)}>×</button>
-            <UploadDocumentForm onUploadSuccess={() => {
-              fetchDocuments();
-              setShowForm(false);
-            }} />
-          </div>
-        )}
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#e3f2fd' }}>
+                <TableCell>Type</TableCell>
+                <TableCell>Chauffeur / Véhicule</TableCell>
+                <TableCell>Fichier</TableCell>
+                <TableCell>Date d'expiration</TableCell>
+                <TableCell>Statut</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {documents.map((doc) => (
+                <TableRow key={doc._id}>
+                  <TableCell>{doc.type}</TableCell>
+                  <TableCell>{doc.nom}</TableCell>
+                  <TableCell>
+                    <a href={doc.fichier} target="_blank" rel="noopener noreferrer">Voir</a>
+                  </TableCell>
+                  <TableCell>{new Date(doc.date_expiration).toLocaleDateString()}</TableCell>
+                  <TableCell>{doc.statut}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleEdit(doc)}><Edit /></IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Chauffeur / Véhicule</th>
-              <th>Document</th>
-              <th>Date d'expiration</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {documents.map((doc) => (
-              <tr key={doc._id}>
-                <td>{doc.type}</td>
-                <td>{doc.nom}</td>
-                <td><a href={doc.fichier} target="_blank" rel="noopener noreferrer">Voir</a></td>
-                <td>{new Date(doc.date_expiration).toLocaleDateString()}</td>
-                <td>{doc.statut}</td>
-                <td>—</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={400}>
+            <Typography variant="h6" mb={2}>
+              {editData ? 'Modifier Document' : 'Ajouter Document'}
+            </Typography>
+            <UploadDocumentForm
+              editData={editData}
+              onUploadSuccess={() => {
+                setDrawerOpen(false);
+                fetchDocuments();
+              }}
+            />
+          </Box>
+        </Drawer>
+      </Box>
     </AdminLayout>
   );
 };

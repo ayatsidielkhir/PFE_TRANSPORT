@@ -1,10 +1,15 @@
-import express from 'express';
+import { Router } from 'express';
 import upload from '../middleware/upload';
-import { getAllDocuments, uploadDocument } from '../controllers/document.controller';
+import {
+  getAllDocuments,
+  uploadDocument,
+  updateDocument
+} from '../controllers/document.controller';
 
-const router = express.Router();
+const router = Router();
 
-router.get('/', getAllDocuments); // GET /api/documents
-router.post('/upload', upload.single('file'), uploadDocument); // POST /api/documents/upload
+router.get('/', getAllDocuments);
+router.post('/', upload.single('fichier'), uploadDocument);
+router.put('/:id', upload.single('fichier'), updateDocument);
 
 export default router;

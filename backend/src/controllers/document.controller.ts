@@ -32,3 +32,33 @@ export const uploadDocument = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Erreur lors de l\'upload', err });
   }
 };
+
+// ✅ Ajout de la mise à jour d'un document
+export const updateDocument = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { type, expirationDate, entityType, linkedTo } = req.body;
+
+    const updatedFields: any = {
+      type,
+      expirationDate,
+      entityType,
+      linkedTo,
+    };
+
+    if (req.file) {
+      updatedFields.fileName = req.file.filename;
+      updatedFields.filePath = req.file.path;
+    }
+
+    const updatedDoc = await Document.findByIdAndUpdate(id, updatedFields, { new: true });
+
+    if (!updatedDoc) {
+      return res.status(404).json({ message: 'Document non trouvé' });
+    }
+
+    res.status(200).json(updatedDoc);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur lors de la mise à jour', err });
+  }
+};

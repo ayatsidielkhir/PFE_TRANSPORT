@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Box, TextField, MenuItem, Select, InputLabel,
+  FormControl, Button, Typography
+} from '@mui/material';
 import axios from 'axios';
 
 interface Chauffeur {
@@ -11,15 +15,25 @@ interface Vehicule {
   matricule: string;
 }
 
-interface Props {
-  onUploadSuccess: () => void;
+interface DocumentEditData {
+  _id?: string;
+  type: string;
+  entityType: 'chauffeur' | 'vehicule';
+  linkedTo: string;
+  expirationDate: string;
+  fileName?: string;
 }
 
-const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess }) => {
+interface Props {
+  onUploadSuccess: () => void;
+  editData?: DocumentEditData | null;
+}
+
+const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess, editData }) => {
   const [type, setType] = useState('');
   const [entityType, setEntityType] = useState<'chauffeur' | 'vehicule'>('chauffeur');
   const [linkedTo, setLinkedTo] = useState('');
-  const [dateExpiration, setDateExpiration] = useState('');
+  const [expirationDate, setExpirationDate] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
   const [vehicules, setVehicules] = useState<Vehicule[]>([]);
@@ -27,7 +41,7 @@ const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess }) => {
   useEffect(() => {
     const fetchChauffeurs = async () => {
       try {
-        const res = await axios.get('http://localhost:3000/api/chauffeur');
+        const res = await axios.get('http://localhost:5000/api/chauffeurs');
         setChauffeurs(res.data);
       } catch (err) {
         console.error(err);
@@ -36,7 +50,7 @@ const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess }) => {
 
     const fetchVehicules = async () => {
       try {
-        const res = await axios.get('http://localhost:3000/api/vehicule');
+        const res = await axios.get('http://localhost:5000/api/vehicules');
         setVehicules(res.data);
       } catch (err) {
         console.error(err);
@@ -47,20 +61,32 @@ const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess }) => {
     fetchVehicules();
   }, []);
 
+  useEffect(() => {
+    if (editData) {
+      setType(editData.type);
+      setEntityType(editData.entityType);
+      setLinkedTo(editData.linkedTo);
+      setExpirationDate(editData.expirationDate.split('T')[0]);
+    }
+  }, [editData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!type || !linkedTo || !dateExpiration || !file) return;
+    if (!type || !linkedTo || !expirationDate || (!file && !editData)) return;
 
     const formData = new FormData();
     formData.append('type', type);
     formData.append('entityType', entityType);
     formData.append('linkedTo', linkedTo);
-    formData.append('date_expiration', dateExpiration);
-    formData.append('fichier', file);
+    formData.append('expirationDate', expirationDate);
+    if (file) formData.append('fichier', file);
 
     try {
-      await axios.post('http://localhost:3000/api/documents', formData);
+      if (editData?._id) {
+        await axios.put(`http://localhost:5000/api/documents/${editData._id}`, formData);
+      } else {
+        await axios.post('http://localhost:5000/api/documents', formData);
+      }
       onUploadSuccess();
     } catch (err) {
       console.error(err);
@@ -70,34 +96,45 @@ const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess }) => {
   const options = entityType === 'chauffeur' ? chauffeurs : vehicules;
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label>Type:</label>
-      <input value={type} onChange={(e) => setType(e.target.value)} required />
+    <Box component="form" display="flex" flexDirection="column" gap={2} onSubmit={handleSubmit}>
+      <Typography variant="subtitle1">{editData ? 'Modifier' : 'Ajouter'} un document</Typography>
 
-      <label>Type de cible:</label>
-      <select value={entityType} onChange={(e) => setEntityType(e.target.value as 'chauffeur' | 'vehicule')}>
-        <option value="chauffeur">Chauffeur</option>
-        <option value="vehicule">Véhicule</option>
-      </select>
+      <TextField label="Type" value={type} onChange={(e) => setType(e.target.value)} required />
 
-      <label>Choisir {entityType}:</label>
-      <select value={linkedTo} onChange={(e) => setLinkedTo(e.target.value)} required>
-        <option value="">-- Sélectionner --</option>
-        {options.map((item) => (
-          <option key={item._id} value={item._id}>
-            {'nom' in item ? item.nom : item.matricule}
-          </option>
-        ))}
-      </select>
+      <FormControl fullWidth>
+        <InputLabel>Type de cible</InputLabel>
+        <Select value={entityType} onChange={(e) => setEntityType(e.target.value as 'chauffeur' | 'vehicule')}>
+          <MenuItem value="chauffeur">Chauffeur</MenuItem>
+          <MenuItem value="vehicule">Véhicule</MenuItem>
+        </Select>
+      </FormControl>
 
-      <label>Date d'expiration:</label>
-      <input type="date" value={dateExpiration} onChange={(e) => setDateExpiration(e.target.value)} required />
+      <FormControl fullWidth required>
+        <InputLabel>{entityType === 'chauffeur' ? 'Chauffeur' : 'Véhicule'}</InputLabel>
+        <Select value={linkedTo} onChange={(e) => setLinkedTo(e.target.value)}>
+          {options.map((item) => (
+            <MenuItem key={item._id} value={item._id}>
+              {'nom' in item ? item.nom : item.matricule}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
-      <label>Fichier:</label>
-      <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
+      <TextField
+        type="date"
+        label="Date d'expiration"
+        InputLabelProps={{ shrink: true }}
+        value={expirationDate}
+        onChange={(e) => setExpirationDate(e.target.value)}
+        required
+      />
 
-      <button type="submit" className="btn-add">Uploader</button>
-    </form>
+      <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+
+      <Button type="submit" variant="contained" color="primary">
+        {editData ? 'Enregistrer les modifications' : 'Uploader'}
+      </Button>
+    </Box>
   );
 };
 
