@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
 import path from 'path';
+import ocrRoutes from "./routes/ocr.routes";
 
 import authRoutes from './routes/auth.routes';
 import chauffeurRoutes from './routes/chauffeur.routes';
@@ -33,6 +34,7 @@ mongoose.connect(MONGO_URI)
     app.use('/api/documents', documentRoutes);
     app.use('/api/trajets', trajetRoutes);
     app.use('/api/admin/dashboard', dashboardRoutes);
+    app.use("/api/ocr", ocrRoutes);
 
     // Serve static files (e.g. uploaded files)
     app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
