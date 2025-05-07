@@ -19,12 +19,12 @@ export const addChauffeur = async (req: Request, res: Response) => {
       cin,
       adresse,
       observations,
-      'permis.type': permisType,
-      'permis.date_expiration': permisDate,
-      'contrat.type': contratType,
-      'contrat.date_expiration': contratDate,
-      'visa.actif': visaActif,
-      'visa.date_expiration': visaDate
+      permis_type,
+      permis_date_expiration,
+      contrat_type,
+      contrat_date_expiration,
+      visa_actif,
+      visa_date_expiration
     } = req.body;
 
     const scanPermis =
@@ -42,16 +42,16 @@ export const addChauffeur = async (req: Request, res: Response) => {
       adresse,
       observations,
       permis: {
-        type: permisType,
-        date_expiration: permisDate
+        type: permis_type,
+        date_expiration: permis_date_expiration
       },
       contrat: {
-        type: contratType,
-        date_expiration: contratDate
+        type: contrat_type,
+        date_expiration: contrat_date_expiration
       },
       visa: {
-        actif: visaActif === 'true',
-        date_expiration: visaDate || null
+        actif: visa_actif === 'true',
+        date_expiration: visa_date_expiration || null
       },
       scanPermis,
       scanVisa,
@@ -61,7 +61,7 @@ export const addChauffeur = async (req: Request, res: Response) => {
     await chauffeur.save();
     res.status(201).json(chauffeur);
   } catch (err) {
-    console.error(err);
+    console.error('❌ Erreur lors de la création du chauffeur :', err);
     res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };

@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, InputAdornment, Drawer,
-  FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip
+  IconButton, Tooltip
 } from '@mui/material';
-import { Add, Delete, Search, Visibility } from '@mui/icons-material';
+import { Add, Delete, Search } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import Layout from '../../components/Layout';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Chauffeur {
   _id?: string;
@@ -46,49 +47,47 @@ const ChauffeursPage: React.FC = () => {
   }, []);
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('/chauffeurs');
+    const res = await axios.get('/chauffeur');
     setChauffeurs(res.data);
   };
 
   const formatDate = (dateStr: string | undefined): string => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return date.toISOString().split('T')[0]; // Récupère uniquement la partie YYYY-MM-DD
+    return date.toISOString().split('T')[0];
   };
 
   const handleDelete = async (id?: string) => {
     if (!id) return;
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce chauffeur ?')) {
-      await axios.delete(`/chauffeurs/${id}`);
+      await axios.delete(`/chauffeur/${id}`);
       fetchChauffeurs();
     }
   };
 
   const handleSubmit = async () => {
     const data = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (typeof value === 'object') {
-        Object.entries(value).forEach(([subKey, subVal]) => {
-          if (subKey === 'date_expiration') {
-            // Remplacer la date d'expiration par la date formatée
-            data.append(`${key}.${subKey}`, formatDate(String(subVal)));
-          } else {
-            data.append(`${key}.${subKey}`, String(subVal));
-          }
-        });
-      } else {
-        data.append(key, String(value));
-      }
-    });
+    data.append('nom', form.nom);
+    data.append('prenom', form.prenom);
+    data.append('telephone', form.telephone);
+    data.append('cin', form.cin);
+    data.append('adresse', form.adresse || '');
+    data.append('observations', form.observations || '');
+    data.append('permis_type', form.permis.type);
+    data.append('permis_date_expiration', formatDate(form.permis.date_expiration));
+    data.append('contrat_type', form.contrat.type);
+    data.append('contrat_date_expiration', formatDate(form.contrat.date_expiration));
+    data.append('visa_actif', String(form.visa.actif));
+    data.append('visa_date_expiration', formatDate(form.visa.date_expiration || ''));
 
     if (scanPermis) data.append('scanPermis', scanPermis);
     if (scanVisa) data.append('scanVisa', scanVisa);
     if (scanCIN) data.append('scanCIN', scanCIN);
 
     const res = selectedChauffeur && selectedChauffeur._id
-      ? await axios.put(`/chauffeurs/${selectedChauffeur._id}`, data)
-      : await axios.post('/chauffeurs', data);
-      
+      ? await axios.put(`/chauffeur/${selectedChauffeur._id}`, data)
+      : await axios.post('/chauffeur', data);
+
     if (res.status === 200 || res.status === 201) {
       fetchChauffeurs();
       setDrawerOpen(false);
@@ -98,7 +97,7 @@ const ChauffeursPage: React.FC = () => {
   const generatePdf = (c: Chauffeur) => {
     const doc = new jsPDF();
     doc.text(`Fiche du chauffeur ${c.nom} ${c.prenom}`, 14, 16);
-    doc.autoTable({
+    autoTable(doc, {
       head: [['Champ', 'Valeur']],
       body: [
         ['Nom', c.nom],
@@ -187,11 +186,9 @@ const ChauffeursPage: React.FC = () => {
                     {c.scanCIN && <a href={`http://localhost:5000/uploads/${c.scanCIN}`} target="_blank">CIN</a>}
                   </TableCell>
                   <TableCell>
-                  
                     <Tooltip title="Supprimer">
                       <IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton>
                     </Tooltip>
-                 
                   </TableCell>
                 </TableRow>
               ))}
@@ -199,7 +196,6 @@ const ChauffeursPage: React.FC = () => {
           </Table>
         </TableContainer>
 
-        {/* Drawer d'ajout/modification */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={400}>
             <Typography variant="h6" mb={2}>{selectedChauffeur ? 'Modifier Chauffeur' : 'Ajouter Chauffeur'}</Typography>
@@ -208,9 +204,11 @@ const ChauffeursPage: React.FC = () => {
             <TextField label="Téléphone" value={form.telephone} onChange={e => setForm({ ...form, telephone: e.target.value })} fullWidth sx={{ mb: 1 }} />
             <TextField label="CIN" value={form.cin} onChange={e => setForm({ ...form, cin: e.target.value })} fullWidth sx={{ mb: 1 }} />
             <TextField label="Adresse" value={form.adresse} onChange={e => setForm({ ...form, adresse: e.target.value })} fullWidth sx={{ mb: 1 }} />
-            <TextField type="date" label="Permis Expiration" value={form.permis.date_expiration} onChange={e => setForm({ ...form, permis: { ...form.permis, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
-            <TextField type="date" label="Contrat Expiration" value={form.contrat.date_expiration} onChange={e => setForm({ ...form, contrat: { ...form.contrat, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
-            <TextField type="date" label="Visa Expiration" value={form.visa.date_expiration} onChange={e => setForm({ ...form, visa: { ...form.visa, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+            <TextField type="text" label="Type Permis" value={form.permis.type} onChange={e => setForm({ ...form, permis: { ...form.permis, type: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+            <TextField type="date" label="Expiration Permis" value={form.permis.date_expiration} onChange={e => setForm({ ...form, permis: { ...form.permis, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+            <TextField type="text" label="Type Contrat" value={form.contrat.type} onChange={e => setForm({ ...form, contrat: { ...form.contrat, type: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+            <TextField type="date" label="Expiration Contrat" value={form.contrat.date_expiration} onChange={e => setForm({ ...form, contrat: { ...form.contrat, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+            <TextField type="date" label="Expiration Visa" value={form.visa.date_expiration} onChange={e => setForm({ ...form, visa: { ...form.visa, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
             <Button variant="contained" fullWidth onClick={handleSubmit}>{selectedChauffeur ? 'Modifier' : 'Ajouter'} Chauffeur</Button>
           </Box>
         </Drawer>

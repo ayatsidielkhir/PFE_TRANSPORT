@@ -43,12 +43,12 @@ const VehiculesPage: React.FC = () => {
   }, []);
 
   const fetchVehicules = async () => {
-    const res = await axios.get('/vehicules');
+    const res = await axios.get('/vehicule'); // ✅ corrigé
     setVehicules(res.data);
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('/chauffeurs');
+    const res = await axios.get('/chauffeur'); // ✅ corrigé
     setChauffeurs(res.data);
   };
 
@@ -81,8 +81,8 @@ const VehiculesPage: React.FC = () => {
     if (file) formData.append('carteGrise', file);
 
     const res = isEditing && form._id
-      ? await axios.put(`/vehicules/${form._id}`, formData)
-      : await axios.post('/vehicules', formData);
+      ? await axios.put(`/vehicule/${form._id}`, formData) // ✅ corrigé
+      : await axios.post('/vehicule', formData); // ✅ corrigé
 
     if (res.status === 200 || res.status === 201) {
       fetchVehicules();
@@ -93,7 +93,7 @@ const VehiculesPage: React.FC = () => {
   const handleDelete = async (id?: string) => {
     if (!id) return;
     if (window.confirm('Supprimer ce véhicule ?')) {
-      await axios.delete(`/vehicules/${id}`);
+      await axios.delete(`/vehicule/${id}`); // ✅ corrigé
       fetchVehicules();
     }
   };
