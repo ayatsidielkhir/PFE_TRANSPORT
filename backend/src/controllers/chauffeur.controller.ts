@@ -10,8 +10,13 @@ export const getChauffeurs = async (_: Request, res: Response) => {
   }
 };
 
+
+
 export const addChauffeur = async (req: Request, res: Response) => {
   try {
+    console.log('Body:', req.body);
+    console.log('Files:', req.files);
+
     const {
       nom,
       prenom,
@@ -28,11 +33,11 @@ export const addChauffeur = async (req: Request, res: Response) => {
     } = req.body;
 
     const scanPermis =
-      req.files && 'scanPermis' in req.files ? req.files['scanPermis'][0].filename : '';
+      req.files && 'scanPermis' in req.files ? (req.files['scanPermis'] as Express.Multer.File[])[0].filename : '';
     const scanVisa =
-      req.files && 'scanVisa' in req.files ? req.files['scanVisa'][0].filename : '';
+      req.files && 'scanVisa' in req.files ? (req.files['scanVisa'] as Express.Multer.File[])[0].filename : '';
     const scanCIN =
-      req.files && 'scanCIN' in req.files ? req.files['scanCIN'][0].filename : '';
+      req.files && 'scanCIN' in req.files ? (req.files['scanCIN'] as Express.Multer.File[])[0].filename : '';
 
     const chauffeur = new Chauffeur({
       nom,
@@ -60,11 +65,12 @@ export const addChauffeur = async (req: Request, res: Response) => {
 
     await chauffeur.save();
     res.status(201).json(chauffeur);
-  } catch (err) {
-    console.error('❌ Erreur lors de la création du chauffeur :', err);
-    res.status(500).json({ message: 'Erreur serveur', error: err });
+  } catch (err: any) {
+    console.error('🔥 ERREUR interne:', err);
+    res.status(500).json({ message: 'Erreur serveur', error: err.message });
   }
 };
+
 
 export const deleteChauffeur = async (req: Request, res: Response) => {
   try {

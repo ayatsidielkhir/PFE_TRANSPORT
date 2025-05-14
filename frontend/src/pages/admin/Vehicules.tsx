@@ -43,12 +43,12 @@ const VehiculesPage: React.FC = () => {
   }, []);
 
   const fetchVehicules = async () => {
-    const res = await axios.get('/vehicule'); // ✅ corrigé
+    const res = await axios.get('http://localhost:5000/api/vehicules');
     setVehicules(res.data);
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('/chauffeur'); // ✅ corrigé
+    const res = await axios.get('http://localhost:5000/api/chauffeurs');
     setChauffeurs(res.data);
   };
 

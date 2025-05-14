@@ -1,21 +1,37 @@
 import { Request, Response } from 'express';
 import Document from '../models/document.models';
+import Chauffeur from '../models/Chauffeur';  // Assure-toi que le chemin est correct
+import '../models/Vehicule';
+import fs from 'fs';
+import path from 'path';
 
 export const getAllDocuments = async (req: Request, res: Response) => {
   try {
-    const documents = await Document.find();
+    console.log('Tentative de récupération des documents...');
+    const documents = await Document.find().populate({
+      path: 'linkedTo',
+      model: Chauffeur,  // Indiquer explicitement le modèle que tu veux utiliser pour peupler
+      strictPopulate: false
+    });
+    console.log('Documents récupérés:', documents);
+
     res.status(200).json(documents);
   } catch (error) {
+    console.error('Erreur dans getAllDocuments:', error);
     res.status(500).json({ message: 'Erreur serveur', error });
   }
 };
+
 
 export const uploadDocument = async (req: Request, res: Response) => {
   try {
     const { type, expirationDate, entityType, linkedTo } = req.body;
     const file = req.file;
 
-    if (!file) return res.status(400).json({ message: 'Aucun fichier envoyé' });
+    if (!file) {
+      res.status(400).json({ message: 'Aucun fichier envoyé' });
+      return;
+    }
 
     const newDoc = new Document({
       type,
@@ -33,7 +49,6 @@ export const uploadDocument = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Ajout de la mise à jour d'un document
 export const updateDocument = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -54,11 +69,34 @@ export const updateDocument = async (req: Request, res: Response) => {
     const updatedDoc = await Document.findByIdAndUpdate(id, updatedFields, { new: true });
 
     if (!updatedDoc) {
-      return res.status(404).json({ message: 'Document non trouvé' });
+      res.status(404).json({ message: 'Document non trouvé' });
+      return;
     }
 
     res.status(200).json(updatedDoc);
   } catch (err) {
     res.status(500).json({ message: 'Erreur lors de la mise à jour', err });
+  }
+};
+
+export const deleteDocument = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const doc = await Document.findById(id);
+
+    if (!doc) {
+      res.status(404).json({ message: 'Document non trouvé' });
+      return;
+    }
+
+    const filePath = path.resolve(doc.filePath);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    await Document.findByIdAndDelete(id);
+    res.status(200).json({ message: 'Document supprimé avec succès' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur lors de la suppression', err });
   }
 };

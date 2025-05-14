@@ -7,7 +7,7 @@ const vehiculeSchema = new mongoose.Schema({
   kilometrage: { type: Number, required: true },
   controle_technique: { type: String, required: true },
   assurance: { type: String, required: true },
-  carteGrise: { type: String } // <-- nouveau champ
+  carteGrise: { type: String }
 }, { timestamps: true });
 
-export default mongoose.model('Vehicule', vehiculeSchema);
+export default mongoose.model('Vehicule', vehiculeSchema);  // En majuscule

@@ -36,12 +36,13 @@ const TrajetsPage: React.FC = () => {
     depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '', distanceKm: 0, consommationL: 0,
   });
 
+  // Fonction pour récupérer les données
   const fetchData = async () => {
     try {
       const [trajetRes, chaufRes, vehicRes] = await Promise.all([
-        axios.get('/api/trajets'),
-        axios.get('/api/chauffeurs'),
-        axios.get('/api/vehicules')
+        axios.get('http://localhost:5000/api/trajets'),
+        axios.get('http://localhost:5000/api/chauffeurs'),
+        axios.get('http://localhost:5000/api/vehicules')
       ]);
       setTrajets(trajetRes.data);
       setChauffeurs(chaufRes.data);
@@ -51,8 +52,11 @@ const TrajetsPage: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
+  // Gestion des changements dans les champs du formulaire
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prevForm) => ({
@@ -71,7 +75,7 @@ const TrajetsPage: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      await axios.post('/api/trajets', form);
+      await axios.post('http://localhost:5000/api/trajets', form);
       setDrawerOpen(false);
       fetchData();
     } catch (err) {
@@ -79,11 +83,13 @@ const TrajetsPage: React.FC = () => {
     }
   };
 
+  // Fonction pour obtenir le nom du chauffeur par ID
   const getChauffeurName = (id: string) => {
     const ch = chauffeurs.find(c => c._id === id);
     return ch ? `${ch.nom} ${ch.prenom}` : '';
   };
 
+  // Fonction pour obtenir la matricule du véhicule par ID
   const getVehiculeMatricule = (id: string) => {
     const v = vehicules.find(v => v._id === id);
     return v ? v.matricule : '';
@@ -139,9 +145,9 @@ const TrajetsPage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             <MenuItem value="">Sélectionner chauffeur</MenuItem>
-            {chauffeurs.map(c => (
+            {chauffeurs.length > 0 ? chauffeurs.map(c => (
               <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
-            ))}
+            )) : <MenuItem disabled>Aucun chauffeur disponible</MenuItem>}
           </Select>
 
           <Select
@@ -153,9 +159,9 @@ const TrajetsPage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             <MenuItem value="">Sélectionner véhicule</MenuItem>
-            {vehicules.map(v => (
+            {vehicules.length > 0 ? vehicules.map(v => (
               <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
-            ))}
+            )) : <MenuItem disabled>Aucun véhicule disponible</MenuItem>}
           </Select>
 
           <TextField label="Distance (km)" type="number" name="distanceKm" fullWidth margin="normal" onChange={handleInputChange} />
