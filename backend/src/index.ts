@@ -10,6 +10,7 @@ import vehiculeRoutes from './routes/vehicule.routes';
 import documentRoutes from './routes/document.routes';
 import trajetRoutes from './routes/trajet.routes'; 
 import dashboardRoutes from './routes/Dashboard..routes';  
+import partenaireRoutes from './routes/partenaire.routes';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ mongoose.connect(MONGO_URI)
     app.use('/api/trajets', trajetRoutes); 
     app.use('/api/admin/dashboard', dashboardRoutes);
     app.use("/api/ocr", ocrRoutes);
+    app.use('/api/partenaires', partenaireRoutes);
 
     app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 

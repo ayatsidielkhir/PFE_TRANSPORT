@@ -8,6 +8,9 @@ const trajetSchema = new mongoose.Schema({
   vehicule: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicule', required: true },
   distanceKm: { type: Number, required: true },
   consommationL: { type: Number, required: true },
+  consommationMAD: { type: Number, required: false },
+  partenaire: { type: mongoose.Schema.Types.ObjectId, ref: 'Partenaire', required: false },
+  importExport: { type: String, enum: ['import', 'export'], required: false },
 }, { timestamps: true });
 
 export default mongoose.model('Trajet', trajetSchema);

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, Select, MenuItem, SelectChangeEvent
+  TableHead, TableRow, Select, MenuItem, SelectChangeEvent, Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import axios from 'axios';
 
@@ -16,6 +17,11 @@ interface Vehicule {
   matricule: string;
 }
 
+interface Partenaire {
+  _id: string;
+  nom: string;
+}
+
 interface Trajet {
   _id?: string;
   depart: string;
@@ -25,27 +31,40 @@ interface Trajet {
   vehicule: string;
   distanceKm: number;
   consommationL: number;
+  consommationMAD?: number;
+  partenaire?: string;
+  importExport?: 'import' | 'export';
 }
 
 const TrajetsPage: React.FC = () => {
   const [trajets, setTrajets] = useState<Trajet[]>([]);
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
   const [vehicules, setVehicules] = useState<Vehicule[]>([]);
+  const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState<Trajet>({
     depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '', distanceKm: 0, consommationL: 0,
+    consommationMAD: 0, partenaire: '', importExport: undefined
   });
+  const [filters, setFilters] = useState({ mois: '', partenaire: '' });
 
   const fetchData = async () => {
     try {
-      const [trajetRes, chaufRes, vehicRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/trajets'),
+      const query = new URLSearchParams();
+      if (filters.mois) query.append('mois', filters.mois);
+      if (filters.partenaire) query.append('partenaire', filters.partenaire);
+
+      const [trajetRes, chaufRes, vehicRes, partRes] = await Promise.all([
+        axios.get(`http://localhost:5000/api/trajets?${query.toString()}`),
         axios.get('http://localhost:5000/api/chauffeurs'),
-        axios.get('http://localhost:5000/api/vehicules')
+        axios.get('http://localhost:5000/api/vehicules'),
+        axios.get('http://localhost:5000/api/partenaires')
       ]);
+
       setTrajets(trajetRes.data);
       setChauffeurs(chaufRes.data);
       setVehicules(vehicRes.data);
+      setPartenaires(partRes.data);
     } catch (err) {
       console.error("Erreur lors du chargement des données", err);
     }
@@ -53,7 +72,7 @@ const TrajetsPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [filters]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -91,6 +110,11 @@ const TrajetsPage: React.FC = () => {
     return v ? v.matricule : '';
   };
 
+  const getPartenaireNom = (id: string) => {
+    const p = partenaires.find(p => p._id === id);
+    return p ? p.nom : '';
+  };
+
   return (
     <Box p={3}>
       <Box display="flex" justifyContent="space-between" mb={2}>
@@ -98,6 +122,24 @@ const TrajetsPage: React.FC = () => {
         <Button variant="contained" color="primary" onClick={() => setDrawerOpen(true)}>
           Nouveau trajet
         </Button>
+      </Box>
+
+      <Box display="flex" gap={2} mb={2}>
+        <TextField
+          label="Filtrer par mois"
+          type="month"
+          onChange={(e) => setFilters({ ...filters, mois: e.target.value })}
+        />
+        <Select
+          value={filters.partenaire}
+          onChange={(e) => setFilters({ ...filters, partenaire: e.target.value })}
+          displayEmpty
+        >
+          <MenuItem value="">Tous les partenaires</MenuItem>
+          {partenaires.map(p => (
+            <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>
+          ))}
+        </Select>
       </Box>
 
       <Table>
@@ -108,7 +150,10 @@ const TrajetsPage: React.FC = () => {
             <TableCell>Chauffeur</TableCell>
             <TableCell>Véhicule</TableCell>
             <TableCell>Distance</TableCell>
-            <TableCell>Consommation</TableCell>
+            <TableCell>Conso. L</TableCell>
+            <TableCell>Conso. MAD</TableCell>
+            <TableCell>Partenaire</TableCell>
+            <TableCell>Type</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -120,6 +165,9 @@ const TrajetsPage: React.FC = () => {
               <TableCell>{getVehiculeMatricule(t.vehicule)}</TableCell>
               <TableCell>{t.distanceKm} km</TableCell>
               <TableCell>{t.consommationL} L</TableCell>
+              <TableCell>{t.consommationMAD} MAD</TableCell>
+              <TableCell>{getPartenaireNom(t.partenaire || '')}</TableCell>
+              <TableCell>{t.importExport}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -133,35 +181,49 @@ const TrajetsPage: React.FC = () => {
           <TextField type="date" name="date" fullWidth margin="normal" onChange={handleInputChange} />
 
           <Select
-            fullWidth
-            name="chauffeur"
-            value={form.chauffeur}
-            onChange={handleSelectChange}
-            displayEmpty
-            sx={{ mt: 2 }}
+            fullWidth name="chauffeur" value={form.chauffeur} onChange={handleSelectChange}
+            displayEmpty sx={{ mt: 2 }}
           >
             <MenuItem value="">Sélectionner chauffeur</MenuItem>
-            {chauffeurs.length > 0 ? chauffeurs.map(c => (
+            {chauffeurs.map(c => (
               <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
-            )) : <MenuItem disabled>Aucun chauffeur disponible</MenuItem>}
+            ))}
           </Select>
 
           <Select
-            fullWidth
-            name="vehicule"
-            value={form.vehicule}
-            onChange={handleSelectChange}
-            displayEmpty
-            sx={{ mt: 2 }}
+            fullWidth name="vehicule" value={form.vehicule} onChange={handleSelectChange}
+            displayEmpty sx={{ mt: 2 }}
           >
             <MenuItem value="">Sélectionner véhicule</MenuItem>
-            {vehicules.length > 0 ? vehicules.map(v => (
+            {vehicules.map(v => (
               <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
-            )) : <MenuItem disabled>Aucun véhicule disponible</MenuItem>}
+            ))}
           </Select>
 
           <TextField label="Distance (km)" type="number" name="distanceKm" fullWidth margin="normal" onChange={handleInputChange} />
           <TextField label="Consommation (L)" type="number" name="consommationL" fullWidth margin="normal" onChange={handleInputChange} />
+          <TextField label="Consommation (MAD)" type="number" name="consommationMAD" fullWidth margin="normal" onChange={handleInputChange} />
+
+          <Select
+            fullWidth name="partenaire" value={form.partenaire || ''} onChange={handleSelectChange}
+            displayEmpty sx={{ mt: 2 }}
+          >
+            <MenuItem value="">Sélectionner partenaire</MenuItem>
+            {partenaires.map(p => (
+              <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>
+            ))}
+          </Select>
+
+          <Box mt={2}>
+            <FormControlLabel
+              control={<Checkbox checked={form.importExport === 'import'} onChange={() => setForm({ ...form, importExport: 'import' })} />}
+              label="Import"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={form.importExport === 'export'} onChange={() => setForm({ ...form, importExport: 'export' })} />}
+              label="Export"
+            />
+          </Box>
 
           <Button variant="contained" fullWidth onClick={handleSubmit} sx={{ mt: 2 }}>
             Enregistrer
