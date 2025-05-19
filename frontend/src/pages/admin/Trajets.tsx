@@ -36,7 +36,6 @@ const TrajetsPage: React.FC = () => {
     depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '', distanceKm: 0, consommationL: 0,
   });
 
-  // Fonction pour récupérer les données
   const fetchData = async () => {
     try {
       const [trajetRes, chaufRes, vehicRes] = await Promise.all([
@@ -56,7 +55,6 @@ const TrajetsPage: React.FC = () => {
     fetchData();
   }, []);
 
-  // Gestion des changements dans les champs du formulaire
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prevForm) => ({
@@ -83,13 +81,11 @@ const TrajetsPage: React.FC = () => {
     }
   };
 
-  // Fonction pour obtenir le nom du chauffeur par ID
   const getChauffeurName = (id: string) => {
     const ch = chauffeurs.find(c => c._id === id);
     return ch ? `${ch.nom} ${ch.prenom}` : '';
   };
 
-  // Fonction pour obtenir la matricule du véhicule par ID
   const getVehiculeMatricule = (id: string) => {
     const v = vehicules.find(v => v._id === id);
     return v ? v.matricule : '';

@@ -1,5 +1,5 @@
 import express from 'express';
-import upload from '../middleware/upload'; // 👈 très important
+import upload from '../middleware/upload'; 
 import {
   getAllDocuments,
   uploadDocument,

@@ -20,7 +20,7 @@ const chauffeurSchema = new mongoose.Schema({
   contrat: {
     type: {
       type: String,
-      required: false, // <-- maintenant optionnel
+      required: false, 
     },
     date_expiration: {
       type: Date,

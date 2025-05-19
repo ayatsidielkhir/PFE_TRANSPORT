@@ -5,18 +5,18 @@ const documentSchema = new mongoose.Schema({
   fileName: { type: String, required: true },
   filePath: { type: String, required: true },
   expirationDate: { type: Date, required: true },
-  statut: { type: String, default: 'valide' }, // si tu utilises ce champ
+  statut: { type: String, default: 'valide' }, 
 
   entityType: {
     type: String,
     required: true,
-    enum: ['chauffeur', 'vehicule'], // 👈 très important
+    enum: ['chauffeur', 'vehicule'], 
   },
 
   linkedTo: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    refPath: 'entityType', // 👈 lien dynamique
+    refPath: 'entityType', 
   }
 }, {
   timestamps: true,

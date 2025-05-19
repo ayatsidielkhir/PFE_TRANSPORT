@@ -79,9 +79,9 @@ const DocumentsPage: React.FC = () => {
     setEditData(doc);
     setSelectedEntityType(doc.entityType);
     setSelectedLinkedTo(doc.linkedTo);
-    setExpirationDate(doc.expirationDate.split('T')[0]); // Format pour input date
+    setExpirationDate(doc.expirationDate.split('T')[0]); 
     setStatut(doc.statut);
-    setFile(null); // On ne modifie pas le fichier à ce stade
+    setFile(null); 
     setDrawerOpen(true);
   };
 
@@ -102,7 +102,7 @@ const DocumentsPage: React.FC = () => {
     }
 
     const formData = new FormData();
-    formData.append('type', 'visa'); // à adapter selon logique de ton projet
+    formData.append('type', 'visa'); 
     formData.append('expirationDate', expirationDate);
     formData.append('entityType', selectedEntityType);
     formData.append('linkedTo', selectedLinkedTo);

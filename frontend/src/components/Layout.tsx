@@ -1,4 +1,3 @@
-// ✅ Ancien Layout.tsx qui accepte des children
 
 import {
   AppBar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon,

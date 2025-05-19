@@ -1,4 +1,3 @@
-// src/controllers/dashboard.controller.ts
 import { Request, Response } from 'express';
 import Chauffeur from '../models/Chauffeur';
 import Vehicule from '../models/Vehicule';

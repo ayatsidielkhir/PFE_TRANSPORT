@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Document from '../models/document.models';
-import Chauffeur from '../models/Chauffeur';  // Assure-toi que le chemin est correct
+import Chauffeur from '../models/Chauffeur'; 
 import '../models/Vehicule';
 import fs from 'fs';
 import path from 'path';
@@ -10,7 +10,7 @@ export const getAllDocuments = async (req: Request, res: Response) => {
     console.log('Tentative de récupération des documents...');
     const documents = await Document.find().populate({
       path: 'linkedTo',
-      model: Chauffeur,  // Indiquer explicitement le modèle que tu veux utiliser pour peupler
+      model: Chauffeur, 
       strictPopulate: false
     });
     console.log('Documents récupérés:', documents);

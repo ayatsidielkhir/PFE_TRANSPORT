@@ -22,8 +22,7 @@ export const processDocument = async (req: Request, res: Response) => {
     const dateStr = dateMatch ? dateMatch[1].replace(/\//g, '-') : null;
     const dateExpiree = dateStr ? dayjs(dateStr).isBefore(dayjs()) : null;
 
-    fs.unlinkSync(imagePath); // Supprimer le fichier temporaire
-
+    fs.unlinkSync(imagePath); 
     return res.json({
       texte: text,
       extrait: {

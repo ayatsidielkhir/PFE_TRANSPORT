@@ -21,10 +21,8 @@ export const createVehicule = async (req: Request, res: Response) => {
       assurance
     } = req.body;
 
-    // Récupérer le fichier s'il existe
     const carteGrise = req.file?.filename || '';
 
-    // Créer un objet de véhicule
     const vehicule = new Vehicule({
       nom,
       matricule,
