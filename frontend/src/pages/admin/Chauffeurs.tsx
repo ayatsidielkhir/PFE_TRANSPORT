@@ -1,204 +1,198 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Typography, Button, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, IconButton, Drawer, TextField, Tooltip
+  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
+  TableHead, TableRow, IconButton, Pagination
 } from '@mui/material';
-import { Add, Edit, Delete } from '@mui/icons-material';
-import axios from '../../utils/axios';
-import Layout from '../../components/Layout';
+import { Delete } from '@mui/icons-material';
+import axios from 'axios';
+import AdminLayout from '../../components/Layout';
 
 interface Chauffeur {
-  _id?: string;
+  _id: string;
   nom: string;
   prenom: string;
   telephone: string;
   cin: string;
   adresse?: string;
   observations?: string;
-  permis: { type: string; date_expiration: string };
-  contrat: { type: string; date_expiration: string };
-  visa: { actif: boolean; date_expiration?: string };
+  photo?: string;
+  scanCIN?: string;
+  certificatBonneConduite?: string;
 }
 
 const ChauffeursPage: React.FC = () => {
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
+  const [filteredChauffeurs, setFilteredChauffeurs] = useState<Chauffeur[]>([]);
+  const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedChauffeur, setSelectedChauffeur] = useState<Chauffeur | null>(null);
-  const [scanPermis, setScanPermis] = useState<File | null>(null);
-  const [scanVisa, setScanVisa] = useState<File | null>(null);
-  const [scanCIN, setScanCIN] = useState<File | null>(null);
-  const [form, setForm] = useState<Chauffeur>({
-    nom: '', prenom: '', telephone: '', cin: '', adresse: '', observations: '',
-    permis: { type: '', date_expiration: '' },
-    contrat: { type: '', date_expiration: '' },
-    visa: { actif: false, date_expiration: '' }
+  const [errorMsg, setErrorMsg] = useState('');
+  const [form, setForm] = useState<Record<string, string | Blob | null>>({
+    nom: '',
+    prenom: '',
+    telephone: '',
+    cin: '',
+    adresse: '',
+    observations: '',
+    photo: null,
+    scanCIN: null,
+    certificatBonneConduite: null
   });
+  const [page, setPage] = useState(1);
+  const perPage = 5;
+
+  const fetchChauffeurs = async () => {
+    const res = await axios.get('http://localhost:5000/api/chauffeurs');
+    setChauffeurs(res.data);
+    setFilteredChauffeurs(res.data);
+  };
 
   useEffect(() => {
     fetchChauffeurs();
   }, []);
 
-  const fetchChauffeurs = async () => {
-    const res = await axios.get('http://localhost:5000/api/chauffeurs');
-    setChauffeurs(res.data);
-  };
+  useEffect(() => {
+    const filtered = chauffeurs.filter(c =>
+      c.nom.toLowerCase().includes(search.toLowerCase()) ||
+      c.prenom.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredChauffeurs(filtered);
+    setPage(1);
+  }, [search, chauffeurs]);
 
-  const handleDelete = async (id?: string) => {
-    if (!id) return;
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce chauffeur ?')) {
-      await axios.delete(`http://localhost:5000/api/chauffeurs/${id}`);
-      fetchChauffeurs();
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, files } = e.target;
+    if (files) {
+      setForm((prev) => ({ ...prev, [name]: files[0] }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const handleSubmit = async () => {
-    const data = new FormData();
-    data.append('nom', form.nom);
-    data.append('prenom', form.prenom);
-    data.append('telephone', form.telephone);
-    data.append('cin', form.cin);
-    data.append('adresse', form.adresse || '');
-    data.append('observations', form.observations || '');
-    data.append('permis_type', form.permis.type);
-    data.append('permis_date_expiration', form.permis.date_expiration);
-    data.append('contrat_type', form.contrat.type);
-    data.append('contrat_date_expiration', form.contrat.date_expiration);
-    data.append('visa_actif', String(form.visa.actif));
-    data.append('visa_date_expiration', form.visa.date_expiration || '');
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (value instanceof Blob || typeof value === 'string') {
+        formData.append(key, value);
+      }
+    });
 
-    if (scanPermis) data.append('scanPermis', scanPermis);
-    if (scanVisa) data.append('scanVisa', scanVisa);
-    if (scanCIN) data.append('scanCIN', scanCIN);
-
-    const res = selectedChauffeur && selectedChauffeur._id
-      ? await axios.put(`http://localhost:5000/api/chauffeurs/${selectedChauffeur._id}`, data, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
-      : await axios.post('http://localhost:5000/api/chauffeurs', data, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+    try {
+      const res = await axios.post('http://localhost:5000/api/chauffeurs', formData);
+      if (res.status === 200 || res.status === 201) {
+        setDrawerOpen(false);
+        setForm({
+          nom: '',
+          prenom: '',
+          telephone: '',
+          cin: '',
+          adresse: '',
+          observations: '',
+          photo: null,
+          scanCIN: null,
+          certificatBonneConduite: null
         });
-
-    if (res.status === 200 || res.status === 201) {
-      fetchChauffeurs();
-      setDrawerOpen(false);
-      resetForm();
+        fetchChauffeurs();
+        setErrorMsg('');
+      }
+    } catch (err: any) {
+      if (err.response?.status === 400) {
+        setErrorMsg(err.response.data.message || 'Erreur de validation');
+      } else {
+        setErrorMsg("Erreur lors de l'ajout du chauffeur");
+      }
     }
   };
 
-  const resetForm = () => {
-    setForm({
-      nom: '', prenom: '', telephone: '', cin: '', adresse: '', observations: '',
-      permis: { type: '', date_expiration: '' },
-      contrat: { type: '', date_expiration: '' },
-      visa: { actif: false, date_expiration: '' }
-    });
-    setScanPermis(null);
-    setScanVisa(null);
-    setScanCIN(null);
-    setSelectedChauffeur(null);
+  const handleDelete = async (id: string) => {
+    await axios.delete(`http://localhost:5000/api/chauffeurs/${id}`);
+    fetchChauffeurs();
   };
 
-  const formatDate = (dateStr: string | undefined): string => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toISOString().split('T')[0];
-  };
-
-  const getDateColor = (dateStr?: string): string => {
-    if (!dateStr) return '';
-    const diff = (new Date(dateStr).getTime() - Date.now()) / (1000 * 3600 * 24);
-    if (diff < 0) return '#d32f2f'; // rouge
-    if (diff < 30) return '#f57c00'; // orange
-    if (diff < 60) return '#fbc02d'; // jaune
-    return '#388e3c'; // vert
-  };
+  const paginatedChauffeurs = filteredChauffeurs.slice((page - 1) * perPage, page * perPage);
 
   return (
-    <Layout>
-      <Box p={4}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5" fontWeight={600}>Chauffeurs</Typography>
+    <AdminLayout>
+      <Box p={3}>
+        <Box display="flex" justifyContent="space-between" mb={2}>
+          <h2>Chauffeurs</h2>
           <Button variant="contained" onClick={() => {
-            setSelectedChauffeur(null);
             setDrawerOpen(true);
-          }}>
-            Nouveau chauffeur
-          </Button>
+            setErrorMsg('');
+          }}>Ajouter</Button>
         </Box>
 
-        <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#e3f2fd' }}>
-                <TableCell><strong>Nom</strong></TableCell>
-                <TableCell><strong>Permis</strong></TableCell>
-                <TableCell><strong>Visa</strong></TableCell>
-                <TableCell><strong>Contrat</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
+        <TextField
+          label="Recherche par nom ou prénom"
+          fullWidth
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Nom</TableCell>
+              <TableCell>Prénom</TableCell>
+              <TableCell>Téléphone</TableCell>
+              <TableCell>CIN</TableCell>
+              <TableCell>Adresse</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {paginatedChauffeurs.map((c) => (
+              <TableRow key={c._id}>
+                <TableCell>{c.nom}</TableCell>
+                <TableCell>{c.prenom}</TableCell>
+                <TableCell>{c.telephone}</TableCell>
+                <TableCell>{c.cin}</TableCell>
+                <TableCell>{c.adresse}</TableCell>
+                <TableCell>
+                  <IconButton onClick={() => handleDelete(c._id)}>
+                    <Delete />
+                  </IconButton>
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {chauffeurs.map(c => (
-                <TableRow key={c._id} hover>
-                  <TableCell>{`${c.nom} ${c.prenom}`}</TableCell>
-                  <TableCell>{`${c.permis.type}:${c.cin}`}</TableCell>
-                  <TableCell sx={{ color: getDateColor(c.visa.date_expiration), fontWeight: 'bold' }}>
-                    {formatDate(c.visa.date_expiration)}
-                  </TableCell>
-                  <TableCell sx={{ color: getDateColor(c.contrat.date_expiration), fontWeight: 'bold' }}>
-                    {formatDate(c.contrat.date_expiration)}
-                  </TableCell>
-                  <TableCell>
-                    <Tooltip title="Modifier">
-                      <IconButton onClick={() => {
-                        setSelectedChauffeur(c);
-                        setForm(c);
-                        setDrawerOpen(true);
-                      }}>
-                        <Edit fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Supprimer">
-                      <IconButton onClick={() => handleDelete(c._id)}>
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            ))}
+          </TableBody>
+        </Table>
+
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination
+            count={Math.ceil(filteredChauffeurs.length / perPage)}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+          />
+        </Box>
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400}>
-            <Typography variant="h6" mb={2}>
-              {selectedChauffeur ? 'Modifier Chauffeur' : 'Ajouter Chauffeur'}
-            </Typography>
-            <TextField label="Nom" value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} fullWidth sx={{ mb: 1 }} />
-            <TextField label="Prénom" value={form.prenom} onChange={e => setForm({ ...form, prenom: e.target.value })} fullWidth sx={{ mb: 1 }} />
-            <TextField label="Téléphone" value={form.telephone} onChange={e => setForm({ ...form, telephone: e.target.value })} fullWidth sx={{ mb: 1 }} />
-            <TextField label="CIN" value={form.cin} onChange={e => setForm({ ...form, cin: e.target.value })} fullWidth sx={{ mb: 1 }} />
-            <TextField label="Type Permis" value={form.permis.type} onChange={e => setForm({ ...form, permis: { ...form.permis, type: e.target.value } })} fullWidth sx={{ mb: 1 }} />
-            <TextField type="date" label="Expiration Permis" value={form.permis.date_expiration} onChange={e => setForm({ ...form, permis: { ...form.permis, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
-            <TextField type="date" label="Expiration Contrat" value={form.contrat.date_expiration} onChange={e => setForm({ ...form, contrat: { ...form.contrat, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
-            <TextField type="date" label="Expiration Visa" value={form.visa.date_expiration} onChange={e => setForm({ ...form, visa: { ...form.visa, date_expiration: e.target.value } })} fullWidth sx={{ mb: 1 }} />
+          <Box p={3} width={350}>
+            <h3>Ajouter Chauffeur</h3>
+            <TextField label="Nom" name="nom" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField label="Prénom" name="prenom" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField label="Téléphone" name="telephone" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField label="CIN" name="cin" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField label="Adresse" name="adresse" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField label="Observations" name="observations" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField type="file" name="photo" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField type="file" name="scanCIN" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField type="file" name="certificatBonneConduite" fullWidth margin="normal" onChange={handleInputChange} />
 
-            {/* Upload fichiers, non affichés dans le tableau */}
-            <Box mt={2}>
-              <Typography variant="subtitle2">Fichiers optionnels :</Typography>
-              <input type="file" onChange={(e) => setScanPermis(e.target.files?.[0] || null)} />
-              <input type="file" onChange={(e) => setScanVisa(e.target.files?.[0] || null)} />
-              <input type="file" onChange={(e) => setScanCIN(e.target.files?.[0] || null)} />
-            </Box>
+            {errorMsg && (
+              <Box color="error.main" fontSize="0.9rem" mt={1}>
+                {errorMsg}
+              </Box>
+            )}
 
-            <Button variant="contained" fullWidth onClick={handleSubmit} sx={{ mt: 2 }}>
-              {selectedChauffeur ? 'Modifier' : 'Ajouter'}
+            <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={handleSubmit}>
+              Enregistrer
             </Button>
           </Box>
         </Drawer>
       </Box>
-    </Layout>
+    </AdminLayout>
   );
 };
 

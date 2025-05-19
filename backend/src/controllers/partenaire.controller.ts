@@ -31,3 +31,18 @@ export const deletePartenaire = async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Erreur lors de la suppression' });
   }
 };
+
+export const updatePartenaire = async (req: Request, res: Response) => {
+  try {
+    const { nom, ice, adresse } = req.body;
+    const logo = req.file ? req.file.filename : undefined;
+
+    const updateData: any = { nom, ice, adresse };
+    if (logo) updateData.logo = logo;
+
+    const partenaire = await Partenaire.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    res.json(partenaire);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de la mise à jour du partenaire' });
+  }
+};
