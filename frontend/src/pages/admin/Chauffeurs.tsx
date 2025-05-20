@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, IconButton, Pagination
+  TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip
 } from '@mui/material';
-import { Delete } from '@mui/icons-material';
+import { Delete, Edit } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
@@ -14,7 +14,6 @@ interface Chauffeur {
   telephone: string;
   cin: string;
   adresse?: string;
-  observations?: string;
   photo?: string;
   scanCIN?: string;
   certificatBonneConduite?: string;
@@ -26,13 +25,13 @@ const ChauffeursPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [selectedChauffeur, setSelectedChauffeur] = useState<Chauffeur | null>(null);
   const [form, setForm] = useState<Record<string, string | Blob | null>>({
     nom: '',
     prenom: '',
     telephone: '',
     cin: '',
     adresse: '',
-    observations: '',
     photo: null,
     scanCIN: null,
     certificatBonneConduite: null
@@ -77,20 +76,13 @@ const ChauffeursPage: React.FC = () => {
     });
 
     try {
-      const res = await axios.post('http://localhost:5000/api/chauffeurs', formData);
+      const res = selectedChauffeur
+        ? await axios.put(`http://localhost:5000/api/chauffeurs/${selectedChauffeur._id}`, formData)
+        : await axios.post('http://localhost:5000/api/chauffeurs', formData);
+
       if (res.status === 200 || res.status === 201) {
         setDrawerOpen(false);
-        setForm({
-          nom: '',
-          prenom: '',
-          telephone: '',
-          cin: '',
-          adresse: '',
-          observations: '',
-          photo: null,
-          scanCIN: null,
-          certificatBonneConduite: null
-        });
+        resetForm();
         fetchChauffeurs();
         setErrorMsg('');
       }
@@ -98,14 +90,44 @@ const ChauffeursPage: React.FC = () => {
       if (err.response?.status === 400) {
         setErrorMsg(err.response.data.message || 'Erreur de validation');
       } else {
-        setErrorMsg("Erreur lors de l'ajout du chauffeur");
+        setErrorMsg("Erreur lors de l'enregistrement du chauffeur");
       }
     }
+  };
+
+  const handleEdit = (chauffeur: Chauffeur) => {
+    setSelectedChauffeur(chauffeur);
+    setForm({
+      nom: chauffeur.nom,
+      prenom: chauffeur.prenom,
+      telephone: chauffeur.telephone,
+      cin: chauffeur.cin,
+      adresse: chauffeur.adresse || '',
+      photo: null,
+      scanCIN: null,
+      certificatBonneConduite: null
+    });
+    setDrawerOpen(true);
+    setErrorMsg('');
   };
 
   const handleDelete = async (id: string) => {
     await axios.delete(`http://localhost:5000/api/chauffeurs/${id}`);
     fetchChauffeurs();
+  };
+
+  const resetForm = () => {
+    setForm({
+      nom: '',
+      prenom: '',
+      telephone: '',
+      cin: '',
+      adresse: '',
+      photo: null,
+      scanCIN: null,
+      certificatBonneConduite: null
+    });
+    setSelectedChauffeur(null);
   };
 
   const paginatedChauffeurs = filteredChauffeurs.slice((page - 1) * perPage, page * perPage);
@@ -117,7 +139,7 @@ const ChauffeursPage: React.FC = () => {
           <h2>Chauffeurs</h2>
           <Button variant="contained" onClick={() => {
             setDrawerOpen(true);
-            setErrorMsg('');
+            resetForm();
           }}>Ajouter</Button>
         </Box>
 
@@ -132,6 +154,7 @@ const ChauffeursPage: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>Photo</TableCell>
               <TableCell>Nom</TableCell>
               <TableCell>Prénom</TableCell>
               <TableCell>Téléphone</TableCell>
@@ -143,15 +166,29 @@ const ChauffeursPage: React.FC = () => {
           <TableBody>
             {paginatedChauffeurs.map((c) => (
               <TableRow key={c._id}>
+                <TableCell>
+                  {c.photo ? (
+                    <Avatar src={`http://localhost:5000/uploads/chauffeurs/${c.photo}`} alt={c.nom} />
+                  ) : (
+                    <Avatar>{c.nom[0]}</Avatar>
+                  )}
+                </TableCell>
                 <TableCell>{c.nom}</TableCell>
                 <TableCell>{c.prenom}</TableCell>
                 <TableCell>{c.telephone}</TableCell>
                 <TableCell>{c.cin}</TableCell>
                 <TableCell>{c.adresse}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleDelete(c._id)}>
-                    <Delete />
-                  </IconButton>
+                  <Tooltip title="Modifier">
+                    <IconButton onClick={() => handleEdit(c)}>
+                      <Edit />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Supprimer">
+                    <IconButton onClick={() => handleDelete(c._id)}>
+                      <Delete />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
@@ -169,13 +206,12 @@ const ChauffeursPage: React.FC = () => {
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={350}>
-            <h3>Ajouter Chauffeur</h3>
-            <TextField label="Nom" name="nom" fullWidth margin="normal" onChange={handleInputChange} />
-            <TextField label="Prénom" name="prenom" fullWidth margin="normal" onChange={handleInputChange} />
-            <TextField label="Téléphone" name="telephone" fullWidth margin="normal" onChange={handleInputChange} />
-            <TextField label="CIN" name="cin" fullWidth margin="normal" onChange={handleInputChange} />
-            <TextField label="Adresse" name="adresse" fullWidth margin="normal" onChange={handleInputChange} />
-            <TextField label="Observations" name="observations" fullWidth margin="normal" onChange={handleInputChange} />
+            <h3>{selectedChauffeur ? 'Modifier Chauffeur' : 'Ajouter Chauffeur'}</h3>
+            <TextField label="Nom" name="nom" fullWidth margin="normal" value={form.nom as string} onChange={handleInputChange} />
+            <TextField label="Prénom" name="prenom" fullWidth margin="normal" value={form.prenom as string} onChange={handleInputChange} />
+            <TextField label="Téléphone" name="telephone" fullWidth margin="normal" value={form.telephone as string} onChange={handleInputChange} />
+            <TextField label="CIN" name="cin" fullWidth margin="normal" value={form.cin as string} onChange={handleInputChange} />
+            <TextField label="Adresse" name="adresse" fullWidth margin="normal" value={form.adresse as string} onChange={handleInputChange} />
             <TextField type="file" name="photo" fullWidth margin="normal" onChange={handleInputChange} />
             <TextField type="file" name="scanCIN" fullWidth margin="normal" onChange={handleInputChange} />
             <TextField type="file" name="certificatBonneConduite" fullWidth margin="normal" onChange={handleInputChange} />
@@ -187,7 +223,7 @@ const ChauffeursPage: React.FC = () => {
             )}
 
             <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={handleSubmit}>
-              Enregistrer
+              {selectedChauffeur ? 'Modifier' : 'Enregistrer'}
             </Button>
           </Box>
         </Drawer>
