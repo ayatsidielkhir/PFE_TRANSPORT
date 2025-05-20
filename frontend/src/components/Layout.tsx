@@ -20,7 +20,8 @@ const sidebarItems = {
     { label: 'Documents', icon: <Description />, path: '/admin/documents' },
     { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
     { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
-    { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' }
+    { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
+    { label: 'Dossier Juridique', icon: <Description />, path: '/admin/dossier-juridique' } // ✅ AJOUT ICI
   ],
   responsable: [
     { label: 'Dashboard', icon: <Dashboard />, path: '/responsable/dashboard' },
