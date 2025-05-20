@@ -37,6 +37,9 @@ mongoose.connect(MONGO_URI)
 
     app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
+
+
+
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch(err => console.error('❌ MongoDB connection error:', err));

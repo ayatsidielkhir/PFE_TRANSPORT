@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import Chauffeur from '../models/Chauffeur';
 
-export const getChauffeurs = async (_: Request, res: Response) => {
+// ✅ Récupérer la liste des chauffeurs
+export const getChauffeurs = async (_: Request, res: Response): Promise<void> => {
   try {
     const list = await Chauffeur.find();
     res.json(list);
@@ -9,7 +10,9 @@ export const getChauffeurs = async (_: Request, res: Response) => {
     res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };
-export const deleteChauffeur = async (req: Request, res: Response) => {
+
+// ✅ Supprimer un chauffeur
+export const deleteChauffeur = async (req: Request, res: Response): Promise<void> => {
   try {
     await Chauffeur.findByIdAndDelete(req.params.id);
     res.json({ message: 'Chauffeur supprimé avec succès.' });
@@ -18,8 +21,42 @@ export const deleteChauffeur = async (req: Request, res: Response) => {
   }
 };
 
+export const updateChauffeur = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const updates: any = req.body;
 
-export const addChauffeur = async (req: Request, res: Response) => {
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    if (files) {
+      if (files['scanPermis']) updates.scanPermis = files['scanPermis'][0].filename;
+      if (files['scanVisa']) updates.scanVisa = files['scanVisa'][0].filename;
+      if (files['scanCIN']) updates.scanCIN = files['scanCIN'][0].filename;
+      if (files['photo']) updates.photo = files['photo'][0].filename;
+      if (files['certificatBonneConduite']) updates.certificatBonneConduite = files['certificatBonneConduite'][0].filename;
+    }
+
+    // Si c'est une string 'true'/'false', transforme en booléen
+    if ('visa_actif' in updates) {
+      updates['visa.actif'] = updates.visa_actif === 'true' || updates.visa_actif === true;
+      delete updates.visa_actif;
+    }
+
+    // Formater les dates pour les sous-documents
+    if (updates.permis_date_expiration) updates['permis.date_expiration'] = updates.permis_date_expiration;
+    if (updates.contrat_type) updates['contrat.type'] = updates.contrat_type;
+    if (updates.contrat_date_expiration) updates['contrat.date_expiration'] = updates.contrat_date_expiration;
+    if (updates.visa_date_expiration) updates['visa.date_expiration'] = updates.visa_date_expiration;
+
+    await Chauffeur.findByIdAndUpdate(req.params.id, updates, { new: true });
+
+    res.json({ message: 'Chauffeur modifié avec succès.' });
+  } catch (err) {
+    console.error('❌ Erreur modification chauffeur :', err);
+    res.status(500).json({ message: 'Erreur lors de la modification.' });
+  }
+};
+
+// ✅ Ajouter un chauffeur
+export const addChauffeur = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       nom,
@@ -35,11 +72,14 @@ export const addChauffeur = async (req: Request, res: Response) => {
       visa_date_expiration
     } = req.body;
 
-    const scanPermis = req.files && 'scanPermis' in req.files ? req.files['scanPermis'][0].filename : '';
-    const scanVisa = req.files && 'scanVisa' in req.files ? req.files['scanVisa'][0].filename : '';
-    const scanCIN = req.files && 'scanCIN' in req.files ? req.files['scanCIN'][0].filename : '';
-    const photo = req.files && 'photo' in req.files ? req.files['photo'][0].filename : '';
-    const certificatBonneConduite = req.files && 'certificatBonneConduite' in req.files ? req.files['certificatBonneConduite'][0].filename : '';
+    const scanPermis = req.files && 'scanPermis' in req.files ? (req.files['scanPermis'][0] as Express.Multer.File).filename : '';
+    const scanVisa = req.files && 'scanVisa' in req.files ? (req.files['scanVisa'][0] as Express.Multer.File).filename : '';
+    const scanCIN = req.files && 'scanCIN' in req.files ? (req.files['scanCIN'][0] as Express.Multer.File).filename : '';
+    const photo = req.files && 'photo' in req.files ? (req.files['photo'][0] as Express.Multer.File).filename : '';
+    const certificatBonneConduite = req.files && 'certificatBonneConduite' in req.files
+      ? (req.files['certificatBonneConduite'][0] as Express.Multer.File).filename
+      : '';
+
     const visaActifBool = visa_actif === 'true' || visa_actif === true;
 
     const chauffeur = new Chauffeur({
@@ -57,7 +97,7 @@ export const addChauffeur = async (req: Request, res: Response) => {
         date_expiration: contrat_date_expiration
       },
       visa: {
-        actif: visaActifBool,      
+        actif: visaActifBool,
         date_expiration: visa_date_expiration
       },
       scanPermis,
@@ -71,14 +111,14 @@ export const addChauffeur = async (req: Request, res: Response) => {
     res.status(201).json(chauffeur);
   } catch (err: any) {
     console.error('❌ Erreur lors de la création du chauffeur :', err);
-  
-    if (err instanceof Error && 'code' in err && (err as any).code === 11000) {
-      return res.status(400).json({ message: "Un chauffeur avec ce CIN existe déjà." });
+
+    if (err.code === 11000) {
+      res.status(400).json({ message: "Un chauffeur avec ce CIN existe déjà." });
+    } else {
+      res.status(500).json({ message: 'Erreur serveur', error: err.message });
     }
-  
-    res.status(500).json({ message: 'Erreur serveur', error: err });
   }
-  
-  
-  
 };
+
+
+

@@ -1,3 +1,6 @@
+// ✅ Chauffeurs.tsx
+// (frontend React page avec ajout/modif des documents, photo et édition complète)
+
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
@@ -6,6 +9,9 @@ import {
 import { Delete, Edit } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
+import { Dialog } from '@mui/material';
+import { Download } from '@mui/icons-material';
+
 
 interface Chauffeur {
   _id: string;
@@ -16,6 +22,8 @@ interface Chauffeur {
   adresse?: string;
   photo?: string;
   scanCIN?: string;
+  scanPermis?: string;
+  scanVisa?: string;
   certificatBonneConduite?: string;
 }
 
@@ -27,15 +35,13 @@ const ChauffeursPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedChauffeur, setSelectedChauffeur] = useState<Chauffeur | null>(null);
   const [form, setForm] = useState<Record<string, string | Blob | null>>({
-    nom: '',
-    prenom: '',
-    telephone: '',
-    cin: '',
-    adresse: '',
-    photo: null,
-    scanCIN: null,
-    certificatBonneConduite: null
+    nom: '', prenom: '', telephone: '', cin: '', adresse: '',
+    photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
   });
+
+const [openDialog, setOpenDialog] = useState(false);
+const [dialogImageSrc, setDialogImageSrc] = useState('');
+
   const [page, setPage] = useState(1);
   const perPage = 5;
 
@@ -45,9 +51,7 @@ const ChauffeursPage: React.FC = () => {
     setFilteredChauffeurs(res.data);
   };
 
-  useEffect(() => {
-    fetchChauffeurs();
-  }, []);
+  useEffect(() => { fetchChauffeurs(); }, []);
 
   useEffect(() => {
     const filtered = chauffeurs.filter(c =>
@@ -87,11 +91,7 @@ const ChauffeursPage: React.FC = () => {
         setErrorMsg('');
       }
     } catch (err: any) {
-      if (err.response?.status === 400) {
-        setErrorMsg(err.response.data.message || 'Erreur de validation');
-      } else {
-        setErrorMsg("Erreur lors de l'enregistrement du chauffeur");
-      }
+      setErrorMsg(err.response?.data?.message || 'Erreur lors de l\'enregistrement du chauffeur');
     }
   };
 
@@ -105,6 +105,8 @@ const ChauffeursPage: React.FC = () => {
       adresse: chauffeur.adresse || '',
       photo: null,
       scanCIN: null,
+      scanPermis: null,
+      scanVisa: null,
       certificatBonneConduite: null
     });
     setDrawerOpen(true);
@@ -118,29 +120,21 @@ const ChauffeursPage: React.FC = () => {
 
   const resetForm = () => {
     setForm({
-      nom: '',
-      prenom: '',
-      telephone: '',
-      cin: '',
-      adresse: '',
-      photo: null,
-      scanCIN: null,
-      certificatBonneConduite: null
+      nom: '', prenom: '', telephone: '', cin: '', adresse: '',
+      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
     });
     setSelectedChauffeur(null);
   };
 
   const paginatedChauffeurs = filteredChauffeurs.slice((page - 1) * perPage, page * perPage);
 
+
   return (
     <AdminLayout>
       <Box p={3}>
         <Box display="flex" justifyContent="space-between" mb={2}>
           <h2>Chauffeurs</h2>
-          <Button variant="contained" onClick={() => {
-            setDrawerOpen(true);
-            resetForm();
-          }}>Ajouter</Button>
+          <Button variant="contained" onClick={() => { setDrawerOpen(true); resetForm(); }}>Ajouter</Button>
         </Box>
 
         <TextField
@@ -160,6 +154,10 @@ const ChauffeursPage: React.FC = () => {
               <TableCell>Téléphone</TableCell>
               <TableCell>CIN</TableCell>
               <TableCell>Adresse</TableCell>
+              <TableCell>CIScan</TableCell>
+              <TableCell>PScan</TableCell>
+              <TableCell>VScan</TableCell>
+              <TableCell>CScan</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -167,17 +165,74 @@ const ChauffeursPage: React.FC = () => {
             {paginatedChauffeurs.map((c) => (
               <TableRow key={c._id}>
                 <TableCell>
-                  {c.photo ? (
-                    <Avatar src={`http://localhost:5000/uploads/chauffeurs/${c.photo}`} alt={c.nom} />
-                  ) : (
-                    <Avatar>{c.nom[0]}</Avatar>
-                  )}
+
+                    {c.photo ? (
+                      <Avatar
+                        src={`http://localhost:5000/uploads/chauffeurs/${c.scanPermis}`}
+                        sx={{ width: 40, height: 40, cursor: 'pointer' }}
+                        onClick={() => {
+                          setDialogImageSrc(`http://localhost:5000/uploads/chauffeurs/${c.scanPermis}`);
+                          setOpenDialog(true);
+                        }}
+                      />
+                    ) : 'N/A'}
+                
                 </TableCell>
                 <TableCell>{c.nom}</TableCell>
                 <TableCell>{c.prenom}</TableCell>
                 <TableCell>{c.telephone}</TableCell>
                 <TableCell>{c.cin}</TableCell>
                 <TableCell>{c.adresse}</TableCell>
+                  <TableCell>
+                    {c.scanCIN ? (
+                      <Avatar
+                        src={`http://localhost:5000/uploads/chauffeurs/${c.scanPermis}`}
+                        sx={{ width: 40, height: 40, cursor: 'pointer' }}
+                        onClick={() => {
+                          setDialogImageSrc(`http://localhost:5000/uploads/chauffeurs/${c.scanPermis}`);
+                          setOpenDialog(true);
+                        }}
+                      />
+                    ) : 'N/A'}
+                  </TableCell>
+                <TableCell>
+                    {c.scanPermis ? (
+                      <Avatar
+                        src={`http://localhost:5000/uploads/chauffeurs/${c.scanPermis}`}
+                        sx={{ width: 40, height: 40, cursor: 'pointer' }}
+                        onClick={() => {
+                          setDialogImageSrc(`http://localhost:5000/uploads/chauffeurs/${c.scanPermis}`);
+                          setOpenDialog(true);
+                        }}
+                      />
+                    ) : 'N/A'}
+                  </TableCell>
+             <TableCell>
+              {c.scanVisa ? (
+                <Avatar
+                  src={`http://localhost:5000/uploads/chauffeurs/${c.scanVisa}`}
+                  sx={{ width: 40, height: 40, cursor: 'pointer' }}
+                  onClick={() => {
+                    setDialogImageSrc(`http://localhost:5000/uploads/chauffeurs/${c.scanVisa}`);
+                    setOpenDialog(true);
+                  }}
+                />
+              ) : 'N/A'}
+            </TableCell>
+
+             <TableCell>
+                {c.certificatBonneConduite ? (
+                  <Avatar
+                    src={`http://localhost:5000/uploads/chauffeurs/${c.certificatBonneConduite}`}
+                    sx={{ width: 40, height: 40, cursor: 'pointer' }}
+                    onClick={() => {
+                      setDialogImageSrc(`http://localhost:5000/uploads/chauffeurs/${c.certificatBonneConduite}`);
+                      setOpenDialog(true);
+                    }}
+                  />
+                ) : 'N/A'}
+              </TableCell>
+
                 <TableCell>
                   <Tooltip title="Modifier">
                     <IconButton onClick={() => handleEdit(c)}>
@@ -214,6 +269,8 @@ const ChauffeursPage: React.FC = () => {
             <TextField label="Adresse" name="adresse" fullWidth margin="normal" value={form.adresse as string} onChange={handleInputChange} />
             <TextField type="file" name="photo" fullWidth margin="normal" onChange={handleInputChange} />
             <TextField type="file" name="scanCIN" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField type="file" name="scanPermis" fullWidth margin="normal" onChange={handleInputChange} />
+            <TextField type="file" name="scanVisa" fullWidth margin="normal" onChange={handleInputChange} />
             <TextField type="file" name="certificatBonneConduite" fullWidth margin="normal" onChange={handleInputChange} />
 
             {errorMsg && (
@@ -228,7 +285,42 @@ const ChauffeursPage: React.FC = () => {
           </Box>
         </Drawer>
       </Box>
+
+
+    <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+  <Box position="relative" p={2}>
+    {/* Icône de téléchargement en haut à droite */}
+    <IconButton
+     onClick={() => {
+        const filename = dialogImageSrc.split('/').pop();
+        const downloadUrl = `http://localhost:5000/api/chauffeurs/download/${filename}`;
+
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', filename || 'document');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }}
+
+      sx={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#fff' }}
+    >
+      <Download />
+    </IconButton>
+
+    {/* Image affichée */}
+    <Box display="flex" justifyContent="center">
+      <img
+        src={dialogImageSrc}
+        alt="Aperçu"
+        style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8 }}
+      />
+    </Box>
+  </Box>
+</Dialog>
+
     </AdminLayout>
+  
   );
 };
 
