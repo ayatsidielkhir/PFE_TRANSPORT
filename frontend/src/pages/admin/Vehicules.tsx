@@ -55,12 +55,12 @@ const VehiculesPage: React.FC = () => {
   }, []);
 
   const fetchVehicules = async () => {
-    const res = await axios.get('/vehicules');
+    const res = await axios.get('/api/vehicules');
     setVehicules(res.data);
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('/chauffeurs');
+    const res = await axios.get('/api/chauffeurs');
     setChauffeurs(res.data);
   };
 

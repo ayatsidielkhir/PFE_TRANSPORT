@@ -11,6 +11,7 @@ import trajetRoutes from './routes/trajet.routes';
 import dashboardRoutes from './routes/Dashboard..routes';  
 import partenaireRoutes from './routes/partenaire.routes';
 import dossierJuridiqueRoutes from './routes/dossierjuridique.routes';
+import platformRoutes from './routes/plateformes.routes';
 
 
 dotenv.config();
@@ -35,8 +36,8 @@ mongoose.connect(MONGO_URI)
     app.use("/api/ocr", ocrRoutes);
     app.use('/api/partenaires', partenaireRoutes);
     app.use('/api/dossier-juridique', dossierJuridiqueRoutes);
+    app.use('/api/plateformes', platformRoutes);
 
-    // 👇 Cette ligne est cruciale pour servir les fichiers depuis /uploads
     app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 
