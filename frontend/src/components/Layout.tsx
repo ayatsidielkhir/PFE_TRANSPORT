@@ -19,7 +19,8 @@ const sidebarItems = {
     { label: 'Véhicules', icon: <LocalShipping />, path: '/admin/vehicules' },
     { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
     { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
-    { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' }
+    { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
+    { label: 'Dossier Juridique', icon: <Description />, path: '/admin/dossier-juridique' } // ✅ AJOUT ICI
   ],
   responsable: [
     { label: 'Dashboard', icon: <Dashboard />, path: '/responsable/dashboard' },
