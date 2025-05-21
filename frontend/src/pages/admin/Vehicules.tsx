@@ -91,8 +91,21 @@ const VehiculesPage: React.FC = () => {
     setAssuranceFile(null);
     setIsEditing(true);
     setDrawerOpen(true);
+
+    if (isEditing) {
+  const confirmUpdate = window.confirm("Voulez-vous vraiment modifier ce véhicule ?");
+  if (!confirmUpdate) return;
+}
+
   };
+
+
 const handleSave = async () => {
+  if (!form.nom || !form.matricule || !form.type || !form.kilometrage || !form.controle_technique) {
+    alert("Merci de remplir tous les champs obligatoires.");
+    return;
+  }
+
   const formData = new FormData();
   Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
   if (carteGriseFile) formData.append('carteGrise', carteGriseFile);
@@ -113,16 +126,24 @@ const handleSave = async () => {
     }
   } catch (err) {
     console.error('❌ Erreur lors de l\'enregistrement :', err);
+    alert("Erreur lors de l'enregistrement du véhicule.");
   }
 };
+
 
 const handleDelete = async (id?: string) => {
   if (!id) return;
   if (window.confirm('Supprimer ce véhicule ?')) {
-    await axios.delete(`/api/vehicules/${id}`); // ✅ corrigé
-    fetchVehicules();
+    try {
+      await axios.delete(`/api/vehicules/${id}`);
+      fetchVehicules();
+      alert('Véhicule supprimé avec succès.');
+    } catch (err) {
+      alert("Erreur lors de la suppression.");
+    }
   }
 };
+
 
   const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';

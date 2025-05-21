@@ -92,29 +92,36 @@ const ChauffeursPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value instanceof Blob || typeof value === 'string') {
-        formData.append(key, value);
-      }
-    });
+const handleSubmit = async () => {
+  if (!form.nom || !form.prenom || !form.telephone || !form.cin) {
+    setErrorMsg('Tous les champs obligatoires doivent être remplis (nom, prénom, téléphone, CIN).');
+    return;
+  }
 
-    try {
-      const res = selectedChauffeur
-        ? await axios.put(`http://localhost:5000/api/chauffeurs/${selectedChauffeur._id}`, formData)
-        : await axios.post('http://localhost:5000/api/chauffeurs', formData);
-
-      if (res.status === 200 || res.status === 201) {
-        setDrawerOpen(false);
-        resetForm();
-        fetchChauffeurs();
-        setErrorMsg('');
-      }
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Erreur lors de l'enregistrement du chauffeur");
+  const formData = new FormData();
+  Object.entries(form).forEach(([key, value]) => {
+    if (value instanceof Blob || typeof value === 'string') {
+      formData.append(key, value);
     }
-  };
+  });
+
+  try {
+    const res = selectedChauffeur
+      ? await axios.put(`http://localhost:5000/api/chauffeurs/${selectedChauffeur._id}`, formData)
+      : await axios.post('http://localhost:5000/api/chauffeurs', formData);
+
+    if (res.status === 200 || res.status === 201) {
+      alert(selectedChauffeur ? 'Chauffeur modifié avec succès !' : 'Chauffeur ajouté avec succès !');
+      setDrawerOpen(false);
+      resetForm();
+      fetchChauffeurs();
+      setErrorMsg('');
+    }
+  } catch (err: any) {
+    setErrorMsg(err.response?.data?.message || "Erreur lors de l'enregistrement du chauffeur");
+  }
+};
+
 
   const handleEdit = (chauffeur: Chauffeur) => {
     setSelectedChauffeur(chauffeur);
