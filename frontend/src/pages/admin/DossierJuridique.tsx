@@ -119,20 +119,55 @@ const DossierJuridique: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400}>
-            <Typography variant="h6" mb={2}>Uploader les documents juridiques</Typography>
-            <Box display="flex" flexDirection="column" gap={2}>
-              {['modelJ', 'statut', 'rc', 'identifiantFiscale', 'cinGerant', 'doc1007'].map((name) => (
-                <Box key={name}>
-                  <Typography>{name}</Typography>
-                  <input type="file" onChange={e => handleFileChange(name, e.target.files?.[0] || null)} />
-                </Box>
-              ))}
-              <Button variant="contained" onClick={handleUpload}>Enregistrer</Button>
-            </Box>
-          </Box>
-        </Drawer>
+  <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Box p={3} width={400}>
+    <Typography variant="h6" fontWeight={600} mb={3}>
+      Documents à importer
+    </Typography>
+
+    <Box display="flex" flexDirection="column" gap={3}>
+      {[
+        { label: 'Model J', name: 'modelJ' },
+        { label: 'Statut', name: 'statut' },
+        { label: 'RC', name: 'rc' },
+        { label: 'Identifiant Fiscale', name: 'identifiantFiscale' },
+        { label: 'CIN Gérant', name: 'cinGerant' },
+        { label: '1007', name: 'doc1007' }
+      ].map(({ label, name }) => (
+        <Box key={name}>
+          <Typography fontWeight={500} mb={1}>{label}</Typography>
+          <input
+            type="file"
+            onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
+            style={{
+              border: '1px solid #ccc',
+              padding: '8px',
+              borderRadius: '6px',
+              width: '100%',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+              appearance: 'none',
+              backgroundColor: 'white'
+            }}
+          />
+        </Box>
+      ))}
+
+      <Button
+        variant="contained"
+        fullWidth
+        sx={{ mt: 2, backgroundColor: '#1976d2' }}
+        onClick={handleUpload}
+        disabled={Object.values(files).every(f => f === null)}
+      >
+        ENREGISTRER
+      </Button>
+    </Box>
+  </Box>
+</Drawer>
+
+
+
 
         <Snackbar
           open={snackbarOpen}
