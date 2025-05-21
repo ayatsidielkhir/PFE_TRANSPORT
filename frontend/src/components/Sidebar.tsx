@@ -18,7 +18,6 @@
       { label: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
       { label: 'Chauffeurs', icon: <People />, path: '/admin/chauffeurs' },
       { label: 'Véhicules', icon: <LocalShipping />, path: '/admin/vehicules' },
-      { label: 'Documents', icon: <Description />, path: '/admin/documents' },
       { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
       { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
       { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },

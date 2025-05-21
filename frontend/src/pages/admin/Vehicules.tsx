@@ -15,8 +15,8 @@ interface Vehicule {
   type: string;
   kilometrage: number;
   controle_technique: string;
-  assuranceFile?: string;
-  carteGriseFile?: string;
+  assurance: string;
+  carteGrise: string;
   chauffeur?: string;
 }
 
@@ -33,9 +33,16 @@ const VehiculesPage: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Vehicule>({
-    nom: '', matricule: '', type: '', kilometrage: 0,
-    controle_technique: '', chauffeur: ''
-  });
+  nom: '',
+  matricule: '',
+  type: '',
+  kilometrage: 0,
+  controle_technique: '',
+  chauffeur: '',
+  assurance: '',        // ✅ ajouté
+  carteGrise: ''        // ✅ ajouté
+});
+
   const [assuranceFile, setAssuranceFile] = useState<File | null>(null);
   const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null);
   const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
@@ -60,14 +67,23 @@ const VehiculesPage: React.FC = () => {
   const handleChange = (field: keyof Vehicule, value: any) => {
     setForm({ ...form, [field]: value });
   };
+    const handleAdd = () => {
+      setForm({
+        nom: '',
+        matricule: '',
+        type: '',
+        kilometrage: 0,
+        controle_technique: '',
+        chauffeur: '',
+        assurance: '',      // ✅ ajouté
+        carteGrise: ''      // ✅ ajouté
+      });
+      setCarteGriseFile(null);
+      setAssuranceFile(null);
+      setIsEditing(false);
+      setDrawerOpen(true);
+    };
 
-  const handleAdd = () => {
-    setForm({ nom: '', matricule: '', type: '', kilometrage: 0, controle_technique: '', chauffeur: '' });
-    setCarteGriseFile(null);
-    setAssuranceFile(null);
-    setIsEditing(false);
-    setDrawerOpen(true);
-  };
 
   const handleEdit = (vehicule: Vehicule) => {
     setForm({ ...vehicule });
@@ -76,22 +92,36 @@ const VehiculesPage: React.FC = () => {
     setIsEditing(true);
     setDrawerOpen(true);
   };
+const handleSave = async () => {
+  const formData = new FormData();
 
-  const handleSave = async () => {
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
-    if (carteGriseFile) formData.append('carteGriseFile', carteGriseFile);
-    if (assuranceFile) formData.append('assuranceFile', assuranceFile);
+  // Ajouter les champs texte
+  Object.entries(form).forEach(([key, value]) => {
+    formData.append(key, String(value));
+  });
 
+  // Ajouter les fichiers avec les bons noms attendus par le backend
+  if (carteGriseFile) formData.append('carteGrise', carteGriseFile);
+  if (assuranceFile) formData.append('assurance', assuranceFile);
+
+  try {
     const res = isEditing && form._id
-      ? await axios.put(`/vehicules/${form._id}`, formData)
-      : await axios.post('/vehicules', formData);
+      ? await axios.put(`/vehicules/${form._id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+      : await axios.post('/vehicules', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
 
     if ([200, 201].includes(res.status)) {
       fetchVehicules();
       setDrawerOpen(false);
     }
-  };
+  } catch (err) {
+    console.error('❌ Erreur lors de l\'enregistrement :', err);
+  }
+};
+
 
   const handleDelete = async (id?: string) => {
     if (!id) return;
@@ -103,7 +133,7 @@ const VehiculesPage: React.FC = () => {
 
   const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';
-    const url = `http://localhost:5000/uploads/vehicules/${file}`;
+    const url = `http://localhost:5000/uploads/chauffeurs/${file}`;
     const isPdf = /\.pdf$/i.test(file);
     return (
       <Avatar
@@ -124,6 +154,8 @@ const VehiculesPage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3}>
+                  <h2>Liste Des Véhicules </h2>
+
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <TextField
             placeholder="Rechercher"
@@ -155,15 +187,15 @@ const VehiculesPage: React.FC = () => {
             </TableHead>
             <TableBody>
               {paginated.map((v, i) => (
-                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                  <TableCell>{v.nom}</TableCell>
+                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f0fbff' }}>
+                  <TableCell sx={{fontWeight: 'bold'}}>{v.nom}</TableCell>
                   <TableCell>{v.chauffeur}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
                   <TableCell>{v.type}</TableCell>
                   <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
                   <TableCell>{v.controle_technique}</TableCell>
-                  <TableCell>{renderFileAvatar(v.assuranceFile)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.carteGriseFile)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
                   <TableCell>
                     <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
                     <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
@@ -215,31 +247,40 @@ const VehiculesPage: React.FC = () => {
           </Box>
         </Drawer>
 
-        <Dialog open={!!previewFileUrl} onClose={() => setPreviewFileUrl(null)} maxWidth="lg">
-          <Box position="relative" p={2}>
-            <IconButton
-              onClick={() => {
-                const filename = previewFileUrl?.split('/').pop();
-                const link = document.createElement('a');
-                link.href = previewFileUrl!;
-                link.setAttribute('download', filename || 'document');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}
-              sx={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#fff' }}
-            >
-              <Download />
-            </IconButton>
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-              {previewFileUrl?.endsWith('.pdf') ? (
-                <iframe src={previewFileUrl} width="90%" height="600px" style={{ border: 'none' }} />
-              ) : (
-                <img src={previewFileUrl!} alt="Aperçu" style={{ maxWidth: '90vw', maxHeight: '90vh' }} />
-              )}
+       <Dialog open={!!previewFileUrl} onClose={() => setPreviewFileUrl(null)} maxWidth="lg">
+        <Box position="relative" p={2}>
+          {/* ✅ Bouton de téléchargement */}
+          <IconButton
+            onClick={() => {
+              const filename = previewFileUrl?.split('/').pop();
+              if (!filename) return;
+              window.open(`http://localhost:5000/api/vehicules/download/${filename}`, '_blank');
+            }}
+            sx={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#fff' }}
+          >
+            <Download />
+          </IconButton>
+
+              {/* ✅ Affichage du fichier */}
+              <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+                {previewFileUrl?.endsWith('.pdf') ? (
+                  <iframe
+                    src={previewFileUrl}
+                    width="90%"
+                    height="600px"
+                    style={{ border: 'none' }}
+                  />
+                ) : (
+                  <img
+                    src={previewFileUrl!}
+                    alt="Aperçu"
+                    style={{ maxWidth: '90vw', maxHeight: '90vh' }}
+                  />
+                )}
+              </Box>
             </Box>
-          </Box>
         </Dialog>
+
       </Box>
     </AdminLayout>
   );

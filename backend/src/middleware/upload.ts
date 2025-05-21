@@ -4,8 +4,7 @@ import fs from 'fs';
 
 const storage = multer.diskStorage({
   destination: function (_req, _file, cb) {
-    // 🔥 Chemin absolu vers backend/uploads/chauffeurs
-    const dir = path.resolve('uploads', 'chauffeurs');
+    const dir = path.resolve(__dirname, '../../uploads/chauffeurs');
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },

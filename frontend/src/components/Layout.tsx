@@ -17,7 +17,6 @@ const sidebarItems = {
     { label: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
     { label: 'Chauffeurs', icon: <People />, path: '/admin/chauffeurs' },
     { label: 'Véhicules', icon: <LocalShipping />, path: '/admin/vehicules' },
-    { label: 'Documents', icon: <Description />, path: '/admin/documents' },
     { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
     { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
     { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' }
@@ -26,7 +25,6 @@ const sidebarItems = {
     { label: 'Dashboard', icon: <Dashboard />, path: '/responsable/dashboard' },
     { label: 'Chauffeurs', icon: <People />, path: '/responsable/chauffeurs' },
     { label: 'Véhicules', icon: <LocalShipping />, path: '/responsable/vehicules' },
-    { label: 'Documents', icon: <Description />, path: '/responsable/documents' },
     { label: 'Factures', icon: <Receipt />, path: '/responsable/factures' },
     { label: 'Trajets', icon: <Map />, path: '/responsable/trajets' },
     { label: 'Partenaires', icon: <Business />, path: '/responsable/partenaires' }

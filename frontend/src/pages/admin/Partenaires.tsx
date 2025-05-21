@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, IconButton
+  TableHead, TableRow, IconButton, Avatar, Pagination, InputAdornment
 } from '@mui/material';
-import { Delete, Edit } from '@mui/icons-material';
+import { Delete, Edit, Add, Search as SearchIcon } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
@@ -21,6 +21,8 @@ const PartenairesPage: React.FC = () => {
   const [editData, setEditData] = useState<Partenaire | null>(null);
   const [form, setForm] = useState({ nom: '', ice: '', adresse: '', logo: null as File | null });
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const perPage = 5;
 
   const fetchPartenaires = async () => {
     const res = await axios.get('http://localhost:5000/api/partenaires');
@@ -64,121 +66,102 @@ const PartenairesPage: React.FC = () => {
     fetchPartenaires();
   };
 
-  const filteredPartenaires = partenaires.filter(p =>
+  const filtered = partenaires.filter(p =>
     p.nom.toLowerCase().includes(search.toLowerCase())
   );
+
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
     <AdminLayout>
       <Box p={3}>
-        <Box display="flex" justifyContent="space-between" mb={2}>
-          <h2>Partenaires</h2>
-          <Button variant="contained" onClick={() => {
+        <h2>Liste Des Partenaires</h2>
+
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <TextField
+            size="small"
+            placeholder="Rechercher par nom"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '30%' }}
+          />
+          <Button variant="contained" startIcon={<Add />} onClick={() => {
             setEditData(null);
             setForm({ nom: '', ice: '', adresse: '', logo: null });
             setDrawerOpen(true);
-          }}>Ajouter</Button>
+          }}>
+            Ajouter
+          </Button>
         </Box>
-
-        <TextField
-          label="Rechercher par nom"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          fullWidth
-          sx={{ mb: 2 }}
-        />
 
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>Logo</TableCell>
-              <TableCell>Nom</TableCell>
-              <TableCell>ICE</TableCell>
-              <TableCell>Adresse</TableCell>
-              <TableCell>Actions</TableCell>
+            <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+              {['Logo', 'Nom', 'ICE', 'Adresse', 'Actions'].map(h => (
+                <TableCell key={h}><strong>{h}</strong></TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredPartenaires.map((p) => (
-              <TableRow key={p._id}>
+            {paginated.map((p, i) => (
+              <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
                 <TableCell>
-                  {p.logo && (
-                    <img src={`http://localhost:5000/uploads/partenaires/${p.logo}`} alt="logo" width={50} />
-                  )}
+                  {p.logo ? (
+                    <Avatar
+                        src={`http://localhost:5000/uploads/partenaires/${p.logo}`}
+                        alt="logo"
+                        sx={{
+                          width: 50,
+                          height: 50,
+                          transition: 'transform 0.5s ease-in-out',
+                          '&:hover': {
+                            transform: 'rotate(360deg) scale(1.1)',
+                          }
+                        }}
+                      />
+
+                  ) : 'N/A'}
                 </TableCell>
-                <TableCell>{p.nom}</TableCell>
-                <TableCell>{p.ice}</TableCell>
+                <TableCell  sx={{fontWeight:'bold'}}>{p.nom}</TableCell>
+                <TableCell sx={{fontWeight:'bold'}}>{p.ice}</TableCell>
                 <TableCell>{p.adresse}</TableCell>
                 <TableCell>
                   <IconButton onClick={() => {
                     setEditData(p);
                     setForm({ nom: p.nom, ice: p.ice, adresse: p.adresse, logo: null });
                     setDrawerOpen(true);
-                  }}>
-                    <Edit />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(p._id)}>
-                    <Delete />
-                  </IconButton>
+                  }}><Edit /></IconButton>
+                  <IconButton onClick={() => handleDelete(p._id)}><Delete /></IconButton>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
 
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination
+            count={Math.ceil(filtered.length / perPage)}
+            page={page}
+            onChange={(_, val) => setPage(val)}
+            color="primary"
+          />
+        </Box>
+
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={350}>
-            <h3>{editData ? 'Modifier Partenaire' : 'Ajouter un partenaire'}</h3>
-            <TextField
-              label="Nom"
-              name="nom"
-              fullWidth
-              margin="normal"
-              value={form.nom}
-              onChange={handleInputChange}
-            />
-            <TextField
-              label="ICE"
-              name="ice"
-              fullWidth
-              margin="normal"
-              value={form.ice}
-              onChange={handleInputChange}
-            />
-            <TextField
-              label="Adresse"
-              name="adresse"
-              fullWidth
-              margin="normal"
-              value={form.adresse}
-              onChange={handleInputChange}
-            />
-            <TextField
-              type="file"
-              name="logo"
-              fullWidth
-              margin="normal"
-              inputProps={{ accept: 'image/*' }}
-              onChange={handleInputChange}
-            />
-            <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={handleSubmit}>
-              Enregistrer
-            </Button>
-            {editData && (
-              <Button
-                variant="outlined"
-                color="secondary"
-                fullWidth
-                sx={{ mt: 1 }}
-                onClick={() => {
-                  setDrawerOpen(false);
-                  setEditData(null);
-                  setForm({ nom: '', ice: '', adresse: '', logo: null });
-                }}
-              >
-                Annuler
-              </Button>
-            )}
+          <Box mt={8} p={3} width={400} display="flex" flexDirection="column" alignItems="center">
+            <h3>{editData ? 'Modifier Partenaire' : 'Ajouter un Partenaire'}</h3>
+            <TextField label="Nom" name="nom" fullWidth margin="normal" value={form.nom} onChange={handleInputChange} />
+            <TextField label="ICE" name="ice" fullWidth margin="normal" value={form.ice} onChange={handleInputChange} />
+            <TextField label="Adresse" name="adresse" fullWidth margin="normal" value={form.adresse} onChange={handleInputChange} />
+            <TextField type="file" name="logo" fullWidth margin="normal" inputProps={{ accept: 'image/*' }} onChange={handleInputChange} />
+            <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={handleSubmit}>Enregistrer</Button>
           </Box>
         </Drawer>
       </Box>

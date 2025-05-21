@@ -184,13 +184,13 @@ const ChauffeursPage: React.FC = () => {
           <TableHead>
             <TableRow>
               {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
-                <TableCell key={h} sx={{ fontWeight: 'bold' }}>{h}</TableCell>
+                <TableCell key={h} sx={{ fontWeight: 'bold' ,backgroundColor: '#e3f2fd'}}>{h}</TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedChauffeurs.map((c, i) => (
-              <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? 'white' : '#f5f5f5' }}>
+              <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? 'white' : '#f0fbff' }}>
                 <TableCell>
                   {c.photo ? renderDocumentAvatar(c.photo) : 'N/A'}
                 </TableCell>
