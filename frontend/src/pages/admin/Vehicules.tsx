@@ -54,15 +54,15 @@ const VehiculesPage: React.FC = () => {
     fetchChauffeurs();
   }, []);
 
-  const fetchVehicules = async () => {
-    const res = await axios.get('/vehicules');
-    setVehicules(res.data);
-  };
+ const fetchVehicules = async () => {
+  const res = await axios.get('/api/vehicules'); // ✅ corrigé
+  setVehicules(res.data);
+};
 
-  const fetchChauffeurs = async () => {
-    const res = await axios.get('/chauffeurs');
-    setChauffeurs(res.data);
-  };
+ const fetchChauffeurs = async () => {
+  const res = await axios.get('/api/chauffeurs'); // ✅ corrigé
+  setChauffeurs(res.data);
+};
 
   const handleChange = (field: keyof Vehicule, value: any) => {
     setForm({ ...form, [field]: value });
@@ -94,22 +94,16 @@ const VehiculesPage: React.FC = () => {
   };
 const handleSave = async () => {
   const formData = new FormData();
-
-  // Ajouter les champs texte
-  Object.entries(form).forEach(([key, value]) => {
-    formData.append(key, String(value));
-  });
-
-  // Ajouter les fichiers avec les bons noms attendus par le backend
+  Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
   if (carteGriseFile) formData.append('carteGrise', carteGriseFile);
   if (assuranceFile) formData.append('assurance', assuranceFile);
 
   try {
     const res = isEditing && form._id
-      ? await axios.put(`/vehicules/${form._id}`, formData, {
+      ? await axios.put(`/api/vehicules/${form._id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
-      : await axios.post('/vehicules', formData, {
+      : await axios.post('/api/vehicules', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
 
@@ -122,14 +116,13 @@ const handleSave = async () => {
   }
 };
 
-
-  const handleDelete = async (id?: string) => {
-    if (!id) return;
-    if (window.confirm('Supprimer ce véhicule ?')) {
-      await axios.delete(`/vehicules/${id}`);
-      fetchVehicules();
-    }
-  };
+const handleDelete = async (id?: string) => {
+  if (!id) return;
+  if (window.confirm('Supprimer ce véhicule ?')) {
+    await axios.delete(`/api/vehicules/${id}`); // ✅ corrigé
+    fetchVehicules();
+  }
+};
 
   const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';
