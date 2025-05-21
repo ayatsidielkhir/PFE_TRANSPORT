@@ -127,11 +127,11 @@ const TrajetsPage: React.FC = () => {
   const paginated = trajets.slice((page - 1) * perPage, page * perPage);
 
   return (
-       <AdminLayout>
-<Box p={3} width="100%" maxWidth="100%" sx={{ margin: 0 }}>
-        <h2>Liste des Trajets</h2>
+    <AdminLayout>
+      <Box p={3} width="100%" maxWidth="100%" sx={{ marginLeft: 0 }}>
+        <Typography variant="h5" fontWeight={600} mb={3}>Liste des Trajets</Typography>
 
-<Box display="flex" justifyContent="flex-start" width="100%">
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Box display="flex" gap={2}>
             <TextField
               size="small"
@@ -140,6 +140,7 @@ const TrajetsPage: React.FC = () => {
               onChange={(e) => setFilters({ ...filters, mois: e.target.value })}
               InputLabelProps={{ shrink: true }}
               placeholder="Mois"
+              sx={{ width: 200 }}
             />
             <Select
               size="small"
@@ -153,10 +154,20 @@ const TrajetsPage: React.FC = () => {
               ))}
             </Select>
           </Box>
-          <Button variant="contained" startIcon={<Add />} onClick={() => {
-            setForm({ depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '', distanceKm: 0, consommationL: 0, consommationMAD: 0, partenaire: '', importExport: undefined });
-            setDrawerOpen(true);
-          }}>
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            sx={{ height: 40 }}
+            onClick={() => {
+              setForm({
+                depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '',
+                distanceKm: 0, consommationL: 0, consommationMAD: 0,
+                partenaire: '', importExport: undefined
+              });
+              setDrawerOpen(true);
+            }}
+          >
             Ajouter Trajet
           </Button>
         </Box>
@@ -164,7 +175,7 @@ const TrajetsPage: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-              {['Itinéraire', 'Date', 'Chauffeur', 'Véhicule', 'Distance', 'Conso. L', 'Conso. MAD', 'Partenaire', 'Type', 'Actions'].map(h => (
+              {["Itinéraire", "Date", "Chauffeur", "Véhicule", "Distance", "Conso. L", "Conso. MAD", "Partenaire", "Type", "Actions"].map(h => (
                 <TableCell key={h}><strong>{h}</strong></TableCell>
               ))}
             </TableRow>
@@ -182,8 +193,15 @@ const TrajetsPage: React.FC = () => {
                   <TableCell>{t.consommationL} L</TableCell>
                   <TableCell>{t.consommationMAD} MAD</TableCell>
                   <TableCell>
-                    {part?.logo && <Avatar src={`http://localhost:5000/uploads/partenaires/${part.logo}`} sx={{ width: 24, height: 24, mr: 1 }} />}
-                    {part?.nom}
+                    <Box display="flex" alignItems="center" gap={1}>
+                      {part?.logo && (
+                        <Avatar
+                          src={`http://localhost:5000/uploads/partenaires/${part.logo}`}
+                          sx={{ width: 28, height: 28 }}
+                        />
+                      )}
+                      <Typography variant="body2">{part?.nom}</Typography>
+                    </Box>
                   </TableCell>
                   <TableCell>{t.importExport}</TableCell>
                   <TableCell>
@@ -253,5 +271,3 @@ const TrajetsPage: React.FC = () => {
 };
 
 export default TrajetsPage;
-
-  
