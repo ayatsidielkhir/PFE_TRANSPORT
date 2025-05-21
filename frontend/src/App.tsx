@@ -13,6 +13,8 @@ import AdminTrajets from './pages/admin/Trajets';
 import AdminPartenaires from './pages/admin/Partenaires';
 import AdminComptabilite from './pages/admin/Comptabilite';
 import DossierJuridique from './pages/admin/DossierJuridique'; // ✅ import ajouté
+import PlateformesPage from './pages/admin/plateform';
+
 
 
 function App() {
@@ -30,6 +32,8 @@ function App() {
         <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />
         <Route path="/admin/comptabilite" element={<ProtectedRoute><AdminComptabilite /></ProtectedRoute>} />
         <Route path="/admin/dossier-juridique" element={<ProtectedRoute><DossierJuridique /></ProtectedRoute>} /> 
+                <Route path="/admin/plateformes" element={<ProtectedRoute><PlateformesPage /></ProtectedRoute>} /> 
+
         <Route path="*" element={<Login />} />
       </Routes>
     </Router>
