@@ -22,14 +22,7 @@ const sidebarItems = {
     { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
     { label: 'Dossier Juridique', icon: <Description />, path: '/admin/dossier-juridique' } // ✅ AJOUT ICI
   ],
-  responsable: [
-    { label: 'Dashboard', icon: <Dashboard />, path: '/responsable/dashboard' },
-    { label: 'Chauffeurs', icon: <People />, path: '/responsable/chauffeurs' },
-    { label: 'Véhicules', icon: <LocalShipping />, path: '/responsable/vehicules' },
-    { label: 'Factures', icon: <Receipt />, path: '/responsable/factures' },
-    { label: 'Trajets', icon: <Map />, path: '/responsable/trajets' },
-    { label: 'Partenaires', icon: <Business />, path: '/responsable/partenaires' }
-  ]
+
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

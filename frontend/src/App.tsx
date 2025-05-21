@@ -14,13 +14,6 @@ import AdminPartenaires from './pages/admin/Partenaires';
 import AdminComptabilite from './pages/admin/Comptabilite';
 import DossierJuridique from './pages/admin/DossierJuridique'; // ✅ import ajouté
 
-// Responsable pages
-import RespDashboard from './pages/responsable/Dashboard';
-import RespChauffeurs from './pages/responsable/Chauffeurs';
-import RespVehicules from './pages/responsable/Vehicules';
-import RespFactures from './pages/responsable/Factures';
-import RespTrajets from './pages/responsable/Trajets';
-import RespPartenaires from './pages/responsable/Partenaires';
 
 function App() {
   return (
@@ -37,14 +30,6 @@ function App() {
         <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />
         <Route path="/admin/comptabilite" element={<ProtectedRoute><AdminComptabilite /></ProtectedRoute>} />
         <Route path="/admin/dossier-juridique" element={<ProtectedRoute><DossierJuridique /></ProtectedRoute>} /> 
-        {/* Responsable */}
-        <Route path="/responsable/dashboard" element={<ProtectedRoute><RespDashboard /></ProtectedRoute>} />
-        <Route path="/responsable/chauffeurs" element={<ProtectedRoute><RespChauffeurs /></ProtectedRoute>} />
-        <Route path="/responsable/vehicules" element={<ProtectedRoute><RespVehicules /></ProtectedRoute>} />
-        <Route path="/responsable/factures" element={<ProtectedRoute><RespFactures /></ProtectedRoute>} />
-        <Route path="/responsable/trajets" element={<ProtectedRoute><RespTrajets /></ProtectedRoute>} />
-        <Route path="/responsable/partenaires" element={<ProtectedRoute><RespPartenaires /></ProtectedRoute>} />
-
         <Route path="*" element={<Login />} />
       </Routes>
     </Router>

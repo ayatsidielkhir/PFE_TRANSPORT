@@ -18,8 +18,6 @@ const Login = () => {
   
       if (user.role === 'admin') {
         window.location.href = '/admin/dashboard';
-      } else {
-        window.location.href = '/responsable/dashboard';
       }
     } catch (err) {
       toast.error('Email ou mot de passe incorrect');
