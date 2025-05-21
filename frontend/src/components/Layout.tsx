@@ -116,11 +116,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       sx={{
         flexGrow: 1,
         padding: 3,
-        marginLeft: 13, // pas de décalage
-        width: '100%'
+        transition: 'margin-left 0.3s',
+        marginLeft: open ? `${drawerWidth}px` : 0
       }}
     >
-
         <Toolbar />
         {children}
       </Box>
