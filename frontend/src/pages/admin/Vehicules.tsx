@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Typography, Button, TextField, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, InputAdornment, Drawer,
-  FormControl, InputLabel, Select, MenuItem
+  Box, Button, TextField, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
+  Drawer, InputAdornment, Avatar, Typography, Dialog, MenuItem, Select, FormControl, InputLabel, Pagination
 } from '@mui/material';
-import { Add, Search } from '@mui/icons-material';
+import { Add, Delete, Edit, Search, Download } from '@mui/icons-material';
 import axios from '../../utils/axios';
-import Layout from '../../components/Layout';
+import AdminLayout from '../../components/Layout';
 
 interface Vehicule {
   _id?: string;
@@ -15,8 +15,9 @@ interface Vehicule {
   type: string;
   kilometrage: number;
   controle_technique: string;
-  assurance: string;
-  carteGrise?: string;
+  assuranceFile?: string;
+  carteGriseFile?: string;
+  chauffeur?: string;
 }
 
 interface Chauffeur {
@@ -33,9 +34,13 @@ const VehiculesPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Vehicule>({
     nom: '', matricule: '', type: '', kilometrage: 0,
-    controle_technique: '', assurance: ''
+    controle_technique: '', chauffeur: ''
   });
-  const [file, setFile] = useState<File | null>(null);
+  const [assuranceFile, setAssuranceFile] = useState<File | null>(null);
+  const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null);
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const perPage = 5;
 
   useEffect(() => {
     fetchVehicules();
@@ -43,12 +48,12 @@ const VehiculesPage: React.FC = () => {
   }, []);
 
   const fetchVehicules = async () => {
-    const res = await axios.get('http://localhost:5000/api/vehicules');
+    const res = await axios.get('/vehicules');
     setVehicules(res.data);
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('http://localhost:5000/api/chauffeurs');
+    const res = await axios.get('/chauffeurs');
     setChauffeurs(res.data);
   };
 
@@ -57,34 +62,32 @@ const VehiculesPage: React.FC = () => {
   };
 
   const handleAdd = () => {
-    setForm({ nom: '', matricule: '', type: '', kilometrage: 0, controle_technique: '', assurance: '' });
-    setFile(null);
+    setForm({ nom: '', matricule: '', type: '', kilometrage: 0, controle_technique: '', chauffeur: '' });
+    setCarteGriseFile(null);
+    setAssuranceFile(null);
     setIsEditing(false);
     setDrawerOpen(true);
   };
 
   const handleEdit = (vehicule: Vehicule) => {
     setForm({ ...vehicule });
-    setFile(null);
+    setCarteGriseFile(null);
+    setAssuranceFile(null);
     setIsEditing(true);
     setDrawerOpen(true);
   };
 
   const handleSave = async () => {
     const formData = new FormData();
-    formData.append('nom', form.nom);
-    formData.append('matricule', form.matricule);
-    formData.append('type', form.type);
-    formData.append('kilometrage', String(form.kilometrage));
-    formData.append('controle_technique', form.controle_technique);
-    formData.append('assurance', form.assurance);
-    if (file) formData.append('carteGrise', file);
+    Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
+    if (carteGriseFile) formData.append('carteGriseFile', carteGriseFile);
+    if (assuranceFile) formData.append('assuranceFile', assuranceFile);
 
     const res = isEditing && form._id
-      ? await axios.put(`/vehicule/${form._id}`, formData) 
-      : await axios.post('/vehicule', formData); 
+      ? await axios.put(`/vehicules/${form._id}`, formData)
+      : await axios.post('/vehicules', formData);
 
-    if (res.status === 200 || res.status === 201) {
+    if ([200, 201].includes(res.status)) {
       fetchVehicules();
       setDrawerOpen(false);
     }
@@ -93,16 +96,22 @@ const VehiculesPage: React.FC = () => {
   const handleDelete = async (id?: string) => {
     if (!id) return;
     if (window.confirm('Supprimer ce véhicule ?')) {
-      await axios.delete(`/vehicule/${id}`); 
+      await axios.delete(`/vehicules/${id}`);
       fetchVehicules();
     }
   };
 
-  const getDateColor = (dateStr: string) => {
-    const days = (new Date(dateStr).getTime() - Date.now()) / (1000 * 3600 * 24);
-    if (days < 0) return { color: 'red', fontWeight: 'bold' };
-    if (days < 30) return { color: 'orange', fontWeight: 'bold' };
-    return {};
+  const renderFileAvatar = (file?: string) => {
+    if (!file) return 'N/A';
+    const url = `http://localhost:5000/uploads/vehicules/${file}`;
+    const isPdf = /\.pdf$/i.test(file);
+    return (
+      <Avatar
+        src={isPdf ? '/pdf-icon.png' : url}
+        sx={{ width: 40, height: 40, cursor: 'pointer' }}
+        onClick={() => setPreviewFileUrl(url)}
+      />
+    );
   };
 
   const filtered = vehicules.filter(v =>
@@ -110,62 +119,54 @@ const VehiculesPage: React.FC = () => {
     (v.matricule?.toLowerCase() || '').includes(search.toLowerCase())
   );
 
-  return (
-    <Layout>
-      <Box p={4}>
-        <Box display="flex" justifyContent="space-between" mb={2}>
-          <Typography variant="h5" fontWeight={600}>Véhicules</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>Ajouter</Button>
-        </Box>
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
-        <TextField
-          fullWidth
-          placeholder="Rechercher"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
+  return (
+    <AdminLayout>
+      <Box p={3}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <TextField
+            placeholder="Rechercher"
+            size="small"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '30%' }}
+          />
+          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>
+            Ajouter Véhicule
+          </Button>
+        </Box>
 
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#e3f2fd' }}>
-                <TableCell><strong>Nom</strong></TableCell>
-                <TableCell><strong>Matricule</strong></TableCell>
-                <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Kilométrage</strong></TableCell>
-                <TableCell><strong>Contrôle technique</strong></TableCell>
-                <TableCell><strong>Assurance</strong></TableCell>
-                <TableCell><strong>Carte Grise</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
+              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                {['Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Actions'].map(h => (
+                  <TableCell key={h}><strong>{h}</strong></TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {filtered.map(v => (
-                <TableRow key={v._id}>
+              {paginated.map((v, i) => (
+                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
                   <TableCell>{v.nom}</TableCell>
+                  <TableCell>{v.chauffeur}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
                   <TableCell>{v.type}</TableCell>
-                  <TableCell>{v.kilometrage != null ? v.kilometrage.toLocaleString() : 'N/A'}</TableCell>
-                  <TableCell style={getDateColor(v.controle_technique)}>{v.controle_technique}</TableCell>
-                  <TableCell style={getDateColor(v.assurance)}>{v.assurance}</TableCell>
+                  <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
+                  <TableCell>{v.controle_technique}</TableCell>
+                  <TableCell>{renderFileAvatar(v.assuranceFile)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.carteGriseFile)}</TableCell>
                   <TableCell>
-                    {v.carteGrise && (
-                      <a href={`http://localhost:5000/uploads/${v.carteGrise}`} target="_blank" rel="noopener noreferrer">
-                        Voir
-                      </a>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button onClick={() => handleEdit(v)}>Modifier</Button>
-                    <Button color="error" onClick={() => handleDelete(v._id)}>Supprimer</Button>
+                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
@@ -173,47 +174,74 @@ const VehiculesPage: React.FC = () => {
           </Table>
         </TableContainer>
 
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination
+            count={Math.ceil(filtered.length / perPage)}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+          />
+        </Box>
+
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400}>
-            <Typography variant="h6" mb={2}>
-              {isEditing ? 'Modifier Véhicule' : 'Ajouter Véhicule'}
-            </Typography>
-            <Box display="flex" flexDirection="column" gap={2}>
-              <FormControl fullWidth>
-                <InputLabel>Nom chauffeur</InputLabel>
-                <Select
-                  value={form.nom}
-                  label="Nom chauffeur"
-                  onChange={e => handleChange('nom', e.target.value)}
-                >
-                  {chauffeurs.map(c => (
-                    <MenuItem key={c._id} value={`${c.nom} ${c.prenom}`}>{c.nom} {c.prenom}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <TextField label="Matricule" value={form.matricule} onChange={e => handleChange('matricule', e.target.value)} fullWidth />
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select value={form.type} onChange={e => handleChange('type', e.target.value)}>
-                  <MenuItem value="Camion">Camion</MenuItem>
-                  <MenuItem value="Tracteur">Tracteur</MenuItem>
-                </Select>
-              </FormControl>
-
-              <TextField type="number" label="Kilométrage" value={form.kilometrage} onChange={e => handleChange('kilometrage', +e.target.value)} fullWidth />
-              <TextField type="date" label="Contrôle technique" value={form.controle_technique} onChange={e => handleChange('controle_technique', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
-              <TextField type="date" label="Assurance" value={form.assurance} onChange={e => handleChange('assurance', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
-
-              <Typography>Carte Grise</Typography>
-              <input type="file" accept="application/pdf,image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
-
-              <Button variant="contained" onClick={handleSave}>Enregistrer</Button>
+          <Box mt={8} p={3} width={400} display="flex" flexDirection="column" alignItems="center">
+            <Typography variant="h6" mb={2}>{isEditing ? 'Modifier Véhicule' : 'Ajouter Véhicule'}</Typography>
+            <TextField label="Nom du véhicule" value={form.nom} onChange={(e) => handleChange('nom', e.target.value)} fullWidth margin="normal" />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Chauffeur</InputLabel>
+              <Select
+                value={form.chauffeur}
+                label="Chauffeur"
+                onChange={(e) => handleChange('chauffeur', e.target.value)}
+              >
+                {chauffeurs.map(c => (
+                  <MenuItem key={c._id} value={`${c.nom} ${c.prenom}`}>{c.nom} {c.prenom}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField label="Matricule" value={form.matricule} onChange={(e) => handleChange('matricule', e.target.value)} fullWidth margin="normal" />
+            <TextField label="Type" value={form.type} onChange={(e) => handleChange('type', e.target.value)} fullWidth margin="normal" />
+            <TextField label="Kilométrage" type="number" value={form.kilometrage} onChange={(e) => handleChange('kilometrage', +e.target.value)} fullWidth margin="normal" />
+            <TextField label="Contrôle Technique" type="date" InputLabelProps={{ shrink: true }} value={form.controle_technique} onChange={(e) => handleChange('controle_technique', e.target.value)} fullWidth margin="normal" />
+            <Box mt={2} width="100%">
+              <Typography mb={1}>Assurance (PDF ou image)</Typography>
+              <input type="file" accept="application/pdf,image/*" onChange={(e) => setAssuranceFile(e.target.files?.[0] || null)} />
             </Box>
+            <Box mt={2} width="100%">
+              <Typography mb={1}>Carte Grise (PDF ou image)</Typography>
+              <input type="file" accept="application/pdf,image/*" onChange={(e) => setCarteGriseFile(e.target.files?.[0] || null)} />
+            </Box>
+            <Button variant="contained" fullWidth sx={{ mt: 3 }} onClick={handleSave}>Enregistrer</Button>
           </Box>
         </Drawer>
+
+        <Dialog open={!!previewFileUrl} onClose={() => setPreviewFileUrl(null)} maxWidth="lg">
+          <Box position="relative" p={2}>
+            <IconButton
+              onClick={() => {
+                const filename = previewFileUrl?.split('/').pop();
+                const link = document.createElement('a');
+                link.href = previewFileUrl!;
+                link.setAttribute('download', filename || 'document');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+              sx={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#fff' }}
+            >
+              <Download />
+            </IconButton>
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+              {previewFileUrl?.endsWith('.pdf') ? (
+                <iframe src={previewFileUrl} width="90%" height="600px" style={{ border: 'none' }} />
+              ) : (
+                <img src={previewFileUrl!} alt="Aperçu" style={{ maxWidth: '90vw', maxHeight: '90vh' }} />
+              )}
+            </Box>
+          </Box>
+        </Dialog>
       </Box>
-    </Layout>
+    </AdminLayout>
   );
 };
 

@@ -18,10 +18,15 @@ export const createVehicule = async (req: Request, res: Response) => {
       type,
       kilometrage,
       controle_technique,
-      assurance
+      chauffeur
     } = req.body;
 
-    const carteGrise = req.file?.filename || '';
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
+    const carteGrise = files?.carteGrise?.[0]?.filename || '';
+    const assurance = files?.assurance?.[0]?.filename || '';
 
     const vehicule = new Vehicule({
       nom,
@@ -30,7 +35,8 @@ export const createVehicule = async (req: Request, res: Response) => {
       kilometrage: Number(kilometrage),
       controle_technique,
       assurance,
-      carteGrise
+      carteGrise,
+      chauffeur
     });
 
     await vehicule.save();
@@ -43,14 +49,26 @@ export const createVehicule = async (req: Request, res: Response) => {
 
 export const updateVehicule = async (req: Request, res: Response) => {
   try {
-    if (req.file) req.body.carteGrise = req.file.filename;
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
+    const updates = {
+      ...req.body,
+      kilometrage: Number(req.body.kilometrage),
+    };
+
+    if (files?.carteGrise?.[0]) {
+      updates['carteGrise'] = files.carteGrise[0].filename;
+    }
+
+    if (files?.assurance?.[0]) {
+      updates['assurance'] = files.assurance[0].filename;
+    }
 
     const updated = await Vehicule.findByIdAndUpdate(
       req.params.id,
-      {
-        ...req.body,
-        kilometrage: Number(req.body.kilometrage)
-      },
+      updates,
       { new: true }
     );
 

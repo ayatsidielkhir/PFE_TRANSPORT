@@ -35,7 +35,7 @@ mongoose.connect(MONGO_URI)
     app.use("/api/ocr", ocrRoutes);
     app.use('/api/partenaires', partenaireRoutes);
 
-    app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+    app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 
 

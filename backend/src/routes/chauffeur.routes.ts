@@ -16,7 +16,9 @@ const router = Router();
 // ✅ Config multer pour stockage des fichiers
 const storage = multer.diskStorage({
   destination: function (_req, _file, cb) {
-    cb(null, path.join(__dirname, '..', 'uploads', 'chauffeurs'));
+    const dir = path.join(process.cwd(), 'uploads', 'chauffeurs');
+    fs.mkdirSync(dir, { recursive: true }); // ✅ indispensable
+    cb(null, dir);
   },
   filename: function (_req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
@@ -24,6 +26,8 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+
 
 // ✅ Récupérer tous les chauffeurs
 router.get('/', getChauffeurs);
@@ -60,7 +64,7 @@ router.delete('/:id', deleteChauffeur);
 // ✅ Télécharger un fichier (force le téléchargement)
 router.get('/download/:filename', (req: Request, res: Response) => {
   const filename = req.params.filename;
-  const filePath = path.join(__dirname, '../../uploads/chauffeurs', filename);
+  const filePath = path.join(process.cwd(), 'uploads', 'chauffeurs', filename);
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ message: 'Fichier introuvable' });
