@@ -20,7 +20,9 @@ const sidebarItems = {
     { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
     { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
     { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
-    { label: 'Dossier Juridique', icon: <Description />, path: '/admin/dossier-juridique' } // ✅ AJOUT ICI
+    { label: 'Dossier Juridique', icon: <Description />, path: '/admin/dossier-juridique' },
+    { label: 'Plateformes', icon: <Dashboard />, path: '/admin/plateformes' }
+
   ],
 
 };
@@ -61,14 +63,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         sx={{
           width: drawerWidth,
           flexShrink: 0,
+          position: 'absolute', // 👈 empêche le décalage du contenu
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
             bgcolor: '#f8f9fa',
-            borderRight: '1px solid #ddd'
+            borderRight: '1px solid #ddd',
+            position: 'fixed', // 👈 fixe la sidebar indépendamment du main
+            zIndex: 1200
           }
         }}
       >
+
         <Toolbar />
         <List sx={{ mt: 2 }}>
           {(sidebarItems as any)[role]?.map((item: any) => (
@@ -100,7 +106,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </ListItemButton>
       </Drawer>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+    <Box
+      component="main"
+      sx={{
+        flexGrow: 1,
+        padding: 3,
+        transition: 'margin-left 0.3s',
+        marginLeft: open ? `${drawerWidth}px` : 0
+      }}
+    >
         <Toolbar />
         {children}
       </Box>
