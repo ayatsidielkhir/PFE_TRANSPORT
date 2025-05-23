@@ -12,6 +12,8 @@ import dashboardRoutes from './routes/Dashboard..routes';
 import partenaireRoutes from './routes/partenaire.routes';
 import dossierJuridiqueRoutes from './routes/dossierjuridique.routes';
 import platformRoutes from './routes/plateformes.routes';
+import factureRoutes from './routes/facture.routes';
+
 
 
 dotenv.config();
@@ -38,6 +40,7 @@ mongoose.connect(MONGO_URI)
     app.use('/api/dossier-juridique', dossierJuridiqueRoutes);
     app.use('/api/plateformes', platformRoutes);
 
+    app.use('/api/factures', factureRoutes); 
     app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 

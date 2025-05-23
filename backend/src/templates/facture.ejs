@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Facture <%= numero %></title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; margin: 40px; }
+    h1 { text-align: center; color: #333; }
+    .info { margin-bottom: 20px; }
+    .info div { margin-bottom: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    .totaux { margin-top: 20px; float: right; width: 40%; }
+    .totaux td { border: none; padding: 5px; }
+    .signature { margin-top: 80px; display: flex; justify-content: space-between; }
+    .signature div { width: 40%; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <h1>FACTURE N° <%= numero %></h1>
+
+  <div class="info">
+    <div><strong>Date :</strong> <%= date %></div>
+    <div><strong>Client :</strong> <%= client.nom %></div>
+    <div><strong>ICE :</strong> <%= ice %></div>
+    <div><strong>Tracteur :</strong> <%= tracteur %></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Remorque</th>
+        <th>Chargement</th>
+        <th>Déchargement</th>
+        <th>Total HT</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% lignes.forEach(l => { %>
+        <tr>
+          <td><%= l.date %></td>
+          <td><%= l.remorque %></td>
+          <td><%= l.chargement %></td>
+          <td><%= l.dechargement %></td>
+          <td><%= l.totalHT.toFixed(2) %> DH</td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <table class="totaux">
+    <tr>
+      <td><strong>Total HT :</strong></td>
+      <td><%= totalHT.toFixed(2) %> DH</td>
+    </tr>
+    <tr>
+      <td><strong>TVA (<%= tva %>%) :</strong></td>
+      <td><%= (totalHT * tva / 100).toFixed(2) %> DH</td>
+    </tr>
+    <tr>
+      <td><strong>Total TTC :</strong></td>
+      <td><%= totalTTC.toFixed(2) %> DH</td>
+    </tr>
+  </table>
+
+  <div class="signature">
+    <div>Signature Client</div>
+    <div>Signature Société</div>
+  </div>
+
+</body>
+</html>

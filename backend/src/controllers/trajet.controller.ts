@@ -91,3 +91,28 @@ export const deleteTrajet = async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Erreur lors de la suppression du trajet.' });
   }
 };
+
+
+export const getFacturables = async (req: Request, res: Response) => {
+  try {
+    const { mois, partenaire } = req.query;
+
+    if (!mois || !partenaire) {
+      return res.status(400).json({ message: 'Mois et partenaire requis.' });
+    }
+
+    const [year, month] = (mois as string).split('-').map(Number);
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0, 23, 59, 59);
+
+    const trajets = await Trajet.find({
+      partenaire,
+      date: { $gte: start, $lte: end }
+    }).select('date depart arrivee remorque totalHT'); // ⚠️ ajoute "remorque" si tu l’as dans ton modèle
+
+    res.json(trajets);
+  } catch (err) {
+    console.error('Erreur getFacturables :', err);
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};

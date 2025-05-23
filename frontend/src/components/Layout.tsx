@@ -58,8 +58,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </AppBar>
 
       <Drawer
-        variant="persistent"
         open={open}
+        variant="persistent"
         sx={{
           width: drawerWidth,
           flexShrink: 0,

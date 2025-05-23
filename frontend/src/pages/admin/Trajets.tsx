@@ -223,8 +223,19 @@ const TrajetsPage: React.FC = () => {
           />
         </Box>
 
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box mt={8} p={3} width={400} display="flex" flexDirection="column" alignItems="center">
+          <Drawer
+            anchor="right"
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            ModalProps={{ keepMounted: true }}
+            sx={{
+              zIndex: 1201, // plus que la sidebar mais moins que AppBar
+              '& .MuiDrawer-paper': {
+                width: 400,
+                boxSizing: 'border-box',
+              }
+            }}
+>          <Box mt={8} p={3} width={400} display="flex" flexDirection="column" alignItems="center">
             <Typography variant="h6" mb={2}>{form._id ? 'Modifier Trajet' : 'Ajouter Trajet'}</Typography>
             <TextField label="Départ" name="depart" fullWidth margin="normal" value={form.depart} onChange={handleInputChange} />
             <TextField label="Arrivée" name="arrivee" fullWidth margin="normal" value={form.arrivee} onChange={handleInputChange} />
