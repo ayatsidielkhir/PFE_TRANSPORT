@@ -5,7 +5,10 @@ const ligneSchema = new mongoose.Schema({
   remorque: { type: String, required: true },
   chargement: { type: String, required: true },
   dechargement: { type: String, required: true },
-  totalHT: { type: Number, required: true }
+  totalHT: { type: Number, required: true },
+  statut: { type: String, enum: ['payée', 'impayée'], default: 'impayée' }
+
+
 });
 
 const factureSchema = new mongoose.Schema(
@@ -20,7 +23,10 @@ const factureSchema = new mongoose.Schema(
     tva: { type: Number, required: true },
     totalHT: { type: Number, required: true },
     totalTTC: { type: Number, required: true },
-    fileUrl: { type: String, required: true }
+    fileUrl: { type: String, required: true },
+    statut: { type: String, enum: ['payée', 'impayée'], default: 'impayée' }
+
+
   },
   { timestamps: true }
 );
