@@ -40,9 +40,8 @@ mongoose.connect(MONGO_URI)
     app.use('/api/dossier-juridique', dossierJuridiqueRoutes);
     app.use('/api/plateformes', platformRoutes);
 
-    app.use('/api/factures', factureRoutes); 
+    app.use('/api/factures', factureRoutes); // ✅ Ne pas ajouter `/manual` ici
     app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
-
 
 
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

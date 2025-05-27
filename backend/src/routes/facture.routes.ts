@@ -2,18 +2,22 @@ import express from 'express';
 import {
   generateManualFacture,
   getAllFactures,
-  getLatestFacture
+  getLatestFacture,deleteFacture,updateFacture, getFactureById,updateStatutFacture
 } from '../controllers/Facture.controller';
 
+
 const router = express.Router();
+router.get('/:id', getFactureById);
 
-// 🔁 Liste des factures (historique)
 router.get('/', getAllFactures);
-
-// 📄 Dernière facture
 router.get('/latest', getLatestFacture);
-
-// 🧾 Génération et enregistrement d’une facture manuelle
 router.post('/manual', generateManualFacture);
+
+router.delete('/:id', deleteFacture);
+router.put('/:id', updateFacture);
+router.put('/:id/statut', updateStatutFacture);
+
+
+
 
 export default router;
