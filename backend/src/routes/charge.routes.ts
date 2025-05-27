@@ -12,5 +12,4 @@ router.get('/', getCharges);
 router.post('/', addCharge);
 router.put('/:id', updateCharge);
 router.delete('/:id', deleteCharge);
-
 export default router;
