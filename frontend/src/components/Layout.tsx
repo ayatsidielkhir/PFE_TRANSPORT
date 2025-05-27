@@ -9,6 +9,7 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MonetizationOn } from '@mui/icons-material';
 
 const drawerWidth = 240;
 
@@ -21,7 +22,8 @@ const sidebarItems = {
     { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
     { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
     { label: 'Dossier Juridique', icon: <Description />, path: '/admin/dossier-juridique' },
-    { label: 'Plateformes', icon: <Dashboard />, path: '/admin/plateformes' }
+    { label: 'Plateformes', icon: <Dashboard />, path: '/admin/plateformes' },
+    { label: 'Charges', icon: <MonetizationOn />, path: '/admin/charges' },
 
   ],
 

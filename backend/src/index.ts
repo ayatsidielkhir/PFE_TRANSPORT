@@ -13,6 +13,7 @@ import partenaireRoutes from './routes/partenaire.routes';
 import dossierJuridiqueRoutes from './routes/dossierjuridique.routes';
 import platformRoutes from './routes/plateformes.routes';
 import factureRoutes from './routes/facture.routes';
+import chargeRoutes from './routes/charge.routes';
 
 
 
@@ -42,6 +43,7 @@ mongoose.connect(MONGO_URI)
 
     app.use('/api/factures', factureRoutes); 
     app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+    app.use('/api/charges', chargeRoutes);
 
 
 

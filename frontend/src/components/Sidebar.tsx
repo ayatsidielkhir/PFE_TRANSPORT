@@ -6,11 +6,12 @@ import {
   Receipt,
   Map,
   Business,
-  Gavel // 👈 AJOUTÉ pour Dossier Juridique
+  Gavel 
 } from '@mui/icons-material';
 
 import { List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
+import { MonetizationOn } from '@mui/icons-material';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -24,7 +25,8 @@ const Sidebar = () => {
     { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
     { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
     { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
-    { label: 'Dossier Juridique', icon: <Gavel />, path: '/admin/dossier-juridique' } // 👈 AJOUT ICI
+    { label: 'Dossier Juridique', icon: <Gavel />, path: '/admin/dossier-juridique' }, // 👈 AJOUT ICI
+
   ];
 
   return (
