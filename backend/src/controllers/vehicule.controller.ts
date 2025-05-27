@@ -25,18 +25,19 @@ export const createVehicule = async (req: Request, res: Response) => {
       [fieldname: string]: Express.Multer.File[];
     };
 
-    const carteGrise = files?.carteGrise?.[0]?.filename || '';
-    const assurance = files?.assurance?.[0]?.filename || '';
-
     const vehicule = new Vehicule({
       nom,
       matricule,
       type,
       kilometrage: Number(kilometrage),
       controle_technique,
-      assurance,
-      carteGrise,
-      chauffeur
+      chauffeur,
+      carteGrise: files?.carteGrise?.[0]?.filename || '',
+      assurance: files?.assurance?.[0]?.filename || '',
+      vignette: files?.vignette?.[0]?.filename || '',
+      agrement: files?.agrement?.[0]?.filename || '',
+      carteVerte: files?.carteVerte?.[0]?.filename || '',
+      extincteur: files?.extincteur?.[0]?.filename || '',
     });
 
     await vehicule.save();
@@ -53,24 +54,22 @@ export const updateVehicule = async (req: Request, res: Response) => {
       [fieldname: string]: Express.Multer.File[];
     };
 
-    const updates = {
+    const updates: any = {
       ...req.body,
       kilometrage: Number(req.body.kilometrage),
     };
 
-    if (files?.carteGrise?.[0]) {
-      updates['carteGrise'] = files.carteGrise[0].filename;
-    }
+    const fileFields = ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur'];
 
-    if (files?.assurance?.[0]) {
-      updates['assurance'] = files.assurance[0].filename;
-    }
+    fileFields.forEach((field) => {
+      if (files?.[field]?.[0]) {
+        updates[field] = files[field][0].filename;
+      }
+    });
 
-    const updated = await Vehicule.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true }
-    );
+    const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    });
 
     res.status(200).json(updated);
   } catch (err) {

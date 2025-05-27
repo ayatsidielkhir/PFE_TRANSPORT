@@ -3,8 +3,16 @@ import path from 'path';
 import fs from 'fs';
 
 const storage = multer.diskStorage({
-  destination: function (_req, _file, cb) {
-    const dir = path.resolve(__dirname, '../../uploads/chauffeurs');
+  destination: function (req, file, cb) {
+    // Déterminer le dossier en fonction de l'URL
+    let folder = 'autres';
+    if (req.baseUrl.includes('vehicule')) {
+      folder = 'vehicules';
+    } else if (req.baseUrl.includes('chauffeur')) {
+      folder = 'chauffeurs';
+    }
+
+    const dir = path.resolve(__dirname, `../../uploads/${folder}`);
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },

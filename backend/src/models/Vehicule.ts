@@ -16,7 +16,9 @@ const vehiculeSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: ['Camion', 'Tracteur', 'Voiture'],
-      required: true
+      required: true,
+      set: (val: string) => val.charAt(0).toUpperCase() + val.slice(1).toLowerCase()
+
     },
     kilometrage: {
       type: Number,
@@ -27,13 +29,25 @@ const vehiculeSchema = new mongoose.Schema(
       required: true
     },
     assurance: {
-      type: String // nom du fichier image/pdf
+      type: String
     },
     carteGrise: {
-      type: String // nom du fichier image/pdf
+      type: String
+    },
+    vignette: {
+      type: String
+    },
+    agrement: {
+      type: String
+    },
+    carteVerte: {
+      type: String
+    },
+    extincteur: {
+      type: String
     },
     chauffeur: {
-      type: String // nom complet du chauffeur
+      type: String
     }
   },
   {
