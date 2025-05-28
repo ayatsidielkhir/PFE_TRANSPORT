@@ -92,7 +92,8 @@ export const generateManualFacture: RequestHandler = async (req, res) => {
     res.status(500).json({
       message: 'Erreur serveur',
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
+      data: req.body
     });
   }
 };
