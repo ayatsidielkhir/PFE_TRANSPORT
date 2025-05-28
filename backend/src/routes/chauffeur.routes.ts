@@ -1,38 +1,54 @@
-// ✅ chauffeur.routes.ts — complet et corrigé
-
 import { Router, Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
+
 import {
   addChauffeur,
   getChauffeurs,
   deleteChauffeur,
   updateChauffeur
 } from '../controllers/chauffeur.controller';
+import { RequestHandler } from 'express';
+
+
 
 const router = Router();
 
-// ✅ Config multer pour stockage des fichiers
+// ✅ Configuration Multer
 const storage = multer.diskStorage({
-  destination: function (_req, _file, cb) {
+  destination: (_req, _file, cb) => {
     const dir = path.join(process.cwd(), 'uploads', 'chauffeurs');
-    fs.mkdirSync(dir, { recursive: true }); // ✅ indispensable
+    fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
-  filename: function (_req, file, cb) {
+  filename: (_req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
   }
 });
 
+
 const upload = multer({ storage });
 
 
+const downloadFile: RequestHandler = (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(process.cwd(), 'uploads', 'chauffeurs', filename);
 
-// ✅ Récupérer tous les chauffeurs
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ message: 'Fichier introuvable' });
+    return;
+  }
+
+  res.download(filePath);
+};
+
+// ✅ Routes
+
+// 🔹 Récupérer tous les chauffeurs
 router.get('/', getChauffeurs);
 
-// ✅ Ajouter un chauffeur avec fichiers
+// 🔹 Ajouter un chauffeur avec fichiers
 router.post(
   '/',
   upload.fields([
@@ -45,7 +61,7 @@ router.post(
   addChauffeur
 );
 
-// ✅ Modifier un chauffeur
+// 🔹 Modifier un chauffeur
 router.put(
   '/:id',
   upload.fields([
@@ -58,19 +74,10 @@ router.put(
   updateChauffeur
 );
 
-// ✅ Supprimer un chauffeur
+// 🔹 Supprimer un chauffeur
 router.delete('/:id', deleteChauffeur);
 
-// ✅ Télécharger un fichier (force le téléchargement)
-router.get('/download/:filename', (req: Request, res: Response) => {
-  const filename = req.params.filename;
-  const filePath = path.join(process.cwd(), 'uploads', 'chauffeurs', filename);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ message: 'Fichier introuvable' });
-  }
-
-  res.download(filePath);
-});
+// 🔹 Télécharger un fichier
+router.get('/download/:filename', downloadFile);
 
 export default router;

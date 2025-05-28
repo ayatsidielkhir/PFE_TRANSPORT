@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import { RequestHandler } from 'express';
 import Chauffeur from '../models/Chauffeur';
 
 // ✅ Récupérer la liste des chauffeurs
-export const getChauffeurs = async (_: Request, res: Response): Promise<void> => {
+export const getChauffeurs: RequestHandler = async (_req, res) => {
   try {
     const list = await Chauffeur.find();
     res.json(list);
@@ -12,7 +12,7 @@ export const getChauffeurs = async (_: Request, res: Response): Promise<void> =>
 };
 
 // ✅ Supprimer un chauffeur
-export const deleteChauffeur = async (req: Request, res: Response): Promise<void> => {
+export const deleteChauffeur: RequestHandler = async (req, res) => {
   try {
     await Chauffeur.findByIdAndDelete(req.params.id);
     res.json({ message: 'Chauffeur supprimé avec succès.' });
@@ -21,11 +21,12 @@ export const deleteChauffeur = async (req: Request, res: Response): Promise<void
   }
 };
 
-export const updateChauffeur = async (req: Request, res: Response): Promise<void> => {
+// ✅ Modifier un chauffeur
+export const updateChauffeur: RequestHandler = async (req, res) => {
   try {
     const updates: any = req.body;
-
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
     if (files) {
       if (files['scanPermis']) updates.scanPermis = files['scanPermis'][0].filename;
       if (files['scanVisa']) updates.scanVisa = files['scanVisa'][0].filename;
@@ -34,13 +35,11 @@ export const updateChauffeur = async (req: Request, res: Response): Promise<void
       if (files['certificatBonneConduite']) updates.certificatBonneConduite = files['certificatBonneConduite'][0].filename;
     }
 
-    // Si c'est une string 'true'/'false', transforme en booléen
     if ('visa_actif' in updates) {
       updates['visa.actif'] = updates.visa_actif === 'true' || updates.visa_actif === true;
       delete updates.visa_actif;
     }
 
-    // Formater les dates pour les sous-documents
     if (updates.permis_date_expiration) updates['permis.date_expiration'] = updates.permis_date_expiration;
     if (updates.contrat_type) updates['contrat.type'] = updates.contrat_type;
     if (updates.contrat_date_expiration) updates['contrat.date_expiration'] = updates.contrat_date_expiration;
@@ -56,7 +55,7 @@ export const updateChauffeur = async (req: Request, res: Response): Promise<void
 };
 
 // ✅ Ajouter un chauffeur
-export const addChauffeur = async (req: Request, res: Response): Promise<void> => {
+export const addChauffeur: RequestHandler = async (req, res) => {
   try {
     const {
       nom,
@@ -72,12 +71,12 @@ export const addChauffeur = async (req: Request, res: Response): Promise<void> =
       visa_date_expiration
     } = req.body;
 
-    const scanPermis = req.files && 'scanPermis' in req.files ? (req.files['scanPermis'][0] as Express.Multer.File).filename : '';
-    const scanVisa = req.files && 'scanVisa' in req.files ? (req.files['scanVisa'][0] as Express.Multer.File).filename : '';
-    const scanCIN = req.files && 'scanCIN' in req.files ? (req.files['scanCIN'][0] as Express.Multer.File).filename : '';
-    const photo = req.files && 'photo' in req.files ? (req.files['photo'][0] as Express.Multer.File).filename : '';
+    const scanPermis = req.files && 'scanPermis' in req.files ? req.files['scanPermis'][0].filename : '';
+    const scanVisa = req.files && 'scanVisa' in req.files ? req.files['scanVisa'][0].filename : '';
+    const scanCIN = req.files && 'scanCIN' in req.files ? req.files['scanCIN'][0].filename : '';
+    const photo = req.files && 'photo' in req.files ? req.files['photo'][0].filename : '';
     const certificatBonneConduite = req.files && 'certificatBonneConduite' in req.files
-      ? (req.files['certificatBonneConduite'][0] as Express.Multer.File).filename
+      ? req.files['certificatBonneConduite'][0].filename
       : '';
 
     const visaActifBool = visa_actif === 'true' || visa_actif === true;
@@ -111,7 +110,6 @@ export const addChauffeur = async (req: Request, res: Response): Promise<void> =
     res.status(201).json(chauffeur);
   } catch (err: any) {
     console.error('❌ Erreur lors de la création du chauffeur :', err);
-
     if (err.code === 11000) {
       res.status(400).json({ message: "Un chauffeur avec ce CIN existe déjà." });
     } else {
@@ -119,6 +117,3 @@ export const addChauffeur = async (req: Request, res: Response): Promise<void> =
     }
   }
 };
-
-
-

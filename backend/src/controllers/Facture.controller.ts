@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { RequestHandler } from 'express';
 import Facture from '../models/facture';
 import Partenaire from '../models/partenaire.model';
 import puppeteer from 'puppeteer';
@@ -6,7 +6,7 @@ import path from 'path';
 import ejs from 'ejs';
 import fs from 'fs/promises';
 
-export const generateManualFacture = async (req: Request, res: Response) => {
+export const generateManualFacture: RequestHandler = async (req, res) => {
   try {
     const {
       date,
@@ -20,11 +20,15 @@ export const generateManualFacture = async (req: Request, res: Response) => {
     } = req.body;
 
     if (!date || !partenaire || !lignes || lignes.length === 0) {
-      return res.status(400).json({ message: 'Champs obligatoires manquants.' });
+      res.status(400).json({ message: 'Champs obligatoires manquants.' });
+      return;
     }
 
     const client = await Partenaire.findById(partenaire);
-    if (!client) return res.status(404).json({ message: 'Client introuvable' });
+    if (!client) {
+      res.status(404).json({ message: 'Client introuvable' });
+      return;
+    }
 
     const mois = date.slice(0, 7); // ex: "2025-05"
     const count = await Facture.countDocuments({ mois });
@@ -36,7 +40,8 @@ export const generateManualFacture = async (req: Request, res: Response) => {
     try {
       await fs.access(templatePath);
     } catch {
-      return res.status(500).json({ message: `Template facture.ejs introuvable à ${templatePath}` });
+      res.status(500).json({ message: `Template facture.ejs introuvable à ${templatePath}` });
+      return;
     }
 
     const html = await ejs.renderFile(templatePath, {
@@ -80,69 +85,70 @@ export const generateManualFacture = async (req: Request, res: Response) => {
     });
 
     await facture.save();
-
-    return res.status(201).json({ message: 'Facture générée', fileUrl });
+    res.status(201).json({ message: 'Facture générée', fileUrl });
 
   } catch (error: any) {
     console.error('❌ Erreur génération facture :', error);
-    return res.status(500).json({ message: 'Erreur serveur', error: error.message || error });
+    res.status(500).json({ message: 'Erreur serveur', error: error.message || error });
   }
 };
 
-export const getAllFactures = async (_: Request, res: Response) => {
+export const getAllFactures: RequestHandler = async (_req, res) => {
   try {
     const factures = await Facture.find().populate('partenaire', 'nom').sort({ createdAt: -1 });
-    return res.json(factures);
+    res.json(factures);
   } catch (err) {
-    return res.status(500).json({ message: 'Erreur serveur', error: err });
+    res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };
 
-export const getLatestFacture = async (_: Request, res: Response) => {
+export const getLatestFacture: RequestHandler = async (_req, res) => {
   try {
     const last = await Facture.findOne().sort({ createdAt: -1 });
-    if (!last) return res.status(404).json({ message: 'Aucune facture trouvée.' });
-    return res.json(last);
+    if (!last) {
+      res.status(404).json({ message: 'Aucune facture trouvée.' });
+      return;
+    }
+    res.json(last);
   } catch (err) {
-    return res.status(500).json({ message: 'Erreur serveur', error: err });
+    res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };
-export const deleteFacture = async (req: Request, res: Response) => {
+
+export const deleteFacture: RequestHandler = async (req, res) => {
   try {
     const deleted = await Facture.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Facture introuvable' });
+    if (!deleted) {
+      res.status(404).json({ message: 'Facture introuvable' });
+      return;
+    }
     res.status(200).json({ message: 'Facture supprimée' });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };
-export const updateFacture = async (req: Request, res: Response) => {
-  try {
-    const updated = await Facture.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
-    if (!updated) return res.status(404).json({ message: 'Facture non trouvée' });
-    res.status(200).json(updated);
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
-  }
-};
-export const getFactureById = async (req: Request, res: Response) => {
+
+export const getFactureById: RequestHandler = async (req, res) => {
   try {
     const facture = await Facture.findById(req.params.id).populate('partenaire', 'nom');
-    if (!facture) return res.status(404).json({ message: 'Facture non trouvée' });
+    if (!facture) {
+      res.status(404).json({ message: 'Facture non trouvée' });
+      return;
+    }
     res.json(facture);
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };
-export const updateStatutFacture = async (req: Request, res: Response) => {
+
+export const updateStatutFacture: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const facture = await Facture.findById(id);
-    if (!facture) return res.status(404).json({ message: 'Facture introuvable' });
+    if (!facture) {
+      res.status(404).json({ message: 'Facture introuvable' });
+      return;
+    }
 
     facture.statut = facture.statut === 'payée' ? 'impayée' : 'payée';
     await facture.save();
@@ -153,5 +159,15 @@ export const updateStatutFacture = async (req: Request, res: Response) => {
   }
 };
 
-
-
+export const updateFacture: RequestHandler = async (req, res) => {
+  try {
+    const updated = await Facture.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) {
+      res.status(404).json({ message: 'Facture introuvable' });
+      return;
+    }
+    res.json({ message: 'Facture mise à jour', facture: updated });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error });
+  }
+};

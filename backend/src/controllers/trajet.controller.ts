@@ -1,14 +1,13 @@
-import { Request, Response } from 'express';
+import { RequestHandler } from 'express';
 import Trajet from '../models/trajet.model';
 import Vehicule from '../models/Vehicule';
 
-export const getAllTrajets = async (req: Request, res: Response) => {
+// ✅ Récupérer tous les trajets avec filtres
+export const getAllTrajets: RequestHandler = async (req, res) => {
   try {
     const { mois, partenaire } = req.query;
-
     const filter: any = {};
 
-    // Filtrer par mois (ex. "2025-05")
     if (mois) {
       const [year, month] = (mois as string).split('-').map(Number);
       const start = new Date(year, month - 1, 1);
@@ -16,7 +15,6 @@ export const getAllTrajets = async (req: Request, res: Response) => {
       filter.date = { $gte: start, $lte: end };
     }
 
-    // Filtrer par partenaire
     if (partenaire) {
       filter.partenaire = partenaire;
     }
@@ -34,7 +32,8 @@ export const getAllTrajets = async (req: Request, res: Response) => {
   }
 };
 
-export const createTrajet = async (req: Request, res: Response) => {
+// ✅ Créer un trajet
+export const createTrajet: RequestHandler = async (req, res) => {
   try {
     const {
       depart,
@@ -50,7 +49,8 @@ export const createTrajet = async (req: Request, res: Response) => {
     } = req.body;
 
     if (!depart || !arrivee || !date || !chauffeur || !vehicule || !distanceKm || !consommationL) {
-      return res.status(400).json({ error: 'Les informations sont manquantes.' });
+      res.status(400).json({ error: 'Les informations sont manquantes.' });
+      return;
     }
 
     const trajet = new Trajet({
@@ -74,7 +74,8 @@ export const createTrajet = async (req: Request, res: Response) => {
   }
 };
 
-export const updateTrajet = async (req: Request, res: Response) => {
+// ✅ Modifier un trajet
+export const updateTrajet: RequestHandler = async (req, res) => {
   try {
     const trajet = await Trajet.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(trajet);
@@ -83,7 +84,8 @@ export const updateTrajet = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteTrajet = async (req: Request, res: Response) => {
+// ✅ Supprimer un trajet
+export const deleteTrajet: RequestHandler = async (req, res) => {
   try {
     await Trajet.findByIdAndDelete(req.params.id);
     res.json({ message: 'Trajet supprimé avec succès.' });
@@ -92,13 +94,14 @@ export const deleteTrajet = async (req: Request, res: Response) => {
   }
 };
 
-
-export const getFacturables = async (req: Request, res: Response) => {
+// ✅ Obtenir les trajets facturables (filtrés par mois et partenaire)
+export const getFacturables: RequestHandler = async (req, res) => {
   try {
     const { mois, partenaire } = req.query;
 
     if (!mois || !partenaire) {
-      return res.status(400).json({ message: 'Mois et partenaire requis.' });
+      res.status(400).json({ message: 'Mois et partenaire requis.' });
+      return;
     }
 
     const [year, month] = (mois as string).split('-').map(Number);
@@ -108,7 +111,7 @@ export const getFacturables = async (req: Request, res: Response) => {
     const trajets = await Trajet.find({
       partenaire,
       date: { $gte: start, $lte: end }
-    }).select('date depart arrivee remorque totalHT'); // ⚠️ ajoute "remorque" si tu l’as dans ton modèle
+    }).select('date depart arrivee remorque totalHT');
 
     res.json(trajets);
   } catch (err) {
