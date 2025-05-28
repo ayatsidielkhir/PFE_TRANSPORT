@@ -68,43 +68,52 @@ const PlateformesPage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3}>
-        <Box display="flex" justifyContent="space-between" mb={3}>
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          mb={3}
+          gap={2}
+        >
           <Typography variant="h5" fontWeight={600}>Liste des Plateformes</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => setDrawerOpen(true)}>
+          <Button variant="contained" startIcon={<Add />} onClick={() => setDrawerOpen(true)} fullWidth={true}>
             Ajouter Plateforme
           </Button>
         </Box>
 
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-              {['Logo', 'Nom', 'Email', 'Mot de passe', 'Lien', 'Actions'].map(h => (
-                <TableCell key={h}><strong>{h}</strong></TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginated.map((p, i) => (
-              <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                <TableCell>
-                  {p.logo ? <Avatar src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`} /> : 'N/A'}
-                </TableCell>
-                <TableCell>{p.nom}</TableCell>
-                <TableCell>{p.email}</TableCell>
-                <TableCell>{p.password}</TableCell>
-                <TableCell>
-                  <Link href={p.lien} target="_blank" rel="noopener noreferrer">
-                    {p.lien}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(p)}><Edit /></IconButton></Tooltip>
-                  <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(p._id)}><Delete /></IconButton></Tooltip>
-                </TableCell>
+        <Box sx={{ overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                {['Logo', 'Nom', 'Email', 'Mot de passe', 'Lien', 'Actions'].map(h => (
+                  <TableCell key={h}><strong>{h}</strong></TableCell>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {paginated.map((p, i) => (
+                <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
+                  <TableCell>
+                    {p.logo ? <Avatar src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`} /> : 'N/A'}
+                  </TableCell>
+                  <TableCell>{p.nom}</TableCell>
+                  <TableCell>{p.email}</TableCell>
+                  <TableCell>{p.password}</TableCell>
+                  <TableCell>
+                    <Link href={p.lien} target="_blank" rel="noopener noreferrer">
+                      {p.lien}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(p)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(p._id)}><Delete /></IconButton></Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Box>
 
         <Box display="flex" justifyContent="center" mt={2}>
           <Pagination
@@ -115,13 +124,18 @@ const PlateformesPage: React.FC = () => {
           />
         </Box>
 
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400} display="flex" flexDirection="column" gap={2}>
+        <Drawer
+          anchor="right"
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          PaperProps={{ sx: { width: { xs: '100%', sm: 400 } } }}
+        >
+          <Box p={3} display="flex" flexDirection="column" gap={2}>
             <Typography variant="h6">Ajouter / Modifier une plateforme</Typography>
-            <TextField label="Nom" name="nom" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} />
-            <TextField label="Email" name="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            <TextField label="Mot de passe" name="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-            <TextField label="Lien de la plateforme" name="lien" value={form.lien} onChange={(e) => setForm({ ...form, lien: e.target.value })} />
+            <TextField label="Nom" name="nom" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} fullWidth />
+            <TextField label="Email" name="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} fullWidth />
+            <TextField label="Mot de passe" name="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} fullWidth />
+            <TextField label="Lien de la plateforme" name="lien" value={form.lien} onChange={(e) => setForm({ ...form, lien: e.target.value })} fullWidth />
             <Button variant="outlined" component="label">
               Télécharger Logo
               <input type="file" hidden onChange={e => setLogo(e.target.files?.[0] || null)} />
