@@ -7,6 +7,7 @@ import ejs from 'ejs';
 import fs from 'fs/promises';
 
 export const generateManualFacture: RequestHandler = async (req, res) => {
+  console.log('🔍 Données reçues pour la facture :', req.body);
   try {
     const {
       date,
