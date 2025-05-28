@@ -21,7 +21,7 @@ const DashboardPage: React.FC = () => {
   });
 
   useEffect(() => {
-    axios.get('https://mme-backend.onrender.com/api/admin/dashboard')
+    axios.get('https://mme-backend.onrender.com/admin/dashboard')
       .then(res => {
         const { chauffeurs, vehicules, factures, trajets } = res.data;
         setStats({ chauffeurs, vehicules, factures, trajets });
