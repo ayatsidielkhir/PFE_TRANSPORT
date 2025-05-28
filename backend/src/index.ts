@@ -21,7 +21,12 @@ dotenv.config();
 const app = express();
 
 // Définir les origines autorisées
-const allowedOrigins = ['https://mme-express.ma/']; // Remplacez par le domaine réel de votre frontend
+const allowedOrigins = ['https://mme-express.ma/'];
+
+app.use(cors({
+  origin: 'https://mme-express.ma',
+  credentials: true
+}));
 
 const corsOptions: cors.CorsOptions = {
   origin: function (origin, callback) {
