@@ -41,8 +41,7 @@ const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess, editData }) => {
   useEffect(() => {
     const fetchChauffeurs = async () => {
       try {
-        const res = await axios.get('https://mme-backend.onrender.com
-/api/chauffeurs');
+        const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
         setChauffeurs(res.data);
       } catch (err) {
         console.error(err);
@@ -51,8 +50,7 @@ const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess, editData }) => {
 
     const fetchVehicules = async () => {
       try {
-        const res = await axios.get('https://mme-backend.onrender.com
-/api/vehicules');
+        const res = await axios.get('https://mme-backend.onrender.com/api/vehicules');
         setVehicules(res.data);
       } catch (err) {
         console.error(err);
@@ -88,8 +86,7 @@ const UploadDocumentForm: React.FC<Props> = ({ onUploadSuccess, editData }) => {
         await axios.put(`https://mme-backend.onrender.com
 /api/documents/${editData._id}`, formData);
       } else {
-        await axios.post('https://mme-backend.onrender.com
-/api/documents', formData);
+        await axios.post('https://mme-backend.onrender.com/api/documents', formData);
       }
       onUploadSuccess();
     } catch (err) {

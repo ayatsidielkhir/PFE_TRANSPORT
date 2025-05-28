@@ -36,8 +36,7 @@ const DossierJuridique: React.FC = () => {
 
   const handleView = (fileName: string | undefined) => {
     if (!fileName) return;
-    setSelectedDoc(`https://mme-backend.onrender.com
-/uploads/juridique/${fileName}`);
+    setSelectedDoc(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
     setOpenDialog(true);
   };
 
