@@ -11,7 +11,7 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-const res = await axios.post('https://https://mme-backend.onrender.com//auth/login', { email, password });
+const res = await axios.post('https://mme-backend.onrender.com//auth/login', { email, password });
       const { token, user } = res.data;
   
       localStorage.setItem('token', token);

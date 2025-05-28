@@ -23,10 +23,7 @@ const app = express();
 // Définir les origines autorisées
 const allowedOrigins = ['https://mme-express.ma/'];
 
-app.use(cors({
-  origin: 'https://mme-express.ma',
-  credentials: true
-}));
+
 
 const corsOptions: cors.CorsOptions = {
   origin: function (origin, callback) {
@@ -40,6 +37,7 @@ const corsOptions: cors.CorsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
+
 
 app.use(cors(corsOptions));
 app.use(express.json());
