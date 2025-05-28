@@ -103,6 +103,17 @@ const FacturesPage: React.FC = () => {
     }
 
     try {
+      console.log({
+  date,
+  partenaire: client,
+  ice: selectedClient?.ice || '',
+  tracteur,
+  lignes,
+  tva,
+  totalHT,
+  totalTTC
+});
+
       const res = await axios.post('https://mme-backend.onrender.com/api/factures/manual', {
         date,
         partenaire: client,
