@@ -21,9 +21,7 @@ dotenv.config();
 const app = express();
 
 // Définir les origines autorisées
-const allowedOrigins = ['https://mme-express.ma/'];
-
-
+const allowedOrigins = ['https://mme-express.ma'];
 
 const corsOptions: cors.CorsOptions = {
   origin: function (origin, callback) {
