@@ -30,7 +30,7 @@ export const generateManualFacture: RequestHandler = async (req, res) => {
       return;
     }
 
-    const mois = date.slice(0, 7); // ex: "2025-05"
+    const mois = date.slice(0, 7);
     const count = await Facture.countDocuments({ mois });
     const numero = `${(count + 1).toString().padStart(3, '0')}/${new Date().getFullYear()}`;
 
@@ -86,10 +86,13 @@ export const generateManualFacture: RequestHandler = async (req, res) => {
 
     await facture.save();
     res.status(201).json({ message: 'Facture générée', fileUrl });
-
   } catch (error: any) {
     console.error('❌ Erreur génération facture :', error);
-    res.status(500).json({ message: 'Erreur serveur', error: error.message || error });
+    res.status(500).json({
+      message: 'Erreur serveur',
+      error: error.message,
+      stack: error.stack
+    });
   }
 };
 
