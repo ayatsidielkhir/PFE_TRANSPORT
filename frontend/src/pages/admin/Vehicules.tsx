@@ -163,7 +163,8 @@ const VehiculesPage: React.FC = () => {
 
   const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';
-    const url = `http://localhost:5000/uploads/vehicules/${file}`;
+    const url = `https://mme-backend.onrender.com
+/uploads/vehicules/${file}`;
     const isPdf = /\.pdf$/i.test(file);
     return (
       <Avatar
@@ -296,7 +297,8 @@ const VehiculesPage: React.FC = () => {
               onClick={() => {
                 const filename = previewFileUrl?.split('/').pop();
                 if (!filename) return;
-                window.open(`http://localhost:5000/api/vehicules/download/${filename}`, '_blank');
+                window.open(`https://mme-backend.onrender.com
+/api/vehicules/download/${filename}`, '_blank');
               }}
               sx={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#fff' }}
             >

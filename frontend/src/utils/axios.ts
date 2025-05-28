@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'http://localhost:5000', // ✅ Corrigé ici
+  baseURL: 'https://mme-backend.onrender.com
+', // ✅ Corrigé ici
 });
 
 export default instance;

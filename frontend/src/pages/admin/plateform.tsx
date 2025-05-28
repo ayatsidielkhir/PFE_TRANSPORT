@@ -27,7 +27,8 @@ const PlateformesPage: React.FC = () => {
   useEffect(() => { fetchPlateformes(); }, []);
 
   const fetchPlateformes = async () => {
-    const res = await axios.get('http://localhost:5000/api/plateformes');
+    const res = await axios.get('https://mme-backend.onrender.com
+/api/plateformes');
     setPlateformes(res.data);
   };
 
@@ -38,9 +39,11 @@ const PlateformesPage: React.FC = () => {
 
     try {
       if (form._id) {
-        await axios.put(`http://localhost:5000/api/plateformes/${form._id}`, formData);
+        await axios.put(`https://mme-backend.onrender.com
+/api/plateformes/${form._id}`, formData);
       } else {
-        await axios.post('http://localhost:5000/api/plateformes', formData);
+        await axios.post('https://mme-backend.onrender.com
+/api/plateformes', formData);
       }
       setDrawerOpen(false);
       setForm({ nom: '', email: '', password: '', lien: '' });
@@ -58,7 +61,8 @@ const PlateformesPage: React.FC = () => {
 
   const handleDelete = async (id?: string) => {
     if (id && window.confirm('Supprimer cette plateforme ?')) {
-      await axios.delete(`http://localhost:5000/api/plateformes/${id}`);
+      await axios.delete(`https://mme-backend.onrender.com
+/api/plateformes/${id}`);
       fetchPlateformes();
     }
   };
@@ -87,7 +91,8 @@ const PlateformesPage: React.FC = () => {
             {paginated.map((p, i) => (
               <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
                 <TableCell>
-                  {p.logo ? <Avatar src={`http://localhost:5000/uploads/platforms/${p.logo}`} /> : 'N/A'}
+                  {p.logo ? <Avatar src={`https://mme-backend.onrender.com
+/uploads/platforms/${p.logo}`} /> : 'N/A'}
                 </TableCell>
                 <TableCell>{p.nom}</TableCell>
                 <TableCell>{p.email}</TableCell>

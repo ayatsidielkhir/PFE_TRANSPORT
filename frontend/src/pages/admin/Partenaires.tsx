@@ -25,7 +25,8 @@ const PartenairesPage: React.FC = () => {
   const perPage = 5;
 
   const fetchPartenaires = async () => {
-    const res = await axios.get('http://localhost:5000/api/partenaires');
+    const res = await axios.get('https://mme-backend.onrender.com
+/api/partenaires');
     setPartenaires(res.data);
   };
 
@@ -50,9 +51,11 @@ const PartenairesPage: React.FC = () => {
     if (form.logo) formData.append('logo', form.logo);
 
     if (editData) {
-      await axios.put(`http://localhost:5000/api/partenaires/${editData._id}`, formData);
+      await axios.put(`https://mme-backend.onrender.com
+/api/partenaires/${editData._id}`, formData);
     } else {
-      await axios.post('http://localhost:5000/api/partenaires', formData);
+      await axios.post('https://mme-backend.onrender.com
+/api/partenaires', formData);
     }
 
     setDrawerOpen(false);
@@ -62,7 +65,8 @@ const PartenairesPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await axios.delete(`http://localhost:5000/api/partenaires/${id}`);
+    await axios.delete(`https://mme-backend.onrender.com
+/api/partenaires/${id}`);
     fetchPartenaires();
   };
 
@@ -115,7 +119,8 @@ const PartenairesPage: React.FC = () => {
                 <TableCell>
                   {p.logo ? (
                     <Avatar
-                        src={`http://localhost:5000/uploads/partenaires/${p.logo}`}
+                        src={`https://mme-backend.onrender.com
+/uploads/partenaires/${p.logo}`}
                         alt="logo"
                         sx={{
                           width: 50,
