@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && cpy src/templates/**/* --cwd=src --parents --dest=dist",
+    "build": "tsc && cpy \"templates/**/*\" --cwd=src --parents --dest=dist",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
