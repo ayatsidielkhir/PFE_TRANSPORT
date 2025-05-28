@@ -46,6 +46,10 @@ mongoose.connect(MONGO_URI)
     app.use('/api/charges', chargeRoutes);
 
 
+    app.get('/', (_req, res) => {
+    res.send('Bienvenue sur l\'API backend');
+    });
+
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch(err => console.error('❌ MongoDB connection error:', err));
