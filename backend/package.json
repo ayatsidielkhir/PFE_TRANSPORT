@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && xcopy src\\templates dist\\templates /E /I /Y",
+    "build": "tsc && cpy src/templates/**/* --cwd=src --parents --dest=dist",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
@@ -39,6 +39,7 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.14.1",
     "@types/xlsx": "^0.0.35",
+    "cpy-cli": "^5.0.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   }
