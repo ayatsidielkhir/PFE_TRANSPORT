@@ -25,7 +25,7 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* Admin */}
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/chauffeurs" element={<ProtectedRoute><AdminChauffeurs /></ProtectedRoute>} />
         <Route path="/admin/vehicules" element={<ProtectedRoute><AdminVehicules /></ProtectedRoute>} />
         <Route path="/admin/factures" element={<ProtectedRoute><AdminFactures /></ProtectedRoute>} />

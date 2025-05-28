@@ -49,7 +49,7 @@ const ChauffeursPage: React.FC = () => {
 
   const renderDocumentAvatar = (file: string | undefined) => {
     if (!file) return 'N/A';
-    const fileUrl = `http://localhost:5000/uploads/chauffeurs/${encodeURIComponent(file)}`;
+    const fileUrl = `https://mme-backend.onrender.com/uploads/chauffeurs/${encodeURIComponent(file)}`;
     return (
       <Avatar
         src={isImageFile(file) ? fileUrl : '/pdf-icon.png'}
@@ -63,7 +63,7 @@ const ChauffeursPage: React.FC = () => {
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('http://localhost:5000/api/chauffeurs');
+    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
     setChauffeurs(res.data);
     setFilteredChauffeurs(res.data);
   };
@@ -107,8 +107,8 @@ const handleSubmit = async () => {
 
   try {
     const res = selectedChauffeur
-      ? await axios.put(`http://localhost:5000/api/chauffeurs/${selectedChauffeur._id}`, formData)
-      : await axios.post('http://localhost:5000/api/chauffeurs', formData);
+      ? await axios.put(`https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`, formData)
+      : await axios.post('https://mme-backend.onrender.com/api/chauffeurs', formData);
 
     if (res.status === 200 || res.status === 201) {
       alert(selectedChauffeur ? 'Chauffeur modifié avec succès !' : 'Chauffeur ajouté avec succès !');
@@ -141,7 +141,7 @@ const handleSubmit = async () => {
   const handleDelete = async (id: string) => {
     const confirm = window.confirm('Voulez-vous vraiment supprimer ce chauffeur ?');
     if (!confirm) return;
-    await axios.delete(`http://localhost:5000/api/chauffeurs/${id}`);
+    await axios.delete(`https://mme-backend.onrender.com/api/chauffeurs/${id}`);
     fetchChauffeurs();
   };
 
@@ -244,7 +244,7 @@ const handleSubmit = async () => {
                 src={
                   previewPhoto ||
                   (selectedChauffeur?.photo
-                    ? `http://localhost:5000/uploads/chauffeurs/${encodeURIComponent(selectedChauffeur.photo)}`
+                    ? `https://mme-backend.onrender.com/uploads/chauffeurs/${encodeURIComponent(selectedChauffeur.photo)}`
                     : '')
                 }
                 alt="Chauffeur"
@@ -314,7 +314,7 @@ const handleSubmit = async () => {
           <IconButton
             onClick={() => {
               const filename = dialogImageSrc.split('/').pop();
-              const downloadUrl = `http://localhost:5000/api/chauffeurs/download/${filename}`;
+              const downloadUrl = `https://mme-backend.onrender.com/api/chauffeurs/download/${filename}`;
               const link = document.createElement('a');
               link.href = downloadUrl;
               link.setAttribute('download', filename || 'document');
