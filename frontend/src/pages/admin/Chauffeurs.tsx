@@ -227,7 +227,22 @@ const ChauffeursPage: React.FC = () => {
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={400}>
-            <Typography variant="h6" fontWeight={600} mb={2}>Ajouter / Modifier Chauffeur</Typography>
+            <Box display="flex" justifyContent="center" mb={2}>
+              <label htmlFor="photo-input">
+                <Avatar
+                  src={previewPhoto || ''}
+                  sx={{ width: 100, height: 100, cursor: 'pointer' }}
+                />
+              </label>
+              <input
+                id="photo-input"
+                name="photo"
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleInputChange}
+              />
+            </Box>
             {['nom', 'prenom', 'telephone', 'cin', 'adresse'].map(field => (
               <TextField
                 key={field}
@@ -239,7 +254,7 @@ const ChauffeursPage: React.FC = () => {
                 sx={{ mb: 2 }}
               />
             ))}
-            {['photo', 'scanCIN', 'scanPermis', 'scanVisa', 'certificatBonneConduite'].map(field => (
+            {['scanCIN', 'scanPermis', 'scanVisa', 'certificatBonneConduite'].map(field => (
               <Box key={field} sx={{ mb: 2 }}>
                 <Typography fontWeight={500} mb={0.5}>{field}</Typography>
                 <input type="file" name={field} onChange={handleInputChange} />

@@ -1,15 +1,14 @@
-
 import {
   AppBar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon,
-  ListItemText, Toolbar, Typography, Divider
+  ListItemText, Toolbar, Typography, Divider, Button
 } from '@mui/material';
 import {
   Menu, Dashboard, People, LocalShipping, Description, Receipt, Map,
-  Business, Logout
+  Business, Logout, Settings, Gavel, Paid
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MonetizationOn } from '@mui/icons-material';
+import logo from '../logoMEX.png';
 
 const drawerWidth = 240;
 
@@ -21,12 +20,10 @@ const sidebarItems = {
     { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
     { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
     { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
-    { label: 'Dossier Juridique', icon: <Description />, path: '/admin/dossier-juridique' },
-    { label: 'Plateformes', icon: <Dashboard />, path: '/admin/plateformes' },
-    { label: 'Charges', icon: <MonetizationOn />, path: '/admin/charges' },
-
-  ],
-
+    { label: 'Dossier Juridique', icon: <Gavel />, path: '/admin/dossier-juridique' },
+    { label: 'Plateformes', icon: <Settings />, path: '/admin/plateformes' },
+    { label: 'Charges', icon: <Paid />, path: '/admin/charges' },
+  ]
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -48,49 +45,76 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <Box sx={{ display: 'flex' }}>
+      {/* TOPBAR */}
       <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#0379a8' }}>
-        <Toolbar>
-          <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
-            <Menu />
-          </IconButton>
-          <Typography variant="h6" noWrap sx={{ ml: 2 }}>
-            Transport Management System
-          </Typography>
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <Box display="flex" alignItems="center">
+            <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
+              <Menu />
+            </IconButton>
+            <Box display="flex" alignItems="center" gap={2} ml={2}>
+              <Box sx={{ backgroundColor: 'white', padding: '4px 8px', borderRadius: '6px' }}>
+                <img src={logo} alt="MEXPRESS Logo" height="32" />
+              </Box>
+              <Typography variant="h6" noWrap sx={{ fontWeight: 'bold', color: 'white' }}>
+                MEXPRESS - Système de gestion de Transport
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            onClick={handleLogout}
+            variant="contained"
+            sx={{
+              backgroundColor: '#d32f2f',
+              color: 'white',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': { backgroundColor: '#b71c1c' }
+            }}
+            startIcon={<Logout />}
+          >
+            Déconnexion
+          </Button>
         </Toolbar>
       </AppBar>
 
+      {/* SIDEBAR */}
       <Drawer
         open={open}
         variant="persistent"
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          position: 'absolute', // 👈 empêche le décalage du contenu
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
             bgcolor: '#f8f9fa',
             borderRight: '1px solid #ddd',
-            position: 'fixed', // 👈 fixe la sidebar indépendamment du main
-            zIndex: 1200
+            position: 'fixed',
+            zIndex: 1200,
+            pt: 8,
+            px: 1
           }
         }}
       >
-
-        <Toolbar />
         <List sx={{ mt: 2 }}>
           {(sidebarItems as any)[role]?.map((item: any) => (
             <ListItemButton
               key={item.label}
               onClick={() => navigate(item.path)}
               sx={{
-                mx: 1,
-                mb: 1,
+                mb: 1.8,
+                px: 2,
+                py: 1.5,
                 borderRadius: 2,
-                '&:hover': { bgcolor: '#e3f2fd' }
+                '&:hover': {
+                  backgroundColor: '#e0f0ff',
+                  transform: 'scale(1.02)',
+                  transition: 'all 0.2s'
+                }
               }}
             >
-              <ListItemIcon sx={{ color: '#0379a8' }}>{item.icon}</ListItemIcon>
+              <ListItemIcon sx={{ color: '#0379a8', minWidth: 36 }}>{item.icon}</ListItemIcon>
               <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 500 }} />
             </ListItemButton>
           )) || (
@@ -99,25 +123,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </ListItemButton>
           )}
         </List>
-
         <Divider sx={{ my: 2 }} />
-
         <ListItemButton onClick={handleLogout} sx={{ mx: 1, borderRadius: 2 }}>
           <ListItemIcon sx={{ color: '#d32f2f' }}><Logout /></ListItemIcon>
           <ListItemText primary="Déconnexion" primaryTypographyProps={{ fontWeight: 500 }} />
         </ListItemButton>
       </Drawer>
 
-    <Box
-      component="main"
-      sx={{
-        flexGrow: 1,
-        padding: 3,
-        transition: 'margin-left 0.3s',
-        marginLeft: open ? `${drawerWidth}px` : 0
-      }}
-    >
-        <Toolbar />
+      {/* CONTENU */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          backgroundColor: 'white',
+          minHeight: '100vh',
+          padding: 3,
+          pl: open ? `80px` : '24px',
+          pt: '100px'
+        }}
+      >
         {children}
       </Box>
     </Box>
