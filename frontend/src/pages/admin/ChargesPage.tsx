@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Drawer, Typography, MenuItem, Select,
-  FormControl, InputLabel, Pagination, Chip
+  FormControl, InputLabel, Chip
 } from '@mui/material';
 import { Add, Edit, Delete, PictureAsPdf, GridOn } from '@mui/icons-material';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -141,20 +141,18 @@ const ChargesPage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3}>
-        {/* Haut */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" fontWeight="bold" color="primary">Gestion des Charges</Typography>
           <Button
             variant="contained"
             startIcon={<Add />}
-            sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 'bold' }}
+            sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 'bold', backgroundColor: '#001e61', '&:hover': { backgroundColor: '#00184a' } }}
             onClick={handleAdd}
           >
             Ajouter Charge
           </Button>
         </Box>
 
-        {/* Filtres */}
         <Box display="flex" gap={2} mb={3} flexWrap="wrap">
           <FormControl sx={{ minWidth: 140 }}>
             <InputLabel>Type</InputLabel>
@@ -183,13 +181,11 @@ const ChargesPage: React.FC = () => {
           </Button>
         </Box>
 
-        {/* Boutons d'export */}
         <Box display="flex" gap={2} mb={2}>
-          <Button variant="contained" startIcon={<PictureAsPdf />} onClick={exportPDF} sx={{ borderRadius: 3, textTransform: 'none' }}>Exporter PDF</Button>
-          <Button variant="contained" startIcon={<GridOn />} onClick={exportExcel} sx={{ borderRadius: 3, textTransform: 'none' }}>Exporter Excel</Button>
+          <Button variant="contained" startIcon={<PictureAsPdf />} onClick={exportPDF} sx={{ borderRadius: 3, textTransform: 'none', backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}>Exporter PDF</Button>
+          <Button variant="contained" startIcon={<GridOn />} onClick={exportExcel} sx={{ borderRadius: 3, textTransform: 'none', backgroundColor: '#388e3c', '&:hover': { backgroundColor: '#2e7d32' } }}>Exporter Excel</Button>
         </Box>
 
-        {/* Tableau */}
         <TableContainer component={Paper}>
           <Table>
             <TableHead sx={{ backgroundColor: '#f1f1f1' }}>
@@ -227,7 +223,6 @@ const ChargesPage: React.FC = () => {
           </Table>
         </TableContainer>
 
-        {/* Drawer */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={400}>
             <Typography variant="h6" mb={2}>{isEditing ? 'Modifier' : 'Ajouter'} une Charge</Typography>
