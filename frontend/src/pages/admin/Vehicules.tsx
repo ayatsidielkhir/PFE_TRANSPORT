@@ -182,7 +182,7 @@ const VehiculesPage: React.FC = () => {
             }}
             sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
           />
-          <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: 'primary.main', borderRadius: 3, fontWeight: 'bold', textTransform: 'none', px: 3 }} onClick={handleAdd}>
+          <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: '#001447', borderRadius: 3, fontWeight: 'bold', textTransform: 'none', px: 3 }} onClick={handleAdd}>
             Ajouter Véhicule
           </Button>
         </Box>

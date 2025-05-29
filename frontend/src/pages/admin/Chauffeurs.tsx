@@ -231,7 +231,7 @@ const ChauffeursPage: React.FC = () => {
               <label htmlFor="photo-input">
                 <Avatar
                   src={previewPhoto || ''}
-                  sx={{ width: 100, height: 100, cursor: 'pointer' }}
+                  sx={{ width: 100, height: 100, cursor: 'pointer',marginTop:'30px' }}
                 />
               </label>
               <input
