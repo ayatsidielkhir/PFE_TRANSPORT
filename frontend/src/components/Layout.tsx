@@ -1,10 +1,10 @@
 import {
   AppBar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon,
-  ListItemText, Toolbar, Typography, Divider, Button
+  ListItemText, Toolbar, Typography, Button
 } from '@mui/material';
 import {
-  Menu, Dashboard, People, LocalShipping, Description, Receipt, Map,
-  Business, Logout, Settings, Gavel, Paid
+  Menu, Logout, DirectionsBus, Badge, AccountTree, Payment, BusinessCenter,
+  Gavel, Public, Settings, Paid
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,12 +14,12 @@ const drawerWidth = 240;
 
 const sidebarItems = {
   admin: [
-    { label: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
-    { label: 'Chauffeurs', icon: <People />, path: '/admin/chauffeurs' },
-    { label: 'Véhicules', icon: <LocalShipping />, path: '/admin/vehicules' },
-    { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
-    { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
-    { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
+    { label: 'Dashboard', icon: <AccountTree />, path: '/admin/dashboard' },
+    { label: 'Chauffeurs', icon: <Badge />, path: '/admin/chauffeurs' },
+    { label: 'Véhicules', icon: <DirectionsBus />, path: '/admin/vehicules' },
+    { label: 'Factures', icon: <Payment />, path: '/admin/factures' },
+    { label: 'Trajets', icon: <Public />, path: '/admin/trajets' },
+    { label: 'Partenaires', icon: <BusinessCenter />, path: '/admin/partenaires' },
     { label: 'Dossier Juridique', icon: <Gavel />, path: '/admin/dossier-juridique' },
     { label: 'Plateformes', icon: <Settings />, path: '/admin/plateformes' },
     { label: 'Charges', icon: <Paid />, path: '/admin/charges' },
@@ -46,14 +46,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <Box sx={{ display: 'flex' }}>
       {/* TOPBAR */}
-      <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#0379a8' }}>
+      <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#001e61', boxShadow: 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Box display="flex" alignItems="center">
             <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
               <Menu />
             </IconButton>
             <Box display="flex" alignItems="center" gap={2} ml={2}>
-              <Box sx={{ backgroundColor: 'white', padding: '4px 8px', borderRadius: '6px' }}>
+              <Box sx={{
+                backgroundColor: 'white',
+                padding: '4px 8px',
+                borderRadius: '6px'
+              }}>
                 <img src={logo} alt="MEXPRESS Logo" height="32" />
               </Box>
               <Typography variant="h6" noWrap sx={{ fontWeight: 'bold', color: 'white' }}>
@@ -98,7 +102,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }}
       >
         <List sx={{ mt: 2 }}>
-          {(sidebarItems as any)[role]?.map((item: any) => (
+          {(sidebarItems as any)[role]?.map((item: any, index: number) => (
             <ListItemButton
               key={item.label}
               onClick={() => navigate(item.path)}
@@ -114,7 +118,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 }
               }}
             >
-              <ListItemIcon sx={{ color: '#0379a8', minWidth: 36 }}>{item.icon}</ListItemIcon>
+              <ListItemIcon sx={{ color: '#001e61', minWidth: 36 }}>{item.icon}</ListItemIcon>
               <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 500 }} />
             </ListItemButton>
           )) || (
@@ -123,11 +127,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </ListItemButton>
           )}
         </List>
-        <Divider sx={{ my: 2 }} />
-        <ListItemButton onClick={handleLogout} sx={{ mx: 1, borderRadius: 2 }}>
-          <ListItemIcon sx={{ color: '#d32f2f' }}><Logout /></ListItemIcon>
-          <ListItemText primary="Déconnexion" primaryTypographyProps={{ fontWeight: 500 }} />
-        </ListItemButton>
       </Drawer>
 
       {/* CONTENU */}
@@ -138,12 +137,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           backgroundColor: 'white',
           minHeight: '100vh',
           padding: 3,
-          pl: open ? `80px` : '24px',
+          pl: open ? '80px' : '24px',
           pt: '100px'
         }}
       >
         {children}
       </Box>
     </Box>
-  );
-}
+  )
+};

@@ -1,4 +1,4 @@
-.dashboard-container {
+ .dashboard-container {
     display: flex;
     height: 100vh;
     font-family: 'Segoe UI', sans-serif;
@@ -40,4 +40,4 @@
     background-color: #f3f3f3;
     padding: 30px;
   }
-  
+   
