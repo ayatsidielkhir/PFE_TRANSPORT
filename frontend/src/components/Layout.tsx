@@ -52,35 +52,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
               <Menu />
             </IconButton>
-           <Box display="flex" alignItems="center" gap={2} ml={2}>
-            <Box
-              sx={{
-                backgroundColor: 'white',
-                padding: '4px 10px',
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '60px',
-                width: 'auto',
-                boxShadow: '0 0 6px rgba(0,0,0,0.1)'
+          <Box display="flex" alignItems="center" gap={2} ml={2}>
+          <Box
+            sx={{
+              backgroundColor: 'white',
+              padding: '2px 6px',
+              borderRadius: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '44px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+            }}
+          >
+            <img
+              src={logo}
+              alt="MEXPRESS Logo"
+              style={{
+                height: '40px',
+                objectFit: 'contain'
               }}
-            >
-              <img
-                src={logo}
-                alt="MEXPRESS Logo"
-                style={{
-                  height: '50px',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.3))'
-                }}
-              />
-            </Box>
+            />
+          </Box>
 
   <Typography variant="h6" noWrap sx={{ fontWeight: 'bold', color: 'white' }}>
     MME - Système de gestion de Transport
   </Typography>
 </Box>
+
 
           </Box>
           <Button
