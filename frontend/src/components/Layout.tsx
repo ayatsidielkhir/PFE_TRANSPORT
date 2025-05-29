@@ -8,7 +8,7 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../logoMEX.png';
+import logo from '../logoMme-.png';
 
 const drawerWidth = 240;
 
@@ -53,15 +53,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Menu />
             </IconButton>
             <Box display="flex" alignItems="center" gap={2} ml={2}>
-              <Box sx={{
-                backgroundColor: 'white',
-                padding: '4px 8px',
-                borderRadius: '6px'
-              }}>
-                <img src={logo} alt="MEXPRESS Logo" height="32" />
+              <Box>
+                <img
+                  src={logo}
+                  alt="MEXPRESS Logo"
+                  style={{
+                    height: '48px',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.3))'
+                  }}
+                />
               </Box>
+
               <Typography variant="h6" noWrap sx={{ fontWeight: 'bold', color: 'white' }}>
-                MEXPRESS - Système de gestion de Transport
+                MME - Système de gestion de Transport
               </Typography>
             </Box>
           </Box>

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
-  Drawer, InputAdornment, Avatar, Typography, Dialog, MenuItem, Select,
+  Drawer, InputAdornment, Typography, Dialog, MenuItem, Select,
   FormControl, InputLabel, Pagination
 } from '@mui/material';
-import { Add, Delete, Edit, Search, Download } from '@mui/icons-material';
+import { Add, Delete, Edit, Search as SearchIcon } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 
@@ -41,19 +41,15 @@ const VehiculesPage: React.FC = () => {
     nom: '', matricule: '', type: '', kilometrage: 0,
     controle_technique: '', chauffeur: '', assurance: '', carteGrise: ''
   });
-
-  const [assuranceFile, setAssuranceFile] = useState<File | null>(null);
-  const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null);
-  const [vignetteFile, setVignetteFile] = useState<File | null>(null);
-  const [agrementFile, setAgrementFile] = useState<File | null>(null);
-  const [carteVerteFile, setCarteVerteFile] = useState<File | null>(null);
-  const [extincteurFile, setExtincteurFile] = useState<File | null>(null);
-  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [chauffeurMap, setChauffeurMap] = useState<Record<string, string>>({});
   const [page, setPage] = useState(1);
   const perPage = 5;
 
   useEffect(() => {
     fetchVehicules();
+  }, []);
+
+  useEffect(() => {
     fetchChauffeurs();
   }, []);
 
@@ -65,6 +61,13 @@ const VehiculesPage: React.FC = () => {
   const fetchChauffeurs = async () => {
     const res = await axios.get('/api/chauffeurs');
     setChauffeurs(res.data);
+    const map: Record<string, string> = {};
+    res.data.forEach((c: Chauffeur) => {
+      if (c._id) {
+        map[c._id.toString()] = `${c.nom} ${c.prenom}`;
+      }
+    });
+    setChauffeurMap(map);
   };
 
   const handleChange = (field: keyof Vehicule, value: any) => {
@@ -74,30 +77,14 @@ const VehiculesPage: React.FC = () => {
   const handleAdd = () => {
     setForm({ nom: '', matricule: '', type: '', kilometrage: 0,
       controle_technique: '', chauffeur: '', assurance: '', carteGrise: '' });
-    setAssuranceFile(null);
-    setCarteGriseFile(null);
-    setVignetteFile(null);
-    setAgrementFile(null);
-    setCarteVerteFile(null);
-    setExtincteurFile(null);
     setIsEditing(false);
     setDrawerOpen(true);
   };
 
   const handleEdit = (vehicule: Vehicule) => {
     setForm({ ...vehicule });
-    setAssuranceFile(null);
-    setCarteGriseFile(null);
-    setVignetteFile(null);
-    setAgrementFile(null);
-    setCarteVerteFile(null);
-    setExtincteurFile(null);
     setIsEditing(true);
     setDrawerOpen(true);
-    if (isEditing) {
-      const confirmUpdate = window.confirm("Voulez-vous vraiment modifier ce véhicule ?");
-      if (!confirmUpdate) return;
-    }
   };
 
   const handleSave = async () => {
@@ -105,24 +92,16 @@ const VehiculesPage: React.FC = () => {
       alert("Merci de remplir tous les champs obligatoires.");
       return;
     }
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
-    if (assuranceFile) formData.append('assurance', assuranceFile);
-    if (carteGriseFile) formData.append('carteGrise', carteGriseFile);
-    if (vignetteFile) formData.append('vignette', vignetteFile);
-    if (agrementFile) formData.append('agrement', agrementFile);
-    if (carteVerteFile) formData.append('carteVerte', carteVerteFile);
-    if (extincteurFile) formData.append('extincteur', extincteurFile);
+
     try {
       const res = isEditing && form._id
-        ? await axios.put(`/api/vehicules/${form._id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-        : await axios.post('/api/vehicules', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        ? await axios.put(`/api/vehicules/${form._id}`, form)
+        : await axios.post('/api/vehicules', form);
       if ([200, 201].includes(res.status)) {
         fetchVehicules();
         setDrawerOpen(false);
       }
     } catch (err) {
-      console.error('❌ Erreur lors de l\'enregistrement :', err);
       alert("Erreur lors de l'enregistrement du véhicule.");
     }
   };
@@ -130,27 +109,9 @@ const VehiculesPage: React.FC = () => {
   const handleDelete = async (id?: string) => {
     if (!id) return;
     if (window.confirm('Supprimer ce véhicule ?')) {
-      try {
-        await axios.delete(`/api/vehicules/${id}`);
-        fetchVehicules();
-        alert('Véhicule supprimé avec succès.');
-      } catch (err) {
-        alert("Erreur lors de la suppression.");
-      }
+      await axios.delete(`/api/vehicules/${id}`);
+      fetchVehicules();
     }
-  };
-
-  const renderFileAvatar = (file?: string) => {
-    if (!file) return 'N/A';
-    const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
-    const isPdf = /\.pdf$/i.test(file);
-    return (
-      <Avatar
-        src={isPdf ? '/pdf-icon.png' : url}
-        sx={{ width: 40, height: 40, cursor: 'pointer' }}
-        onClick={() => setPreviewFileUrl(url)}
-      />
-    );
   };
 
   const filtered = vehicules.filter(v =>
@@ -169,51 +130,59 @@ const VehiculesPage: React.FC = () => {
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <TextField
-            placeholder="Rechercher..."
             size="small"
+            placeholder="Rechercher un véhicule..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search />
+                  <SearchIcon />
                 </InputAdornment>
-              ),
+              )
             }}
             sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
           />
-          <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: '#001447', borderRadius: 3, fontWeight: 'bold', textTransform: 'none', px: 3 }} onClick={handleAdd}>
-            Ajouter Véhicule
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            sx={{
+              backgroundColor: '#001e61',
+              borderRadius: 3,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              px: 3,
+              boxShadow: 2,
+              '&:hover': { backgroundColor: '#001447' }
+            }}
+            onClick={handleAdd}
+          >
+            Ajouter un véhicule
           </Button>
         </Box>
 
         <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
-                {['Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Vignette', 'Agrément', 'Carte Verte', 'Extincteur', 'Actions'].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
+              <TableRow>
+                {["Nom", "Chauffeur", "Matricule", "Type", "Km", "CT", "Actions"].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((v, i) => (
                 <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{v.nom}</TableCell>
-                  <TableCell>{v.chauffeur}</TableCell>
+                  <TableCell>{v.nom}</TableCell>
+                  <TableCell>{v.chauffeur && chauffeurMap[v.chauffeur] ? chauffeurMap[v.chauffeur] : '—'}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
                   <TableCell>{v.type}</TableCell>
-                  <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
+                  <TableCell>{v.kilometrage}</TableCell>
                   <TableCell>{v.controle_technique}</TableCell>
-                  <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.vignette)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.agrement)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.carteVerte)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.extincteur)}</TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton color="primary" onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton color="error" onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                    <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
@@ -222,8 +191,51 @@ const VehiculesPage: React.FC = () => {
         </Paper>
 
         <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} color="primary" />
+          <Pagination
+            count={Math.ceil(filtered.length / perPage)}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+          />
         </Box>
+
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={400}>
+            <Typography variant="h6" fontWeight={600} mb={2}>{isEditing ? 'Modifier' : 'Ajouter'} Véhicule</Typography>
+            <TextField fullWidth label="Nom" value={form.nom} onChange={(e) => handleChange('nom', e.target.value)} margin="normal" />
+            <TextField fullWidth label="Matricule" value={form.matricule} onChange={(e) => handleChange('matricule', e.target.value)} margin="normal" />
+            <TextField fullWidth label="Type" value={form.type} onChange={(e) => handleChange('type', e.target.value)} margin="normal" />
+            <TextField fullWidth label="Kilométrage" type="number" value={form.kilometrage} onChange={(e) => handleChange('kilometrage', parseFloat(e.target.value))} margin="normal" />
+            <TextField fullWidth label="Contrôle technique" value={form.controle_technique} onChange={(e) => handleChange('controle_technique', e.target.value)} margin="normal" />
+
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Chauffeur</InputLabel>
+              <Select
+                value={form.chauffeur || ''}
+                onChange={(e) => handleChange('chauffeur', e.target.value)}
+                label="Chauffeur"
+              >
+                {chauffeurs.map(c => (
+                  <MenuItem key={c._id} value={c._id}>{`${c.nom} ${c.prenom}`}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleSave}
+              sx={{
+                backgroundColor: '#001e61',
+                textTransform: 'none',
+                fontWeight: 'bold',
+                '&:hover': { backgroundColor: '#001447' }
+              }}
+            >
+              {isEditing ? 'Mettre à jour' : 'Ajouter'}
+            </Button>
+          </Box>
+        </Drawer>
       </Box>
     </AdminLayout>
   );

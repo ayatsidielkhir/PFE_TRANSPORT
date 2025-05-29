@@ -3,7 +3,7 @@ import './login.css';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import logo from '../logoMEX.png'; // 🔁 assurez-vous que ce chemin est correct
+import logo from '../logoMme-.png'; // 🔁 assurez-vous que ce chemin est correct
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -29,7 +29,7 @@ const Login = () => {
     <div className="login-wrapper">
       <form className="login-box" onSubmit={handleSubmit}>
         <img src={logo} alt="Logo MEXPRESS" className="login-logo" />
-        <h2>Connexion</h2>
+        <h2>Connexion Admin</h2>
         <input
           type="email"
           placeholder="Adresse email"
