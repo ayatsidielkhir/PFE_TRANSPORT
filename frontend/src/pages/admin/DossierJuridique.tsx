@@ -74,28 +74,49 @@ const DossierJuridique: React.FC = () => {
 
   return (
     <Layout>
-      <Box p={4}>
-        <Box display="flex" justifyContent="space-between" mb={2}>
-          <Typography variant="h5" fontWeight={600}>Dossier Juridique</Typography>
-          <Button variant="contained" onClick={() => setDrawerOpen(true)}>Ajouter / Modifier</Button>
+      <Box p={4} maxWidth="1200px" mx="auto">
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold" color="primary">
+            Dossier Juridique
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => setDrawerOpen(true)}
+            sx={{
+              backgroundColor: '#001e61',
+              borderRadius: 3,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              px: 3,
+              '&:hover': { backgroundColor: '#001447' }
+            }}
+          >
+            Ajouter / Modifier
+          </Button>
         </Box>
 
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#e3f2fd' }}>
-                <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Action</strong></TableCell>
+              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.map((row, index) => (
-                <TableRow key={index}>
+                <TableRow
+                  key={index}
+                  sx={{
+                    backgroundColor: index % 2 === 0 ? '#fff' : '#f9fbfd',
+                    '&:hover': { backgroundColor: '#e3f2fd' }
+                  }}
+                >
                   <TableCell>{row.label}</TableCell>
                   <TableCell>
                     {row.field ? (
                       <IconButton onClick={() => handleView(row.field)}>
-                        <Visibility />
+                        <Visibility sx={{ color: '#001e61' }} />
                       </IconButton>
                     ) : 'Non disponible'}
                   </TableCell>
@@ -111,7 +132,14 @@ const DossierJuridique: React.FC = () => {
             {selectedDoc && (
               <>
                 <Box component="iframe" src={selectedDoc} width="100%" height="600px" />
-                <Button href={selectedDoc} target="_blank" download fullWidth variant="outlined" sx={{ mt: 2 }}>
+                <Button
+                  href={selectedDoc}
+                  target="_blank"
+                  download
+                  fullWidth
+                  variant="outlined"
+                  sx={{ mt: 2 }}
+                >
                   Télécharger
                 </Button>
               </>
@@ -119,55 +147,55 @@ const DossierJuridique: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-  <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-  <Box p={3} width={400}>
-    <Typography variant="h6" fontWeight={600} mb={3}>
-      Documents à importer
-    </Typography>
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={400}>
+            <Typography variant="h6" fontWeight={600} mb={3}>
+              Documents à importer
+            </Typography>
 
-    <Box display="flex" flexDirection="column" gap={3}>
-      {[
-        { label: 'Model J', name: 'modelJ' },
-        { label: 'Statut', name: 'statut' },
-        { label: 'RC', name: 'rc' },
-        { label: 'Identifiant Fiscale', name: 'identifiantFiscale' },
-        { label: 'CIN Gérant', name: 'cinGerant' },
-        { label: '1007', name: 'doc1007' }
-      ].map(({ label, name }) => (
-        <Box key={name}>
-          <Typography fontWeight={500} mb={1}>{label}</Typography>
-          <input
-            type="file"
-            onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
-            style={{
-              border: '1px solid #ccc',
-              padding: '8px',
-              borderRadius: '6px',
-              width: '100%',
-              cursor: 'pointer',
-              boxSizing: 'border-box',
-              appearance: 'none',
-              backgroundColor: 'white'
-            }}
-          />
-        </Box>
-      ))}
+            <Box display="flex" flexDirection="column" gap={2}>
+              {[
+                { label: 'Model J', name: 'modelJ' },
+                { label: 'Statut', name: 'statut' },
+                { label: 'RC', name: 'rc' },
+                { label: 'Identifiant Fiscale', name: 'identifiantFiscale' },
+                { label: 'CIN Gérant', name: 'cinGerant' },
+                { label: '1007', name: 'doc1007' }
+              ].map(({ label, name }) => (
+                <Box key={name}>
+                  <Typography fontWeight={500} mb={0.5}>{label}</Typography>
+                  <input
+                    type="file"
+                    onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
+                    style={{
+                      border: '1px solid #ccc',
+                      padding: '8px',
+                      borderRadius: '6px',
+                      width: '100%',
+                      cursor: 'pointer',
+                      backgroundColor: 'white'
+                    }}
+                  />
+                </Box>
+              ))}
 
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{ mt: 2, backgroundColor: '#1976d2' }}
-        onClick={handleUpload}
-        disabled={Object.values(files).every(f => f === null)}
-      >
-        ENREGISTRER
-      </Button>
-    </Box>
-  </Box>
-</Drawer>
-
-
-
+              <Button
+                variant="contained"
+                onClick={handleUpload}
+                disabled={Object.values(files).every(f => f === null)}
+                sx={{
+                  mt: 2,
+                  backgroundColor: '#001e61',
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  '&:hover': { backgroundColor: '#001447' }
+                }}
+              >
+                ENREGISTRER
+              </Button>
+            </Box>
+          </Box>
+        </Drawer>
 
         <Snackbar
           open={snackbarOpen}

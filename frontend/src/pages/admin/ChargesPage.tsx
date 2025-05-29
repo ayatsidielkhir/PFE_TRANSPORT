@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Drawer, Typography, MenuItem, Select,
-  FormControl, InputLabel, Pagination
+  FormControl, InputLabel, Pagination, Tooltip
 } from '@mui/material';
 import { Add, Edit, Delete, PictureAsPdf, GridOn } from '@mui/icons-material';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -12,18 +12,20 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
+interface Chauffeur {
+  _id: string;
+  nom: string;
+  prenom: string;
+}
+
 interface Charge {
   _id?: string;
   type: string;
   montant: number;
   date: string;
   statut: 'Payé' | 'Non payé';
-}
-
-interface Chauffeur {
-  _id: string;
-  nom: string;
-  prenom: string;
+  chauffeur?: Chauffeur;
+  notes?: string;
 }
 
 const ChargesPage: React.FC = () => {
@@ -37,6 +39,7 @@ const ChargesPage: React.FC = () => {
     montant: 0,
     date: '',
     statut: 'Non payé',
+    notes: ''
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -71,12 +74,10 @@ const ChargesPage: React.FC = () => {
 
   const applyFilters = () => {
     let filtered = [...charges];
-
     if (filterType) filtered = filtered.filter(c => c.type === filterType);
     if (filterStatut) filtered = filtered.filter(c => c.statut === filterStatut);
     if (filterDateFrom) filtered = filtered.filter(c => new Date(c.date) >= new Date(filterDateFrom));
     if (filterDateTo) filtered = filtered.filter(c => new Date(c.date) <= new Date(filterDateTo));
-
     setFilteredCharges(filtered);
   };
 
@@ -88,7 +89,7 @@ const ChargesPage: React.FC = () => {
   };
 
   const handleAdd = () => {
-    setForm({ type: '', montant: 0, date: '', statut: 'Non payé' });
+    setForm({ type: '', montant: 0, date: '', statut: 'Non payé', notes: '' });
     setChauffeurSelectionne(null);
     setIsEditing(false);
     setDrawerOpen(true);
@@ -96,16 +97,21 @@ const ChargesPage: React.FC = () => {
 
   const handleEdit = (charge: Charge) => {
     setForm(charge);
-    setChauffeurSelectionne(null);
+    setChauffeurSelectionne(charge.chauffeur || null);
     setIsEditing(true);
     setDrawerOpen(true);
   };
 
   const handleSave = async () => {
+    const payload = {
+      ...form,
+      chauffeur: chauffeurSelectionne?._id || undefined
+    };
+
     try {
       const res = isEditing && form._id
-        ? await axios.put(`/api/charges/${form._id}`, form)
-        : await axios.post('/api/charges', form);
+        ? await axios.put(`/api/charges/${form._id}`, payload)
+        : await axios.post('/api/charges', payload);
       if ([200, 201].includes(res.status)) {
         fetchCharges();
         setDrawerOpen(false);
@@ -126,18 +132,18 @@ const ChargesPage: React.FC = () => {
   const exportPDF = () => {
     const doc = new jsPDF();
     doc.text("Liste des Charges", 14, 16);
-
     autoTable(doc, {
       startY: 20,
-      head: [['Type', 'Montant (MAD)', 'Date', 'Statut']],
+      head: [['Type', 'Montant', 'Date', 'Statut', 'Chauffeur', 'Notes']],
       body: filteredCharges.map(c => [
         c.type,
         c.montant.toFixed(2),
         new Date(c.date).toLocaleDateString(),
         c.statut,
+        c.chauffeur ? `${c.chauffeur.nom} ${c.chauffeur.prenom}` : '—',
+        c.notes || ''
       ]),
     });
-
     doc.save('charges.pdf');
   };
 
@@ -147,6 +153,8 @@ const ChargesPage: React.FC = () => {
       Montant: c.montant,
       Date: new Date(c.date).toLocaleDateString(),
       Statut: c.statut,
+      Chauffeur: c.chauffeur ? `${c.chauffeur.nom} ${c.chauffeur.prenom}` : '—',
+      Notes: c.notes || ''
     })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Charges');
@@ -155,146 +163,117 @@ const ChargesPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3}>
-        {/* boutons haut */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5">Gestion des Charges</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>Ajouter</Button>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold" color="primary">
+            Gestion des Charges
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleAdd}
+            sx={{ backgroundColor: '#001e61', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}
+          >
+            Ajouter une charge
+          </Button>
         </Box>
 
-        {/* filtres */}
-        <Box display="flex" gap={2} mb={3} flexWrap="wrap">
-          <FormControl sx={{ minWidth: 120 }}>
+        <Box mb={2} display="flex" flexWrap="wrap" gap={2}>
+          <FormControl sx={{ minWidth: 140 }} size="small">
             <InputLabel>Type</InputLabel>
-            <Select label="Type" value={filterType} onChange={e => setFilterType(e.target.value)} size="small">
+            <Select value={filterType} label="Type" onChange={e => setFilterType(e.target.value)}>
               <MenuItem value="">Tous</MenuItem>
               {['Salaire', 'CNSS', 'Entretien', 'Carburant', 'Vignette', 'Autre'].map(opt => (
                 <MenuItem key={opt} value={opt}>{opt}</MenuItem>
               ))}
             </Select>
           </FormControl>
-
-          <FormControl sx={{ minWidth: 120 }}>
+          <FormControl sx={{ minWidth: 140 }} size="small">
             <InputLabel>Statut</InputLabel>
-            <Select label="Statut" value={filterStatut} onChange={e => setFilterStatut(e.target.value)} size="small">
+            <Select value={filterStatut} label="Statut" onChange={e => setFilterStatut(e.target.value)}>
               <MenuItem value="">Tous</MenuItem>
               <MenuItem value="Payé">Payé</MenuItem>
               <MenuItem value="Non payé">Non payé</MenuItem>
             </Select>
           </FormControl>
-
-          <TextField label="Date de début" type="date" InputLabelProps={{ shrink: true }} value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} size="small" />
-          <TextField label="Date de fin" type="date" InputLabelProps={{ shrink: true }} value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} size="small" />
-
-          <Button variant="outlined" onClick={() => { setFilterType(''); setFilterStatut(''); setFilterDateFrom(''); setFilterDateTo(''); }}>
-            Réinitialiser
-          </Button>
+          <TextField label="Date de début" type="date" size="small" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} />
+          <TextField label="Date de fin" type="date" size="small" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
+          <Button size="small" onClick={() => { setFilterType(''); setFilterStatut(''); setFilterDateFrom(''); setFilterDateTo(''); }}>Réinitialiser</Button>
         </Box>
 
-        {/* export boutons */}
-        <Box mb={2} display="flex" gap={2}>
+        <Box display="flex" justifyContent="flex-end" gap={2} mb={2}>
           <Button variant="outlined" startIcon={<PictureAsPdf />} onClick={exportPDF}>Exporter PDF</Button>
           <Button variant="outlined" startIcon={<GridOn />} onClick={exportExcel}>Exporter Excel</Button>
         </Box>
 
-        {/* tableau */}
-        <TableContainer component={Paper}>
+        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <Table>
-            <TableHead sx={{ backgroundColor: '#f0f0f0' }}>
-              <TableRow>
-                <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Montant</strong></TableCell>
-                <TableCell><strong>Date</strong></TableCell>
-                <TableCell><strong>Statut</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                {['Type', 'Montant', 'Date', 'Statut', 'Chauffeur', 'Actions'].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredCharges.map((c, i) => (
-                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
                   <TableCell>{c.type}</TableCell>
                   <TableCell>{c.montant.toFixed(2)} MAD</TableCell>
                   <TableCell>{new Date(c.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{c.statut}</TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleEdit(c)}><Edit /></IconButton>
-                    <IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton>
+                    <Box sx={{ px: 1.5, py: 0.5, borderRadius: 10, fontSize: 12, fontWeight: 'bold', color: 'white', backgroundColor: c.statut === 'Payé' ? '#2e7d32' : '#d32f2f' }}>{c.statut}</Box>
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title={c.notes || ''}>
+                      <span>{c.chauffeur ? `${c.chauffeur.nom} ${c.chauffeur.prenom}` : '—'}</span>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleEdit(c)} sx={{ color: '#001e61' }}><Edit /></IconButton>
+                    <IconButton onClick={() => handleDelete(c._id)} sx={{ color: '#d32f2f' }}><Delete /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredCharges.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">Aucune charge trouvée</TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
-        </TableContainer>
+        </Paper>
 
-        {/* formulaire Drawer */}
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination count={Math.ceil(filteredCharges.length / 5)} color="primary" />
+        </Box>
+
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box mt={8} p={3} width={400}>
-            <Typography variant="h6" mb={2}>{isEditing ? 'Modifier une charge' : 'Ajouter une charge'}</Typography>
-
+          <Box p={3} width={400}>
+            <Typography variant="h6" fontWeight={600} mb={2}>{isEditing ? 'Modifier' : 'Ajouter'} une charge</Typography>
             <FormControl fullWidth margin="normal">
               <InputLabel>Type</InputLabel>
-              <Select
-                value={form.type}
-                onChange={(e) => handleChange('type', e.target.value)}
-                label="Type"
-              >
+              <Select value={form.type} onChange={(e) => handleChange('type', e.target.value)} label="Type">
                 {['Salaire', 'CNSS', 'Entretien', 'Carburant', 'Vignette', 'Autre'].map(opt => (
                   <MenuItem key={opt} value={opt}>{opt}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-
             {['Salaire', 'CNSS'].includes(form.type) && (
               <Autocomplete
                 options={chauffeurs}
-                getOptionLabel={(option: Chauffeur) => `${option.nom} ${option.prenom}`}
+                getOptionLabel={(c: Chauffeur) => `${c.nom} ${c.prenom}`}
                 value={chauffeurSelectionne}
-                onChange={(_: React.SyntheticEvent, newValue: Chauffeur | null) => {
-                  setChauffeurSelectionne(newValue);
-                }}
-                renderInput={(params: any) => (
-                  <TextField {...params} label="Choisir Chauffeur" margin="normal" fullWidth />
-                )}
+                onChange={(_, value) => setChauffeurSelectionne(value)}
+                renderInput={(params) => <TextField {...params} label="Chauffeur" margin="normal" />}
               />
             )}
-
-            <TextField
-              label="Montant (MAD)"
-              type="number"
-              value={form.montant}
-              onChange={(e) => handleChange('montant', parseFloat(e.target.value))}
-              fullWidth
-              margin="normal"
-            />
-
-            <TextField
-              label="Date"
-              type="date"
-              value={form.date}
-              onChange={(e) => handleChange('date', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              margin="normal"
-            />
-
+            <TextField label="Montant (MAD)" type="number" value={form.montant} onChange={(e) => handleChange('montant', parseFloat(e.target.value))} fullWidth margin="normal" />
+            <TextField label="Date" type="date" value={form.date} onChange={(e) => handleChange('date', e.target.value)} fullWidth margin="normal" InputLabelProps={{ shrink: true }} />
             <FormControl fullWidth margin="normal">
               <InputLabel>Statut</InputLabel>
-              <Select
-                value={form.statut}
-                onChange={(e) => handleChange('statut', e.target.value)}
-                label="Statut"
-              >
+              <Select value={form.statut} onChange={(e) => handleChange('statut', e.target.value)} label="Statut">
                 <MenuItem value="Payé">Payé</MenuItem>
                 <MenuItem value="Non payé">Non payé</MenuItem>
               </Select>
             </FormControl>
-
-            <Button variant="contained" fullWidth onClick={handleSave} sx={{ mt: 2 }}>
+            <TextField label="Notes" value={form.notes || ''} onChange={(e) => handleChange('notes', e.target.value)} fullWidth margin="normal" />
+            <Button variant="contained" fullWidth onClick={handleSave} sx={{ mt: 2, backgroundColor: '#001e61', textTransform: 'none', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}>
               Enregistrer
             </Button>
           </Box>

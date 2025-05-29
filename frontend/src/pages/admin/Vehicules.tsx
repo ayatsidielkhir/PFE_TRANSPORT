@@ -1,5 +1,3 @@
-// Fichier VehiculesPage.tsx converti pour être responsive
-// Basé sur le style utilisé pour ChauffeursPage
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -8,7 +6,7 @@ import {
   Drawer, InputAdornment, Avatar, Typography, Dialog, MenuItem, Select,
   FormControl, InputLabel, Pagination
 } from '@mui/material';
-import { Add, Delete, Edit, Search, Download } from '@mui/icons-material';
+import { Add, Delete, Edit, Search } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 
@@ -150,7 +148,7 @@ const VehiculesPage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3}>
-        <Typography variant="h5" mb={2}>Liste Des Véhicules</Typography>
+        <Typography variant="h5" mb={2} color="primary">Liste Des Véhicules</Typography>
 
         <Box
           display="flex"
@@ -172,49 +170,60 @@ const VehiculesPage: React.FC = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ width: { xs: '100%', sm: '30%' } }}
+            sx={{ width: { xs: '100%', sm: '30%' }, backgroundColor: 'white', borderRadius: 1 }}
           />
 
-          <Button variant="contained" startIcon={<Add />} onClick={handleAdd} fullWidth={true}>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            sx={{
+              backgroundColor: '#001e61',
+              borderRadius: 3,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              px: 3,
+              '&:hover': { backgroundColor: '#001447' }
+            }}
+            onClick={handleAdd}
+            fullWidth={true}
+          >
             Ajouter Véhicule
           </Button>
         </Box>
 
-        <Box sx={{ overflowX: 'auto' }}>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                  {["Nom", "Chauffeur", "Matricule", "Type", "Km", "CT", "Assurance", "Carte Grise", "Vignette", "Agrément", "Carte Verte", "Extincteur", "Actions"].map(h => (
-                    <TableCell key={h}><strong>{h}</strong></TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginated.map((v, i) => (
-                  <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f0fbff' }}>
-                    <TableCell sx={{ fontWeight: 'bold' }}>{v.nom}</TableCell>
-                    <TableCell>{v.chauffeur}</TableCell>
-                    <TableCell>{v.matricule}</TableCell>
-                    <TableCell>{v.type}</TableCell>
-                    <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
-                    <TableCell>{v.controle_technique}</TableCell>
-                    <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.vignette)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.agrement)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.carteVerte)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.extincteur)}</TableCell>
-                    <TableCell>
-                      <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
-                      <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
-                    </TableCell>
-                  </TableRow>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                {["Nom", "Chauffeur", "Matricule", "Type", "Km", "CT", "Assurance", "Carte Grise", "Vignette", "Agrément", "Carte Verte", "Extincteur", "Actions"].map(h => (
+                  <TableCell key={h} sx={{ color: '#001e61', fontWeight: 'bold' }}>{h}</TableCell>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {paginated.map((v, i) => (
+                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
+                  <TableCell>{v.nom}</TableCell>
+                  <TableCell>{v.chauffeur}</TableCell>
+                  <TableCell>{v.matricule}</TableCell>
+                  <TableCell>{v.type}</TableCell>
+                  <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
+                  <TableCell>{v.controle_technique}</TableCell>
+                  <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.vignette)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.agrement)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.carteVerte)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.extincteur)}</TableCell>
+                  <TableCell>
+                    <Tooltip title="Modifier"><IconButton color="primary" onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton color="error" onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
         <Box display="flex" justifyContent="center" mt={2}>
           <Pagination

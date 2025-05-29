@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, IconButton, Avatar, Pagination, InputAdornment
+  TableHead, TableRow, IconButton, Pagination, InputAdornment, Paper, Typography
 } from '@mui/material';
 import { Delete, Edit, Add, Search as SearchIcon } from '@mui/icons-material';
 import axios from 'axios';
@@ -74,8 +74,8 @@ const PartenairesPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3}>
-        <h2>Liste Des Partenaires</h2>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>Liste des Partenaires</Typography>
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <TextField
@@ -90,60 +90,66 @@ const PartenairesPage: React.FC = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ width: '30%' }}
+            sx={{ width: '30%', backgroundColor: 'white', borderRadius: 1 }}
           />
-          <Button variant="contained" startIcon={<Add />} onClick={() => {
-            setEditData(null);
-            setForm({ nom: '', ice: '', adresse: '', logo: null });
-            setDrawerOpen(true);
-          }}>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => {
+              setEditData(null);
+              setForm({ nom: '', ice: '', adresse: '', logo: null });
+              setDrawerOpen(true);
+            }}
+            sx={{
+              backgroundColor: '#001e61',
+              fontWeight: 'bold',
+              '&:hover': { backgroundColor: '#001447' },
+              borderRadius: 3,
+              px: 3
+            }}
+          >
             Ajouter
           </Button>
         </Box>
 
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-              {['Logo', 'Nom', 'ICE', 'Adresse', 'Actions'].map(h => (
-                <TableCell key={h}><strong>{h}</strong></TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginated.map((p, i) => (
-              <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                <TableCell>
-                  {p.logo ? (
-                    <Avatar
-                        src={`https://mme-backend.onrender.com/uploads/partenaires/${p.logo}`}
-                        alt="logo"
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          transition: 'transform 0.5s ease-in-out',
-                          '&:hover': {
-                            transform: 'rotate(360deg) scale(1.1)',
-                          }
-                        }}
-                      />
-
-                  ) : 'N/A'}
-                </TableCell>
-                <TableCell  sx={{fontWeight:'bold'}}>{p.nom}</TableCell>
-                <TableCell sx={{fontWeight:'bold'}}>{p.ice}</TableCell>
-                <TableCell>{p.adresse}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => {
-                    setEditData(p);
-                    setForm({ nom: p.nom, ice: p.ice, adresse: p.adresse, logo: null });
-                    setDrawerOpen(true);
-                  }}><Edit /></IconButton>
-                  <IconButton onClick={() => handleDelete(p._id)}><Delete /></IconButton>
-                </TableCell>
+        <Paper elevation={2} sx={{ borderRadius: 2 }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                {['Logo', 'Nom', 'ICE', 'Adresse', 'Actions'].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {paginated.map((p, i) => (
+                <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
+                  <TableCell>
+                    {p.logo ? (
+                      <Box
+                        component="img"
+                        src={`https://mme-backend.onrender.com/uploads/partenaires/${p.logo}`}
+                        alt="logo partenaire"
+                        sx={{ width: 100, height: 100, objectFit: 'contain', borderRadius: 2, boxShadow: 1 }}
+                      />
+                    ) : 'N/A'}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{p.nom}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{p.ice}</TableCell>
+                  <TableCell>{p.adresse}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => {
+                      setEditData(p);
+                      setForm({ nom: p.nom, ice: p.ice, adresse: p.adresse, logo: null });
+                      setDrawerOpen(true);
+                    }} sx={{ color: '#001e61' }}><Edit /></IconButton>
+                    <IconButton onClick={() => handleDelete(p._id)} sx={{ color: '#d32f2f' }}><Delete /></IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
 
         <Box display="flex" justifyContent="center" mt={2}>
           <Pagination
@@ -155,13 +161,22 @@ const PartenairesPage: React.FC = () => {
         </Box>
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box mt={8} p={3} width={400} display="flex" flexDirection="column" alignItems="center">
-            <h3>{editData ? 'Modifier Partenaire' : 'Ajouter un Partenaire'}</h3>
+          <Box mt={8} p={3} width={400}>
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              {editData ? 'Modifier Partenaire' : 'Ajouter un Partenaire'}
+            </Typography>
             <TextField label="Nom" name="nom" fullWidth margin="normal" value={form.nom} onChange={handleInputChange} />
             <TextField label="ICE" name="ice" fullWidth margin="normal" value={form.ice} onChange={handleInputChange} />
             <TextField label="Adresse" name="adresse" fullWidth margin="normal" value={form.adresse} onChange={handleInputChange} />
             <TextField type="file" name="logo" fullWidth margin="normal" inputProps={{ accept: 'image/*' }} onChange={handleInputChange} />
-            <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={handleSubmit}>Enregistrer</Button>
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ mt: 2, backgroundColor: '#001e61', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}
+              onClick={handleSubmit}
+            >
+              Enregistrer
+            </Button>
           </Box>
         </Drawer>
       </Box>

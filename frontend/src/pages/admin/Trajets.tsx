@@ -128,8 +128,8 @@ const TrajetsPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3} width="100%" maxWidth="100%" sx={{ marginLeft: 0 }}>
-        <Typography variant="h5" fontWeight={600} mb={3}>Liste des Trajets</Typography>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>Liste des Trajets</Typography>
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Box display="flex" gap={2}>
@@ -158,7 +158,7 @@ const TrajetsPage: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<Add />}
-            sx={{ height: 40 }}
+            sx={{ height: 40, backgroundColor: '#001e61', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}
             onClick={() => {
               setForm({
                 depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '',
@@ -175,8 +175,8 @@ const TrajetsPage: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-              {["Itinéraire", "Date", "Chauffeur", "Véhicule", "Distance", "Conso. L", "Conso. MAD", "Partenaire", "Type", "Actions"].map(h => (
-                <TableCell key={h}><strong>{h}</strong></TableCell>
+              {['Itinéraire', 'Date', 'Chauffeur', 'Véhicule', 'Distance', 'Conso. L', 'Conso. MAD', 'Partenaire', 'Type', 'Actions'].map(h => (
+                <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -184,7 +184,7 @@ const TrajetsPage: React.FC = () => {
             {paginated.map((t, i) => {
               const part = getPartenaire(t.partenaire);
               return (
-                <TableRow key={t._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
+                <TableRow key={t._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
                   <TableCell>{t.depart} – {t.arrivee}</TableCell>
                   <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
                   <TableCell>{getChauffeurName(t.chauffeur)}</TableCell>
@@ -205,8 +205,8 @@ const TrajetsPage: React.FC = () => {
                   </TableCell>
                   <TableCell>{t.importExport}</TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(t)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(t._id)}><Delete /></IconButton></Tooltip>
+                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(t)} sx={{ color: '#001e61' }}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(t._id)} sx={{ color: '#d32f2f' }}><Delete /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               );
@@ -215,27 +215,16 @@ const TrajetsPage: React.FC = () => {
         </Table>
 
         <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(trajets.length / perPage)}
-            page={page}
-            onChange={(_, val) => setPage(val)}
-            color="primary"
-          />
+          <Pagination count={Math.ceil(trajets.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
         </Box>
 
-          <Drawer
-            anchor="right"
-            open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
-            ModalProps={{ keepMounted: true }}
-            sx={{
-              zIndex: 1201, // plus que la sidebar mais moins que AppBar
-              '& .MuiDrawer-paper': {
-                width: 400,
-                boxSizing: 'border-box',
-              }
-            }}
->          <Box mt={8} p={3} width={400} display="flex" flexDirection="column" alignItems="center">
+        <Drawer
+          anchor="right"
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          sx={{ '& .MuiDrawer-paper': { width: 400 } }}
+        >
+          <Box mt={8} p={3}>
             <Typography variant="h6" mb={2}>{form._id ? 'Modifier Trajet' : 'Ajouter Trajet'}</Typography>
             <TextField label="Départ" name="depart" fullWidth margin="normal" value={form.depart} onChange={handleInputChange} />
             <TextField label="Arrivée" name="arrivee" fullWidth margin="normal" value={form.arrivee} onChange={handleInputChange} />
@@ -266,12 +255,12 @@ const TrajetsPage: React.FC = () => {
               ))}
             </Select>
 
-            <Box mt={2}>
+            <Box mt={2} display="flex" flexDirection="column">
               <FormControlLabel control={<Checkbox checked={form.importExport === 'import'} onChange={() => setForm({ ...form, importExport: 'import' })} />} label="Import" />
               <FormControlLabel control={<Checkbox checked={form.importExport === 'export'} onChange={() => setForm({ ...form, importExport: 'export' })} />} label="Export" />
             </Box>
 
-            <Button variant="contained" fullWidth onClick={handleSubmit} sx={{ mt: 3 }}>
+            <Button variant="contained" fullWidth onClick={handleSubmit} sx={{ mt: 3, backgroundColor: '#001e61', '&:hover': { backgroundColor: '#001447' } }}>
               Enregistrer
             </Button>
           </Box>

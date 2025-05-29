@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Typography, Table, TableBody, TableCell, TableHead, TableRow,
-  Drawer, TextField, IconButton, Tooltip, Avatar, Link, Pagination
+  Drawer, TextField, IconButton, Tooltip, Avatar, Link, Pagination, Paper
 } from '@mui/material';
 import { Add, Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
@@ -47,7 +47,7 @@ const PlateformesPage: React.FC = () => {
       setLogo(null);
       fetchPlateformes();
     } catch (error) {
-      console.error("Erreur lors de l'enregistrement :", error);
+      alert("Erreur lors de l'enregistrement");
     }
   };
 
@@ -67,35 +67,50 @@ const PlateformesPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3}>
-        <Box
-          display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          mb={3}
-          gap={2}
-        >
-          <Typography variant="h5" fontWeight={600}>Liste des Plateformes</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => setDrawerOpen(true)} fullWidth={true}>
-            Ajouter Plateforme
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
+          Gestion des Plateformes
+        </Typography>
+
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Box flex={1} />
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => { setDrawerOpen(true); setForm({ nom: '', email: '', password: '', lien: '' }); setLogo(null); }}
+            sx={{
+              backgroundColor: '#001e61',
+              borderRadius: 3,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              px: 3,
+              boxShadow: 2,
+              '&:hover': { backgroundColor: '#001447' }
+            }}
+          >
+            Ajouter une plateforme
           </Button>
         </Box>
 
-        <Box sx={{ overflowX: 'auto' }}>
+        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+              <TableRow>
                 {['Logo', 'Nom', 'Email', 'Mot de passe', 'Lien', 'Actions'].map(h => (
-                  <TableCell key={h}><strong>{h}</strong></TableCell>
+                  <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>
+                    {h}
+                  </TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((p, i) => (
-                <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
+                <TableRow
+                  key={p._id}
+                  sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}
+                >
                   <TableCell>
-                    {p.logo ? <Avatar src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`} /> : 'N/A'}
+                    {p.logo ? <Avatar src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`} /> : '—'}
                   </TableCell>
                   <TableCell>{p.nom}</TableCell>
                   <TableCell>{p.email}</TableCell>
@@ -106,14 +121,18 @@ const PlateformesPage: React.FC = () => {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(p)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(p._id)}><Delete /></IconButton></Tooltip>
+                    <Tooltip title="Modifier">
+                      <IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(p)}><Edit /></IconButton>
+                    </Tooltip>
+                    <Tooltip title="Supprimer">
+                      <IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(p._id)}><Delete /></IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </Box>
+        </Paper>
 
         <Box display="flex" justifyContent="center" mt={2}>
           <Pagination
@@ -131,16 +150,27 @@ const PlateformesPage: React.FC = () => {
           PaperProps={{ sx: { width: { xs: '100%', sm: 400 } } }}
         >
           <Box p={3} display="flex" flexDirection="column" gap={2}>
-            <Typography variant="h6">Ajouter / Modifier une plateforme</Typography>
+            <Typography variant="h6" fontWeight={600}>Ajouter / Modifier une plateforme</Typography>
             <TextField label="Nom" name="nom" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} fullWidth />
             <TextField label="Email" name="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} fullWidth />
             <TextField label="Mot de passe" name="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} fullWidth />
-            <TextField label="Lien de la plateforme" name="lien" value={form.lien} onChange={(e) => setForm({ ...form, lien: e.target.value })} fullWidth />
+            <TextField label="Lien" name="lien" value={form.lien} onChange={(e) => setForm({ ...form, lien: e.target.value })} fullWidth />
             <Button variant="outlined" component="label">
               Télécharger Logo
               <input type="file" hidden onChange={e => setLogo(e.target.files?.[0] || null)} />
             </Button>
-            <Button variant="contained" onClick={handleSubmit}>Enregistrer</Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              sx={{
+                backgroundColor: '#001e61',
+                textTransform: 'none',
+                fontWeight: 'bold',
+                '&:hover': { backgroundColor: '#001447' }
+              }}
+            >
+              {form._id ? 'Mettre à jour' : 'Ajouter'}
+            </Button>
           </Box>
         </Drawer>
       </Box>
