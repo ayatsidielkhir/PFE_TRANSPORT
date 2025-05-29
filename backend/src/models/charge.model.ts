@@ -23,6 +23,13 @@ const chargeSchema = new mongoose.Schema(
       type: String,
       enum: ['Payé', 'Non payé'],
       default: 'Non payé',
+    },
+    chauffeur: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Chauffeur' // ⚠️ Assure-toi que ton modèle chauffeur s'appelle bien "Chauffeur"
+    },
+    notes: {
+      type: String
     }
   },
   { timestamps: true }

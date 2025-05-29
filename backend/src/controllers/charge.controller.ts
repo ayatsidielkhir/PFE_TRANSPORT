@@ -3,7 +3,10 @@ import Charge from '../models/charge.model';
 
 export const getCharges = async (_req: Request, res: Response) => {
   try {
-    const charges = await Charge.find().sort({ date: -1 });
+    const charges = await Charge.find()
+      .populate('chauffeur', 'nom prenom') // ne récupère que le nom et prénom
+      .sort({ date: -1 });
+
     res.json(charges);
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', error: err });
