@@ -1,8 +1,9 @@
+// ChauffeursPage.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
   TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Dialog, DialogTitle, DialogContent, Typography, InputAdornment
+  Dialog, DialogTitle, DialogContent, Typography, InputAdornment, Paper
 } from '@mui/material';
 import { Delete, Edit, Search as SearchIcon, Add } from '@mui/icons-material';
 import axios from 'axios';
@@ -32,12 +33,13 @@ const ChauffeursPage: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [page, setPage] = useState(1);
   const perPage = 5;
+
   const [form, setForm] = useState<Record<string, string | Blob | null>>({
     nom: '', prenom: '', telephone: '', cin: '', adresse: '',
     photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
   });
 
-  const isImageFile = (filename: string) => /\.(jpg|jpeg|png|webp|gif)$/i.test(filename);
+  const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
   const renderDocumentAvatar = (file: string | undefined) => {
     if (!file) return '—';
     const url = `https://mme-backend.onrender.com/uploads/chauffeurs/${file}`;
@@ -66,9 +68,7 @@ const ChauffeursPage: React.FC = () => {
     const { name, value, files } = e.target;
     if (files) {
       const file = files[0];
-      if (name === 'photo') {
-        setPreviewPhoto(URL.createObjectURL(file));
-      }
+      if (name === 'photo') setPreviewPhoto(URL.createObjectURL(file));
       setForm(prev => ({ ...prev, [name]: file }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
@@ -123,7 +123,10 @@ const ChauffeursPage: React.FC = () => {
   };
 
   const resetForm = () => {
-    setForm({ nom: '', prenom: '', telephone: '', cin: '', adresse: '', photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null });
+    setForm({
+      nom: '', prenom: '', telephone: '', cin: '', adresse: '',
+      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
+    });
     setSelectedChauffeur(null);
     setPreviewPhoto(null);
   };
@@ -136,65 +139,84 @@ const ChauffeursPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3}>
-        <Box display="flex" justifyContent="space-between" flexWrap="wrap" alignItems="center" mb={3}>
-          <Typography variant="h5" fontWeight={700}>Gestion des Chauffeurs</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => { setDrawerOpen(true); resetForm(); }}>
-            Ajouter Chauffeur
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
+          Gestion des Chauffeurs
+        </Typography>
+
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <TextField
+            size="small"
+            placeholder="Rechercher un chauffeur..."
+            value={search}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+            sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
+          />
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            sx={{
+              backgroundColor: '#001e61',
+              borderRadius: 3,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              px: 3,
+              boxShadow: 2,
+              '&:hover': { backgroundColor: '#001447' }
+            }}
+            onClick={() => { setDrawerOpen(true); resetForm(); }}
+          >
+            Ajouter un chauffeur
           </Button>
         </Box>
 
-        <TextField
-          fullWidth
-          placeholder="Rechercher par nom ou prénom..."
-          value={search}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>
-          }}
-          sx={{ mb: 2 }}
-        />
-
-        <Table size="small">
-          <TableHead sx={{ backgroundColor: '#e3f2fd' }}>
-            <TableRow>
-              <TableCell>Photo</TableCell>
-              <TableCell>Nom</TableCell>
-              <TableCell>Prénom</TableCell>
-              <TableCell>Téléphone</TableCell>
-              <TableCell>CIN</TableCell>
-              <TableCell>Adresse</TableCell>
-              <TableCell>CIN Doc</TableCell>
-              <TableCell>Permis</TableCell>
-              <TableCell>Visa</TableCell>
-              <TableCell>Certificat</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginated.map((c, i) => (
-              <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? 'white' : '#f5f5f5' }}>
-                <TableCell>{renderDocumentAvatar(c.photo)}</TableCell>
-                <TableCell>{c.nom}</TableCell>
-                <TableCell>{c.prenom}</TableCell>
-                <TableCell>{c.telephone}</TableCell>
-                <TableCell>{c.cin}</TableCell>
-                <TableCell>{c.adresse}</TableCell>
-                <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
-                <TableCell>
-                  <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
-                  <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
-                </TableCell>
+        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {paginated.map((c, i) => (
+                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                  <TableCell>{renderDocumentAvatar(c.photo)}</TableCell>
+                  <TableCell>{c.nom}</TableCell>
+                  <TableCell>{c.prenom}</TableCell>
+                  <TableCell>{c.telephone}</TableCell>
+                  <TableCell>{c.cin}</TableCell>
+                  <TableCell>{c.adresse}</TableCell>
+                  <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
+                  <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
+                  <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
+                  <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
+                  <TableCell>
+                    <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
 
-        <Box mt={2} display="flex" justifyContent="center">
-          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination
+            count={Math.ceil(filtered.length / perPage)}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+          />
         </Box>
 
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
@@ -224,7 +246,17 @@ const ChauffeursPage: React.FC = () => {
                 <input type="file" name={field} onChange={handleInputChange} />
               </Box>
             ))}
-            <Button variant="contained" fullWidth onClick={handleSubmit}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleSubmit}
+              sx={{
+                backgroundColor: '#001e61',
+                textTransform: 'none',
+                fontWeight: 'bold',
+                '&:hover': { backgroundColor: '#001447' }
+              }}
+            >
               {selectedChauffeur ? 'Mettre à jour' : 'Ajouter'}
             </Button>
           </Box>
