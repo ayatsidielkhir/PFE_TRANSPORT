@@ -1,236 +1,323 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Dialog, InputAdornment
+  Box, TextField, Typography, Button, Select, MenuItem,
+  Table, TableHead, TableRow, TableCell, TableBody, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Collapse, Divider, Stack, Badge
 } from '@mui/material';
-import { Delete, Edit, Download, Search as SearchIcon, Add } from '@mui/icons-material';
+import { Add, Delete } from '@mui/icons-material';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import axios from 'axios';
-import AdminLayout from '../../components/Layout';
+import Layout from '../../components/Layout';
 
-interface Chauffeur {
+interface Partenaire {
   _id: string;
   nom: string;
-  prenom: string;
-  telephone: string;
-  cin: string;
-  adresse?: string;
-  photo?: string;
-  scanCIN?: string;
-  scanPermis?: string;
-  scanVisa?: string;
-  certificatBonneConduite?: string;
+  ice?: string;
 }
 
-const ChauffeursPage: React.FC = () => {
-  const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
-  const [filteredChauffeurs, setFilteredChauffeurs] = useState<Chauffeur[]>([]);
-  const [search, setSearch] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [selectedChauffeur, setSelectedChauffeur] = useState<Chauffeur | null>(null);
-  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
-  const [dialogImageSrc, setDialogImageSrc] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
-  const [page, setPage] = useState(1);
-  const perPage = 5;
+interface Ligne {
+  date: string;
+  remorque: string;
+  chargement: string;
+  dechargement: string;
+  totalHT: number;
+}
 
-  const [form, setForm] = useState<Record<string, string | Blob | null>>({
-    nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-    photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-  });
+interface Facture {
+  _id: string;
+  numero: string;
+  date: string;
+  client: { nom: string; _id?: string };
+  ice: string;
+  tracteur: string;
+  totalTTC: number;
+  fileUrl: string;
+  statut: 'payée' | 'impayée';
+}
 
-  const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
-  const isPdfFile = (filename: string) => /\.pdf$/i.test(filename);
+const FacturesPage: React.FC = () => {
+  const [date, setDate] = useState('');
+  const [tracteur, setTracteur] = useState('');
+  const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
+  const [client, setClient] = useState('');
+  const [tva, setTva] = useState(0);
+  const [lignes, setLignes] = useState<Ligne[]>([]);
+  const [factures, setFactures] = useState<Facture[]>([]);
+  const [factureToDelete, setFactureToDelete] = useState<Facture | null>(null);
+  const [moisFiltre, setMoisFiltre] = useState('');
+  const [anneeFiltre, setAnneeFiltre] = useState('');
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const selectedClient = partenaires.find(p => p._id === client);
+  const today = new Date().toISOString().split('T')[0];
 
-  const renderDocumentAvatar = (file: string | undefined) => {
-    if (!file) return 'N/A';
-    const fileUrl = `https://mme-backend.onrender.com/uploads/chauffeurs/${encodeURIComponent(file)}`;
-    return (
-      <Avatar
-        src={isImageFile(file) ? fileUrl : '/pdf-icon.png'}
-        sx={{ width: 40, height: 40, cursor: 'pointer' }}
-        onClick={() => {
-          setDialogImageSrc(fileUrl);
-          setOpenDialog(true);
-        }}
-      />
-    );
-  };
-
-  const fetchChauffeurs = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
-    setChauffeurs(res.data);
-    setFilteredChauffeurs(res.data);
-  };
-
-  useEffect(() => { fetchChauffeurs(); }, []);
   useEffect(() => {
-    const filtered = chauffeurs.filter(c =>
-      c.nom.toLowerCase().includes(search.toLowerCase()) ||
-      c.prenom.toLowerCase().includes(search.toLowerCase())
+    axios.get('http://localhost:5000/api/partenaires').then(res => setPartenaires(res.data));
+    axios.get('http://localhost:5000/api/factures').then(res => setFactures(res.data));
+    setDate(today);
+  }, []);
+
+  const totalHT = lignes.reduce((sum, l) => sum + (Number(l.totalHT) || 0), 0);
+  const totalTVA = totalHT * (isNaN(tva) ? 0 : tva) / 100;
+  const totalTTC = totalHT + totalTVA;
+
+  const isFormValid = () => {
+    return (
+      client &&
+      date &&
+      lignes.length > 0 &&
+      lignes.every(l => l.date && l.remorque && l.chargement && l.dechargement && !isNaN(l.totalHT))
     );
-    setFilteredChauffeurs(filtered);
-    setPage(1);
-  }, [search, chauffeurs]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, files } = e.target;
-    if (files) {
-      const file = files[0];
-      if (name === 'photo') {
-        setPreviewPhoto(URL.createObjectURL(file));
-      }
-      setForm(prev => ({ ...prev, [name]: file }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-    }
   };
 
-  const handleSubmit = async () => {
-    if (!form.nom || !form.prenom || !form.telephone || !form.cin) {
-      setErrorMsg('Tous les champs obligatoires doivent être remplis (nom, prénom, téléphone, CIN).');
-      return;
-    }
-
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value instanceof Blob || typeof value === 'string') {
-        formData.append(key, value);
-      }
-    });
-
-    try {
-      const res = selectedChauffeur
-        ? await axios.put(`https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`, formData)
-        : await axios.post('https://mme-backend.onrender.com/api/chauffeurs', formData);
-
-      if (res.status === 200 || res.status === 201) {
-        alert(selectedChauffeur ? 'Chauffeur modifié avec succès !' : 'Chauffeur ajouté avec succès !');
-        setDrawerOpen(false);
-        resetForm();
-        fetchChauffeurs();
-        setErrorMsg('');
-      }
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Erreur lors de l'enregistrement du chauffeur");
-    }
+  const handleLigneChange = <K extends keyof Ligne>(index: number, field: K, value: string | number) => {
+    const updated = [...lignes];
+    updated[index] = {
+      ...updated[index],
+      [field]: field === 'totalHT' ? parseFloat(value as string) || 0 : value
+    };
+    setLignes(updated);
   };
 
-  const handleEdit = (chauffeur: Chauffeur) => {
-    setSelectedChauffeur(chauffeur);
-    setForm({
-      nom: chauffeur.nom,
-      prenom: chauffeur.prenom,
-      telephone: chauffeur.telephone,
-      cin: chauffeur.cin,
-      adresse: chauffeur.adresse || '',
-      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-    });
-    setPreviewPhoto(null);
-    setDrawerOpen(true);
-    setErrorMsg('');
+  const addLigne = () => {
+    setLignes([...lignes, { date: '', remorque: '', chargement: '', dechargement: '', totalHT: 0 }]);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Voulez-vous vraiment supprimer ce chauffeur ?')) return;
-    await axios.delete(`https://mme-backend.onrender.com/api/chauffeurs/${id}`);
-    fetchChauffeurs();
+  const removeLigne = (index: number) => {
+    setLignes(lignes.filter((_, i) => i !== index));
   };
 
   const resetForm = () => {
-    setForm({
-      nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-    });
-    setSelectedChauffeur(null);
-    setPreviewPhoto(null);
+    setDate(today);
+    setClient('');
+    setTracteur('');
+    setTva(0);
+    setLignes([]);
   };
 
-  const paginatedChauffeurs = filteredChauffeurs.slice((page - 1) * perPage, page * perPage);
+  const handleSubmit = async () => {
+    if (!isFormValid()) {
+      alert("Merci de compléter tous les champs de la facture.");
+      return;
+    }
+
+    try {
+      const res = await axios.post('http://localhost:5000/api/factures/manual', {
+        date,
+        partenaire: client,
+        ice: selectedClient?.ice || '',
+        tracteur,
+        lignes,
+        tva: isNaN(tva) ? 0 : tva,
+        totalHT: parseFloat(totalHT.toFixed(2)),
+        totalTTC: parseFloat(totalTTC.toFixed(2))
+      });
+
+      window.open(`http://localhost:5000${res.data.fileUrl}`, '_blank');
+      const updated = await axios.get('http://localhost:5000/api/factures');
+      setFactures(updated.data);
+      resetForm();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la génération de la facture.");
+    }
+  };
+
+  const handleEdit = async (facture: Facture) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/factures/${facture._id}`);
+      const data = res.data;
+      setDate(data.date);
+      setClient(data.partenaire._id);
+      setTracteur(data.tracteur);
+      setLignes(data.lignes);
+    } catch (err) {
+      console.error('Erreur lors du chargement de la facture à modifier');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!factureToDelete) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/factures/${factureToDelete._id}`);
+      setFactures(prev => prev.filter(f => f._id !== factureToDelete._id));
+      setFactureToDelete(null);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la suppression.");
+    }
+  };
+
+  const toggleStatut = async (facture: Facture) => {
+    try {
+      await axios.put(`http://localhost:5000/api/factures/${facture._id}/statut`);
+      const updated = await axios.get('http://localhost:5000/api/factures');
+      setFactures(updated.data);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors du changement de statut.");
+    }
+  };
+
+  const handleExportExcel = () => {
+    const data = factures.map(f => ({
+      Numero: f.numero,
+      Date: f.date,
+      Client: f.client?.nom || '',
+      Tracteur: f.tracteur,
+      TotalTTC: f.totalTTC,
+      Statut: f.statut,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Factures');
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(blob, 'factures.xlsx');
+  };
+
+  const facturesFiltrees = factures.filter(f => {
+    const [fAnnee, fMois] = f.date.split('-');
+    return (!anneeFiltre || fAnnee === anneeFiltre) && (!moisFiltre || fMois === moisFiltre);
+  });
+
+  const facturesJour = facturesFiltrees.filter(f => f.date === today);
+  const facturesArchivees = facturesFiltrees.filter(f => f.date !== today);
+  const annees = Array.from(new Set(factures.map(f => f.date.split('-')[0])));
+  const impayeesCount = useMemo(() => factures.filter(f => f.statut === 'impayée').length, [factures]);
 
   return (
-    <AdminLayout>
+    <Layout>
       <Box p={3}>
-        <h2>Liste Des Chauffeurs</h2>
+        {/* En-tête */}
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h5" fontWeight={600}>Nouvelle Facture</Typography>
+          <Badge badgeContent={impayeesCount} color="error">Factures impayées</Badge>
+        </Stack>
 
-        <Box
-          display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          gap={2}
-          mb={2}
-        >
-          <TextField
-            size="small"
-            placeholder="Rechercher..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-            sx={{ width: { xs: '100%', sm: '30%' } }}
-          />
-
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            fullWidth={true}
-            sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#1565c0' }, textTransform: 'none' }}
-            onClick={() => { setDrawerOpen(true); resetForm(); }}
-          >
-            Ajouter Chauffeur
-          </Button>
+        {/* Formulaire ajout facture */}
+        <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+          <TextField fullWidth label="Date" type="date" value={date} onChange={e => setDate(e.target.value)} InputLabelProps={{ shrink: true }} />
+          <Select fullWidth displayEmpty value={client} onChange={e => setClient(e.target.value)}>
+            <MenuItem value="">Sélectionner client</MenuItem>
+            {partenaires.map(p => <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>)}
+          </Select>
+          <TextField fullWidth label="ICE" value={selectedClient?.ice || ''} disabled />
+          <TextField fullWidth label="Tracteur" value={tracteur} onChange={e => setTracteur(e.target.value)} />
+          <TextField fullWidth label="TVA (%)" type="number" value={isNaN(tva) ? '' : tva} onChange={e => setTva(parseFloat(e.target.value))} />
         </Box>
 
-        <Box sx={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd' }}>{h}</TableCell>
-                ))}
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell><TableCell>Remorque</TableCell><TableCell>Chargement</TableCell>
+              <TableCell>Déchargement</TableCell><TableCell>Total HT</TableCell><TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {lignes.map((ligne, i) => (
+              <TableRow key={i}>
+                <TableCell><TextField type="date" value={ligne.date} onChange={e => handleLigneChange(i, 'date', e.target.value)} /></TableCell>
+                <TableCell><TextField value={ligne.remorque} onChange={e => handleLigneChange(i, 'remorque', e.target.value)} /></TableCell>
+                <TableCell><TextField value={ligne.chargement} onChange={e => handleLigneChange(i, 'chargement', e.target.value)} /></TableCell>
+                <TableCell><TextField value={ligne.dechargement} onChange={e => handleLigneChange(i, 'dechargement', e.target.value)} /></TableCell>
+                <TableCell><TextField type="number" value={ligne.totalHT} onChange={e => handleLigneChange(i, 'totalHT', e.target.value)} /></TableCell>
+                <TableCell><IconButton onClick={() => removeLigne(i)}><Delete /></IconButton></TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedChauffeurs.map((c, i) => (
-                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? 'white' : '#f0fbff' }}>
-                  <TableCell>{c.photo ? renderDocumentAvatar(c.photo) : 'N/A'}</TableCell>
-                  <TableCell>{c.nom}</TableCell>
-                  <TableCell>{c.prenom}</TableCell>
-                  <TableCell>{c.telephone}</TableCell>
-                  <TableCell>{c.cin}</TableCell>
-                  <TableCell>{c.adresse}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
-                  <TableCell>
-                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
+            ))}
+            <TableRow>
+              <TableCell colSpan={6}><Button onClick={addLigne} startIcon={<Add />}>Ajouter ligne</Button></TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(filteredChauffeurs.length / perPage)}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
-          />
-        </Box>
+        <Stack direction="row" spacing={2} mt={2}>
+          <TextField label="Total HT" value={totalHT.toFixed(2)} disabled />
+          <TextField label="TVA" value={totalTVA.toFixed(2)} disabled />
+          <TextField label="Total TTC" value={totalTTC.toFixed(2)} disabled />
+        </Stack>
+
+        <Stack direction="row" spacing={2} mt={2}>
+          <Button variant="contained" onClick={handleSubmit} disabled={!isFormValid()}>Générer et enregistrer</Button>
+          <Button variant="outlined" color="secondary" onClick={resetForm}>Réinitialiser</Button>
+        </Stack>
+
+        {/* Historique */}
+        <Divider sx={{ my: 4 }} />
+        <Typography variant="h6" fontWeight={600}>Historique des factures</Typography>
+
+        <Stack direction="row" spacing={2} mb={2} mt={2}>
+          <Select value={moisFiltre} onChange={e => setMoisFiltre(e.target.value)} displayEmpty>
+            <MenuItem value="">Tous les mois</MenuItem>
+            {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+          </Select>
+          <Select value={anneeFiltre} onChange={e => setAnneeFiltre(e.target.value)} displayEmpty>
+            <MenuItem value="">Toutes les années</MenuItem>
+            {annees.map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
+          </Select>
+          <Button variant="outlined" onClick={handleExportExcel}>Exporter Excel</Button>
+        </Stack>
+
+        {[{ title: 'Factures du jour', data: facturesJour }, { title: 'Archives', data: facturesArchivees }].map(section => (
+          <Box key={section.title} mt={3}>
+            <Typography variant="subtitle1" fontWeight={600}>{section.title}</Typography>
+            <Collapse in={section.title === 'Archives' ? archiveOpen : true}>
+              <Table size="small">
+                <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableRow>
+                    <TableCell>N°</TableCell><TableCell>Date</TableCell><TableCell>Client</TableCell>
+                    <TableCell>Tracteur</TableCell><TableCell>Total TTC</TableCell>
+                    <TableCell>Statut</TableCell><TableCell>PDF</TableCell><TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {section.data.map(f => (
+                    <TableRow key={f._id}>
+                      <TableCell>{f.numero}</TableCell>
+                      <TableCell>{f.date}</TableCell>
+                      <TableCell>{f.client?.nom || '—'}</TableCell>
+                      <TableCell>{f.tracteur}</TableCell>
+                      <TableCell>{f.totalTTC.toFixed(2)} DH</TableCell>
+                      <TableCell>
+                        <Button size="small" variant="contained" color={f.statut === 'payée' ? 'success' : 'error'} onClick={() => toggleStatut(f)}>
+                          {f.statut}
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Button size="small" onClick={() => window.open(`http://localhost:5000${f.fileUrl}`, '_blank')}>
+                          Voir PDF
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Button size="small" color="warning" onClick={() => handleEdit(f)}>Modifier</Button>
+                        <Button size="small" color="error" onClick={() => setFactureToDelete(f)}>Supprimer</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Collapse>
+            {section.title === 'Archives' && (
+              <Button onClick={() => setArchiveOpen(!archiveOpen)} sx={{ mt: 1 }}>
+                {archiveOpen ? 'Masquer les archives' : 'Afficher les archives'}
+              </Button>
+            )}
+          </Box>
+        ))}
+
+        {/* Modal de suppression */}
+        <Dialog open={!!factureToDelete} onClose={() => setFactureToDelete(null)}>
+          <DialogTitle>Confirmation</DialogTitle>
+          <DialogContent>Supprimer la facture n° {factureToDelete?.numero} ?</DialogContent>
+          <DialogActions>
+            <Button onClick={() => setFactureToDelete(null)}>Annuler</Button>
+            <Button color="error" onClick={handleDelete}>Supprimer</Button>
+          </DialogActions>
+        </Dialog>
       </Box>
-    </AdminLayout>
+    </Layout>
   );
 };
 
-export default ChauffeursPage;
+export default FacturesPage;

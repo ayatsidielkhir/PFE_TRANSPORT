@@ -25,7 +25,7 @@ const PartenairesPage: React.FC = () => {
   const perPage = 5;
 
   const fetchPartenaires = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/partenaires');
+    const res = await axios.get('http://localhost:5000/api/partenaires');
     setPartenaires(res.data);
   };
 
@@ -50,9 +50,9 @@ const PartenairesPage: React.FC = () => {
     if (form.logo) formData.append('logo', form.logo);
 
     if (editData) {
-      await axios.put(`https://mme-backend.onrender.com/api/partenaires/${editData._id}`, formData);
+      await axios.put(`http://localhost:5000/api/partenaires/${editData._id}`, formData);
     } else {
-      await axios.post('https://mme-backend.onrender.com/api/partenaires', formData);
+      await axios.post('http://localhost:5000/api/partenaires', formData);
     }
 
     setDrawerOpen(false);
@@ -62,7 +62,7 @@ const PartenairesPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await axios.delete(`https://mme-backend.onrender.com/api/partenaires/${id}`);
+    await axios.delete(`http://localhost:5000/api/partenaires/${id}`);
     fetchPartenaires();
   };
 
@@ -77,14 +77,7 @@ const PartenairesPage: React.FC = () => {
       <Box p={3}>
         <h2>Liste Des Partenaires</h2>
 
-        <Box
-          display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          gap={2}
-          mb={2}
-        >
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <TextField
             size="small"
             placeholder="Rechercher par nom"
@@ -97,38 +90,32 @@ const PartenairesPage: React.FC = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ width: { xs: '100%', sm: '30%' } }}
+            sx={{ width: '30%' }}
           />
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            fullWidth={true}
-            onClick={() => {
-              setEditData(null);
-              setForm({ nom: '', ice: '', adresse: '', logo: null });
-              setDrawerOpen(true);
-            }}
-          >
+          <Button variant="contained" startIcon={<Add />} onClick={() => {
+            setEditData(null);
+            setForm({ nom: '', ice: '', adresse: '', logo: null });
+            setDrawerOpen(true);
+          }}>
             Ajouter
           </Button>
         </Box>
 
-        <Box sx={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                {['Logo', 'Nom', 'ICE', 'Adresse', 'Actions'].map(h => (
-                  <TableCell key={h}><strong>{h}</strong></TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginated.map((p, i) => (
-                <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                  <TableCell>
-                    {p.logo ? (
-                      <Avatar
-                        src={`https://mme-backend.onrender.com/uploads/partenaires/${p.logo}`}
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+              {['Logo', 'Nom', 'ICE', 'Adresse', 'Actions'].map(h => (
+                <TableCell key={h}><strong>{h}</strong></TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {paginated.map((p, i) => (
+              <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
+                <TableCell>
+                  {p.logo ? (
+                    <Avatar
+                        src={`http://localhost:5000/uploads/partenaires/${p.logo}`}
                         alt="logo"
                         sx={{
                           width: 50,
@@ -139,24 +126,24 @@ const PartenairesPage: React.FC = () => {
                           }
                         }}
                       />
-                    ) : 'N/A'}
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{p.nom}</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{p.ice}</TableCell>
-                  <TableCell>{p.adresse}</TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => {
-                      setEditData(p);
-                      setForm({ nom: p.nom, ice: p.ice, adresse: p.adresse, logo: null });
-                      setDrawerOpen(true);
-                    }}><Edit /></IconButton>
-                    <IconButton onClick={() => handleDelete(p._id)}><Delete /></IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
+
+                  ) : 'N/A'}
+                </TableCell>
+                <TableCell  sx={{fontWeight:'bold'}}>{p.nom}</TableCell>
+                <TableCell sx={{fontWeight:'bold'}}>{p.ice}</TableCell>
+                <TableCell>{p.adresse}</TableCell>
+                <TableCell>
+                  <IconButton onClick={() => {
+                    setEditData(p);
+                    setForm({ nom: p.nom, ice: p.ice, adresse: p.adresse, logo: null });
+                    setDrawerOpen(true);
+                  }}><Edit /></IconButton>
+                  <IconButton onClick={() => handleDelete(p._id)}><Delete /></IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
         <Box display="flex" justifyContent="center" mt={2}>
           <Pagination
@@ -167,13 +154,8 @@ const PartenairesPage: React.FC = () => {
           />
         </Box>
 
-        <Drawer
-          anchor="right"
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          PaperProps={{ sx: { width: { xs: '100%', sm: 400 } } }}
-        >
-          <Box mt={8} p={3} display="flex" flexDirection="column" alignItems="center">
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box mt={8} p={3} width={400} display="flex" flexDirection="column" alignItems="center">
             <h3>{editData ? 'Modifier Partenaire' : 'Ajouter un Partenaire'}</h3>
             <TextField label="Nom" name="nom" fullWidth margin="normal" value={form.nom} onChange={handleInputChange} />
             <TextField label="ICE" name="ice" fullWidth margin="normal" value={form.ice} onChange={handleInputChange} />

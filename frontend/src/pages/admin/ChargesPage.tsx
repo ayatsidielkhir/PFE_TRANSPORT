@@ -1,236 +1,307 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Dialog, InputAdornment
+  Box, Button, TextField, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, IconButton, Drawer, Typography, MenuItem, Select,
+  FormControl, InputLabel, Pagination
 } from '@mui/material';
-import { Delete, Edit, Download, Search as SearchIcon, Add } from '@mui/icons-material';
-import axios from 'axios';
+import { Add, Edit, Delete, PictureAsPdf, GridOn } from '@mui/icons-material';
+import Autocomplete from '@mui/material/Autocomplete';
+import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+
+interface Charge {
+  _id?: string;
+  type: string;
+  montant: number;
+  date: string;
+  statut: 'Payé' | 'Non payé';
+}
 
 interface Chauffeur {
   _id: string;
   nom: string;
   prenom: string;
-  telephone: string;
-  cin: string;
-  adresse?: string;
-  photo?: string;
-  scanCIN?: string;
-  scanPermis?: string;
-  scanVisa?: string;
-  certificatBonneConduite?: string;
 }
 
-const ChauffeursPage: React.FC = () => {
+const ChargesPage: React.FC = () => {
+  const [charges, setCharges] = useState<Charge[]>([]);
+  const [filteredCharges, setFilteredCharges] = useState<Charge[]>([]);
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
-  const [filteredChauffeurs, setFilteredChauffeurs] = useState<Chauffeur[]>([]);
-  const [search, setSearch] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [selectedChauffeur, setSelectedChauffeur] = useState<Chauffeur | null>(null);
-  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
-  const [dialogImageSrc, setDialogImageSrc] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
-  const [page, setPage] = useState(1);
-  const perPage = 5;
+  const [chauffeurSelectionne, setChauffeurSelectionne] = useState<Chauffeur | null>(null);
 
-  const [form, setForm] = useState<Record<string, string | Blob | null>>({
-    nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-    photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
+  const [form, setForm] = useState<Charge>({
+    type: '',
+    montant: 0,
+    date: '',
+    statut: 'Non payé',
   });
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
-  const isPdfFile = (filename: string) => /\.pdf$/i.test(filename);
+  const [filterType, setFilterType] = useState<string>('');
+  const [filterStatut, setFilterStatut] = useState<string>('');
+  const [filterDateFrom, setFilterDateFrom] = useState<string>('');
+  const [filterDateTo, setFilterDateTo] = useState<string>('');
 
-  const renderDocumentAvatar = (file: string | undefined) => {
-    if (!file) return 'N/A';
-    const fileUrl = `https://mme-backend.onrender.com/uploads/chauffeurs/${encodeURIComponent(file)}`;
-    return (
-      <Avatar
-        src={isImageFile(file) ? fileUrl : '/pdf-icon.png'}
-        sx={{ width: 40, height: 40, cursor: 'pointer' }}
-        onClick={() => {
-          setDialogImageSrc(fileUrl);
-          setOpenDialog(true);
-        }}
-      />
-    );
+  useEffect(() => {
+    fetchCharges();
+    fetchChauffeurs();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [charges, filterType, filterStatut, filterDateFrom, filterDateTo]);
+
+  const fetchCharges = async () => {
+    const res = await axios.get('/api/charges');
+    setCharges(res.data);
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
-    setChauffeurs(res.data);
-    setFilteredChauffeurs(res.data);
-  };
-
-  useEffect(() => { fetchChauffeurs(); }, []);
-  useEffect(() => {
-    const filtered = chauffeurs.filter(c =>
-      c.nom.toLowerCase().includes(search.toLowerCase()) ||
-      c.prenom.toLowerCase().includes(search.toLowerCase())
-    );
-    setFilteredChauffeurs(filtered);
-    setPage(1);
-  }, [search, chauffeurs]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, files } = e.target;
-    if (files) {
-      const file = files[0];
-      if (name === 'photo') {
-        setPreviewPhoto(URL.createObjectURL(file));
-      }
-      setForm(prev => ({ ...prev, [name]: file }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!form.nom || !form.prenom || !form.telephone || !form.cin) {
-      setErrorMsg('Tous les champs obligatoires doivent être remplis (nom, prénom, téléphone, CIN).');
-      return;
-    }
-
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value instanceof Blob || typeof value === 'string') {
-        formData.append(key, value);
-      }
-    });
-
     try {
-      const res = selectedChauffeur
-        ? await axios.put(`https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`, formData)
-        : await axios.post('https://mme-backend.onrender.com/api/chauffeurs', formData);
-
-      if (res.status === 200 || res.status === 201) {
-        alert(selectedChauffeur ? 'Chauffeur modifié avec succès !' : 'Chauffeur ajouté avec succès !');
-        setDrawerOpen(false);
-        resetForm();
-        fetchChauffeurs();
-        setErrorMsg('');
-      }
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Erreur lors de l'enregistrement du chauffeur");
+      const res = await axios.get('/api/chauffeurs');
+      setChauffeurs(res.data);
+    } catch (err) {
+      console.error('Erreur chargement chauffeurs', err);
     }
   };
 
-  const handleEdit = (chauffeur: Chauffeur) => {
-    setSelectedChauffeur(chauffeur);
-    setForm({
-      nom: chauffeur.nom,
-      prenom: chauffeur.prenom,
-      telephone: chauffeur.telephone,
-      cin: chauffeur.cin,
-      adresse: chauffeur.adresse || '',
-      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-    });
-    setPreviewPhoto(null);
+  const applyFilters = () => {
+    let filtered = [...charges];
+
+    if (filterType) filtered = filtered.filter(c => c.type === filterType);
+    if (filterStatut) filtered = filtered.filter(c => c.statut === filterStatut);
+    if (filterDateFrom) filtered = filtered.filter(c => new Date(c.date) >= new Date(filterDateFrom));
+    if (filterDateTo) filtered = filtered.filter(c => new Date(c.date) <= new Date(filterDateTo));
+
+    setFilteredCharges(filtered);
+  };
+
+  const handleChange = (field: keyof Charge, value: any) => {
+    setForm({ ...form, [field]: value });
+    if (field === 'type' && !['Salaire', 'CNSS'].includes(value)) {
+      setChauffeurSelectionne(null);
+    }
+  };
+
+  const handleAdd = () => {
+    setForm({ type: '', montant: 0, date: '', statut: 'Non payé' });
+    setChauffeurSelectionne(null);
+    setIsEditing(false);
     setDrawerOpen(true);
-    setErrorMsg('');
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Voulez-vous vraiment supprimer ce chauffeur ?')) return;
-    await axios.delete(`https://mme-backend.onrender.com/api/chauffeurs/${id}`);
-    fetchChauffeurs();
+  const handleEdit = (charge: Charge) => {
+    setForm(charge);
+    setChauffeurSelectionne(null);
+    setIsEditing(true);
+    setDrawerOpen(true);
   };
 
-  const resetForm = () => {
-    setForm({
-      nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
+  const handleSave = async () => {
+    try {
+      const res = isEditing && form._id
+        ? await axios.put(`/api/charges/${form._id}`, form)
+        : await axios.post('/api/charges', form);
+      if ([200, 201].includes(res.status)) {
+        fetchCharges();
+        setDrawerOpen(false);
+      }
+    } catch {
+      alert("Erreur lors de l'enregistrement.");
+    }
+  };
+
+  const handleDelete = async (id?: string) => {
+    if (!id) return;
+    if (window.confirm("Supprimer cette charge ?")) {
+      await axios.delete(`/api/charges/${id}`);
+      fetchCharges();
+    }
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Liste des Charges", 14, 16);
+
+    autoTable(doc, {
+      startY: 20,
+      head: [['Type', 'Montant (MAD)', 'Date', 'Statut']],
+      body: filteredCharges.map(c => [
+        c.type,
+        c.montant.toFixed(2),
+        new Date(c.date).toLocaleDateString(),
+        c.statut,
+      ]),
     });
-    setSelectedChauffeur(null);
-    setPreviewPhoto(null);
+
+    doc.save('charges.pdf');
   };
 
-  const paginatedChauffeurs = filteredChauffeurs.slice((page - 1) * perPage, page * perPage);
+  const exportExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(filteredCharges.map(c => ({
+      Type: c.type,
+      Montant: c.montant,
+      Date: new Date(c.date).toLocaleDateString(),
+      Statut: c.statut,
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Charges');
+    XLSX.writeFile(wb, 'charges.xlsx');
+  };
 
   return (
     <AdminLayout>
       <Box p={3}>
-        <h2>Liste Des Chauffeurs</h2>
+        {/* boutons haut */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h5">Gestion des Charges</Typography>
+          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>Ajouter</Button>
+        </Box>
 
-        <Box
-          display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          gap={2}
-          mb={2}
-        >
-          <TextField
-            size="small"
-            placeholder="Rechercher..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-            sx={{ width: { xs: '100%', sm: '30%' } }}
-          />
+        {/* filtres */}
+        <Box display="flex" gap={2} mb={3} flexWrap="wrap">
+          <FormControl sx={{ minWidth: 120 }}>
+            <InputLabel>Type</InputLabel>
+            <Select label="Type" value={filterType} onChange={e => setFilterType(e.target.value)} size="small">
+              <MenuItem value="">Tous</MenuItem>
+              {['Salaire', 'CNSS', 'Entretien', 'Carburant', 'Vignette', 'Autre'].map(opt => (
+                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            fullWidth={true}
-            sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#1565c0' }, textTransform: 'none' }}
-            onClick={() => { setDrawerOpen(true); resetForm(); }}
-          >
-            Ajouter Chauffeur
+          <FormControl sx={{ minWidth: 120 }}>
+            <InputLabel>Statut</InputLabel>
+            <Select label="Statut" value={filterStatut} onChange={e => setFilterStatut(e.target.value)} size="small">
+              <MenuItem value="">Tous</MenuItem>
+              <MenuItem value="Payé">Payé</MenuItem>
+              <MenuItem value="Non payé">Non payé</MenuItem>
+            </Select>
+          </FormControl>
+
+          <TextField label="Date de début" type="date" InputLabelProps={{ shrink: true }} value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} size="small" />
+          <TextField label="Date de fin" type="date" InputLabelProps={{ shrink: true }} value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} size="small" />
+
+          <Button variant="outlined" onClick={() => { setFilterType(''); setFilterStatut(''); setFilterDateFrom(''); setFilterDateTo(''); }}>
+            Réinitialiser
           </Button>
         </Box>
 
-        <Box sx={{ overflowX: 'auto' }}>
+        {/* export boutons */}
+        <Box mb={2} display="flex" gap={2}>
+          <Button variant="outlined" startIcon={<PictureAsPdf />} onClick={exportPDF}>Exporter PDF</Button>
+          <Button variant="outlined" startIcon={<GridOn />} onClick={exportExcel}>Exporter Excel</Button>
+        </Box>
+
+        {/* tableau */}
+        <TableContainer component={Paper}>
           <Table>
-            <TableHead>
+            <TableHead sx={{ backgroundColor: '#f0f0f0' }}>
               <TableRow>
-                {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd' }}>{h}</TableCell>
-                ))}
+                <TableCell><strong>Type</strong></TableCell>
+                <TableCell><strong>Montant</strong></TableCell>
+                <TableCell><strong>Date</strong></TableCell>
+                <TableCell><strong>Statut</strong></TableCell>
+                <TableCell><strong>Actions</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedChauffeurs.map((c, i) => (
-                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? 'white' : '#f0fbff' }}>
-                  <TableCell>{c.photo ? renderDocumentAvatar(c.photo) : 'N/A'}</TableCell>
-                  <TableCell>{c.nom}</TableCell>
-                  <TableCell>{c.prenom}</TableCell>
-                  <TableCell>{c.telephone}</TableCell>
-                  <TableCell>{c.cin}</TableCell>
-                  <TableCell>{c.adresse}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
+              {filteredCharges.map((c, i) => (
+                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                  <TableCell>{c.type}</TableCell>
+                  <TableCell>{c.montant.toFixed(2)} MAD</TableCell>
+                  <TableCell>{new Date(c.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{c.statut}</TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
+                    <IconButton onClick={() => handleEdit(c)}><Edit /></IconButton>
+                    <IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredCharges.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">Aucune charge trouvée</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
-        </Box>
+        </TableContainer>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(filteredChauffeurs.length / perPage)}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
-          />
-        </Box>
+        {/* formulaire Drawer */}
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box mt={8} p={3} width={400}>
+            <Typography variant="h6" mb={2}>{isEditing ? 'Modifier une charge' : 'Ajouter une charge'}</Typography>
+
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Type</InputLabel>
+              <Select
+                value={form.type}
+                onChange={(e) => handleChange('type', e.target.value)}
+                label="Type"
+              >
+                {['Salaire', 'CNSS', 'Entretien', 'Carburant', 'Vignette', 'Autre'].map(opt => (
+                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {['Salaire', 'CNSS'].includes(form.type) && (
+              <Autocomplete
+                options={chauffeurs}
+                getOptionLabel={(option: Chauffeur) => `${option.nom} ${option.prenom}`}
+                value={chauffeurSelectionne}
+                onChange={(_: React.SyntheticEvent, newValue: Chauffeur | null) => {
+                  setChauffeurSelectionne(newValue);
+                }}
+                renderInput={(params: any) => (
+                  <TextField {...params} label="Choisir Chauffeur" margin="normal" fullWidth />
+                )}
+              />
+            )}
+
+            <TextField
+              label="Montant (MAD)"
+              type="number"
+              value={form.montant}
+              onChange={(e) => handleChange('montant', parseFloat(e.target.value))}
+              fullWidth
+              margin="normal"
+            />
+
+            <TextField
+              label="Date"
+              type="date"
+              value={form.date}
+              onChange={(e) => handleChange('date', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              margin="normal"
+            />
+
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Statut</InputLabel>
+              <Select
+                value={form.statut}
+                onChange={(e) => handleChange('statut', e.target.value)}
+                label="Statut"
+              >
+                <MenuItem value="Payé">Payé</MenuItem>
+                <MenuItem value="Non payé">Non payé</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button variant="contained" fullWidth onClick={handleSave} sx={{ mt: 2 }}>
+              Enregistrer
+            </Button>
+          </Box>
+        </Drawer>
       </Box>
     </AdminLayout>
   );
 };
 
-export default ChauffeursPage;
+export default ChargesPage;

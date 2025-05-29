@@ -1,236 +1,187 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Dialog, InputAdornment
+  Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent,
+  IconButton, Drawer, Snackbar, Alert
 } from '@mui/material';
-import { Delete, Edit, Download, Search as SearchIcon, Add } from '@mui/icons-material';
-import axios from 'axios';
-import AdminLayout from '../../components/Layout';
+import { Visibility } from '@mui/icons-material';
+import axios from '../../utils/axios';
+import Layout from '../../components/Layout';
 
-interface Chauffeur {
-  _id: string;
-  nom: string;
-  prenom: string;
-  telephone: string;
-  cin: string;
-  adresse?: string;
-  photo?: string;
-  scanCIN?: string;
-  scanPermis?: string;
-  scanVisa?: string;
-  certificatBonneConduite?: string;
+interface Dossier {
+  modelJ?: string;
+  statut?: string;
+  rc?: string;
+  identifiantFiscale?: string;
+  cinGerant?: string;
+  doc1007?: string;
 }
 
-const ChauffeursPage: React.FC = () => {
-  const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
-  const [filteredChauffeurs, setFilteredChauffeurs] = useState<Chauffeur[]>([]);
-  const [search, setSearch] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [selectedChauffeur, setSelectedChauffeur] = useState<Chauffeur | null>(null);
-  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
-  const [dialogImageSrc, setDialogImageSrc] = useState('');
+const DossierJuridique: React.FC = () => {
+  const [dossier, setDossier] = useState<Dossier | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [page, setPage] = useState(1);
-  const perPage = 5;
+  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [files, setFiles] = useState<{ [key: string]: File | null }>({});
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  const [form, setForm] = useState<Record<string, string | Blob | null>>({
-    nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-    photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-  });
-
-  const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
-  const isPdfFile = (filename: string) => /\.pdf$/i.test(filename);
-
-  const renderDocumentAvatar = (file: string | undefined) => {
-    if (!file) return 'N/A';
-    const fileUrl = `https://mme-backend.onrender.com/uploads/chauffeurs/${encodeURIComponent(file)}`;
-    return (
-      <Avatar
-        src={isImageFile(file) ? fileUrl : '/pdf-icon.png'}
-        sx={{ width: 40, height: 40, cursor: 'pointer' }}
-        onClick={() => {
-          setDialogImageSrc(fileUrl);
-          setOpenDialog(true);
-        }}
-      />
-    );
-  };
-
-  const fetchChauffeurs = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
-    setChauffeurs(res.data);
-    setFilteredChauffeurs(res.data);
-  };
-
-  useEffect(() => { fetchChauffeurs(); }, []);
   useEffect(() => {
-    const filtered = chauffeurs.filter(c =>
-      c.nom.toLowerCase().includes(search.toLowerCase()) ||
-      c.prenom.toLowerCase().includes(search.toLowerCase())
-    );
-    setFilteredChauffeurs(filtered);
-    setPage(1);
-  }, [search, chauffeurs]);
+    fetchDossier();
+  }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, files } = e.target;
-    if (files) {
-      const file = files[0];
-      if (name === 'photo') {
-        setPreviewPhoto(URL.createObjectURL(file));
-      }
-      setForm(prev => ({ ...prev, [name]: file }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-    }
+  const fetchDossier = async () => {
+    const res = await axios.get('/api/dossier-juridique');
+    setDossier(res.data);
   };
 
-  const handleSubmit = async () => {
-    if (!form.nom || !form.prenom || !form.telephone || !form.cin) {
-      setErrorMsg('Tous les champs obligatoires doivent être remplis (nom, prénom, téléphone, CIN).');
-      return;
-    }
+  const handleView = (fileName: string | undefined) => {
+    if (!fileName) return;
+    setSelectedDoc(`http://localhost:5000/uploads/juridique/${fileName}`);
+    setOpenDialog(true);
+  };
 
+  const handleFileChange = (name: string, file: File | null) => {
+    setFiles(prev => ({ ...prev, [name]: file }));
+  };
+
+  const handleUpload = async () => {
     const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value instanceof Blob || typeof value === 'string') {
-        formData.append(key, value);
-      }
+    Object.entries(files).forEach(([key, file]) => {
+      if (file) formData.append(key, file);
     });
 
     try {
-      const res = selectedChauffeur
-        ? await axios.put(`https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`, formData)
-        : await axios.post('https://mme-backend.onrender.com/api/chauffeurs', formData);
-
-      if (res.status === 200 || res.status === 201) {
-        alert(selectedChauffeur ? 'Chauffeur modifié avec succès !' : 'Chauffeur ajouté avec succès !');
+      const res = await axios.post('/api/dossier-juridique', formData);
+      if (res.status === 201) {
+        setFiles({});
+        fetchDossier();
         setDrawerOpen(false);
-        resetForm();
-        fetchChauffeurs();
-        setErrorMsg('');
+        setSnackbarOpen(true);
       }
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Erreur lors de l'enregistrement du chauffeur");
+    } catch (err) {
+      console.error("Erreur d'upload", err);
     }
   };
 
-  const handleEdit = (chauffeur: Chauffeur) => {
-    setSelectedChauffeur(chauffeur);
-    setForm({
-      nom: chauffeur.nom,
-      prenom: chauffeur.prenom,
-      telephone: chauffeur.telephone,
-      cin: chauffeur.cin,
-      adresse: chauffeur.adresse || '',
-      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-    });
-    setPreviewPhoto(null);
-    setDrawerOpen(true);
-    setErrorMsg('');
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Voulez-vous vraiment supprimer ce chauffeur ?')) return;
-    await axios.delete(`https://mme-backend.onrender.com/api/chauffeurs/${id}`);
-    fetchChauffeurs();
-  };
-
-  const resetForm = () => {
-    setForm({
-      nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-    });
-    setSelectedChauffeur(null);
-    setPreviewPhoto(null);
-  };
-
-  const paginatedChauffeurs = filteredChauffeurs.slice((page - 1) * perPage, page * perPage);
+  const rows = [
+    { label: 'Model J', field: dossier?.modelJ },
+    { label: 'Statut', field: dossier?.statut },
+    { label: 'RC', field: dossier?.rc },
+    { label: 'Identifiant Fiscale', field: dossier?.identifiantFiscale },
+    { label: 'CIN Gérant', field: dossier?.cinGerant },
+    { label: '1007', field: dossier?.doc1007 }
+  ];
 
   return (
-    <AdminLayout>
-      <Box p={3}>
-        <h2>Liste Des Chauffeurs</h2>
-
-        <Box
-          display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          gap={2}
-          mb={2}
-        >
-          <TextField
-            size="small"
-            placeholder="Rechercher..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-            sx={{ width: { xs: '100%', sm: '30%' } }}
-          />
-
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            fullWidth={true}
-            sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#1565c0' }, textTransform: 'none' }}
-            onClick={() => { setDrawerOpen(true); resetForm(); }}
-          >
-            Ajouter Chauffeur
-          </Button>
+    <Layout>
+      <Box p={4}>
+        <Box display="flex" justifyContent="space-between" mb={2}>
+          <Typography variant="h5" fontWeight={600}>Dossier Juridique</Typography>
+          <Button variant="contained" onClick={() => setDrawerOpen(true)}>Ajouter / Modifier</Button>
         </Box>
 
-        <Box sx={{ overflowX: 'auto' }}>
+        <TableContainer component={Paper}>
           <Table>
             <TableHead>
-              <TableRow>
-                {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd' }}>{h}</TableCell>
-                ))}
+              <TableRow sx={{ bgcolor: '#e3f2fd' }}>
+                <TableCell><strong>Type</strong></TableCell>
+                <TableCell><strong>Action</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedChauffeurs.map((c, i) => (
-                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? 'white' : '#f0fbff' }}>
-                  <TableCell>{c.photo ? renderDocumentAvatar(c.photo) : 'N/A'}</TableCell>
-                  <TableCell>{c.nom}</TableCell>
-                  <TableCell>{c.prenom}</TableCell>
-                  <TableCell>{c.telephone}</TableCell>
-                  <TableCell>{c.cin}</TableCell>
-                  <TableCell>{c.adresse}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
+              {rows.map((row, index) => (
+                <TableRow key={index}>
+                  <TableCell>{row.label}</TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
+                    {row.field ? (
+                      <IconButton onClick={() => handleView(row.field)}>
+                        <Visibility />
+                      </IconButton>
+                    ) : 'Non disponible'}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </Box>
+        </TableContainer>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(filteredChauffeurs.length / perPage)}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
+        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Visualiser le document</DialogTitle>
+          <DialogContent>
+            {selectedDoc && (
+              <>
+                <Box component="iframe" src={selectedDoc} width="100%" height="600px" />
+                <Button href={selectedDoc} target="_blank" download fullWidth variant="outlined" sx={{ mt: 2 }}>
+                  Télécharger
+                </Button>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+  <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Box p={3} width={400}>
+    <Typography variant="h6" fontWeight={600} mb={3}>
+      Documents à importer
+    </Typography>
+
+    <Box display="flex" flexDirection="column" gap={3}>
+      {[
+        { label: 'Model J', name: 'modelJ' },
+        { label: 'Statut', name: 'statut' },
+        { label: 'RC', name: 'rc' },
+        { label: 'Identifiant Fiscale', name: 'identifiantFiscale' },
+        { label: 'CIN Gérant', name: 'cinGerant' },
+        { label: '1007', name: 'doc1007' }
+      ].map(({ label, name }) => (
+        <Box key={name}>
+          <Typography fontWeight={500} mb={1}>{label}</Typography>
+          <input
+            type="file"
+            onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
+            style={{
+              border: '1px solid #ccc',
+              padding: '8px',
+              borderRadius: '6px',
+              width: '100%',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+              appearance: 'none',
+              backgroundColor: 'white'
+            }}
           />
         </Box>
+      ))}
+
+      <Button
+        variant="contained"
+        fullWidth
+        sx={{ mt: 2, backgroundColor: '#1976d2' }}
+        onClick={handleUpload}
+        disabled={Object.values(files).every(f => f === null)}
+      >
+        ENREGISTRER
+      </Button>
+    </Box>
+  </Box>
+</Drawer>
+
+
+
+
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
+            Documents juridiques enregistrés avec succès ✅
+          </Alert>
+        </Snackbar>
       </Box>
-    </AdminLayout>
+    </Layout>
   );
 };
 
-export default ChauffeursPage;
+export default DossierJuridique;
