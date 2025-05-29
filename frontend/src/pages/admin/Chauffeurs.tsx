@@ -140,7 +140,7 @@ const ChauffeursPage: React.FC = () => {
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
         <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
-          Gestion des Chauffeurs
+          Gestion des Chauffeurs test test 
         </Typography>
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -173,7 +173,7 @@ const ChauffeursPage: React.FC = () => {
             }}
             onClick={() => { setDrawerOpen(true); resetForm(); }}
           >
-            Ajouter un chauffeur test !!!
+            Ajouter un chauffeur
           </Button>
         </Box>
 
