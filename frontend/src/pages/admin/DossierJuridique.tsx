@@ -1,12 +1,14 @@
+// DossierJuridique.tsx
+
 import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent,
-  IconButton, Drawer, Snackbar, Alert
+  IconButton, Drawer, Snackbar, Alert, Tooltip, TextField
 } from '@mui/material';
-import { Visibility } from '@mui/icons-material';
-import axios from '../../utils/axios';
-import Layout from '../../components/Layout';
+import { InsertDriveFile, AddCircleOutline } from '@mui/icons-material';
+import axios from '../../utils/axios'; // Assurez-vous que vous avez cette configuration Axios
+import Layout from '../../components/Layout'; // Assurez-vous d'avoir ce composant Layout
 
 interface Dossier {
   modelJ?: string;
@@ -15,6 +17,7 @@ interface Dossier {
   identifiantFiscale?: string;
   cinGerant?: string;
   doc1007?: string;
+  [key: string]: string | undefined;
 }
 
 const DossierJuridique: React.FC = () => {
@@ -24,6 +27,7 @@ const DossierJuridique: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [files, setFiles] = useState<{ [key: string]: File | null }>({});
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [customDocs, setCustomDocs] = useState<{ name: string, file: File | null }[]>([]);
 
   useEffect(() => {
     fetchDossier();
@@ -31,7 +35,7 @@ const DossierJuridique: React.FC = () => {
 
   const fetchDossier = async () => {
     const res = await axios.get('/api/dossier-juridique');
-    setDossier(res.data);
+    setDossier(res.data?.data || res.data); // Ajustez en fonction de votre API
   };
 
   const handleView = (fileName: string | undefined) => {
@@ -49,12 +53,17 @@ const DossierJuridique: React.FC = () => {
     Object.entries(files).forEach(([key, file]) => {
       if (file) formData.append(key, file);
     });
+    customDocs.forEach((doc, i) => {
+      if (doc.file) formData.append(`custom_${doc.name || 'doc' + i}`, doc.file);
+    });
 
     try {
       const res = await axios.post('/api/dossier-juridique', formData);
+      console.log('Upload response:', res.data);
       if (res.status === 201) {
         setFiles({});
-        fetchDossier();
+        setCustomDocs([]);
+        fetchDossier(); // 🔁 recharge les données
         setDrawerOpen(false);
         setSnackbarOpen(true);
       }
@@ -74,50 +83,31 @@ const DossierJuridique: React.FC = () => {
 
   return (
     <Layout>
-      <Box p={4} maxWidth="1200px" mx="auto">
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" fontWeight="bold" color="primary">
-            Dossier Juridique
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => setDrawerOpen(true)}
-            sx={{
-              backgroundColor: '#001e61',
-              borderRadius: 3,
-              textTransform: 'none',
-              fontWeight: 'bold',
-              px: 3,
-              '&:hover': { backgroundColor: '#001447' }
-            }}
-          >
-            Ajouter / Modifier
-          </Button>
+      <Box p={4}>
+        <Box display="flex" justifyContent="space-between" mb={2}>
+          <Typography variant="h5" fontWeight={600}>Dossier Juridique</Typography>
+          <Button variant="contained" onClick={() => setDrawerOpen(true)}>Ajouter / Modifier</Button>
         </Box>
 
-        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper}>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Type</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Action</TableCell>
+              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                <TableCell><strong>Type</strong></TableCell>
+                <TableCell><strong>Action</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.map((row, index) => (
-                <TableRow
-                  key={index}
-                  sx={{
-                    backgroundColor: index % 2 === 0 ? '#fff' : '#f9fbfd',
-                    '&:hover': { backgroundColor: '#e3f2fd' }
-                  }}
-                >
+                <TableRow key={index}>
                   <TableCell>{row.label}</TableCell>
                   <TableCell>
                     {row.field ? (
-                      <IconButton onClick={() => handleView(row.field)}>
-                        <Visibility sx={{ color: '#001e61' }} />
-                      </IconButton>
+                      <Tooltip title="Voir le document">
+                        <IconButton onClick={() => handleView(row.field)} sx={{ color: '#0288d1' }}>
+                          <InsertDriveFile />
+                        </IconButton>
+                      </Tooltip>
                     ) : 'Non disponible'}
                   </TableCell>
                 </TableRow>
@@ -132,14 +122,7 @@ const DossierJuridique: React.FC = () => {
             {selectedDoc && (
               <>
                 <Box component="iframe" src={selectedDoc} width="100%" height="600px" />
-                <Button
-                  href={selectedDoc}
-                  target="_blank"
-                  download
-                  fullWidth
-                  variant="outlined"
-                  sx={{ mt: 2 }}
-                >
+                <Button href={selectedDoc} target="_blank" download fullWidth variant="outlined" sx={{ mt: 2 }}>
                   Télécharger
                 </Button>
               </>
@@ -149,47 +132,55 @@ const DossierJuridique: React.FC = () => {
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={400}>
-            <Typography variant="h6" fontWeight={600} mb={3}>
-              Documents à importer
-            </Typography>
-
+            <Typography variant="h6" fontWeight={600} mb={3}>Documents à importer</Typography>
             <Box display="flex" flexDirection="column" gap={2}>
-              {[
-                { label: 'Model J', name: 'modelJ' },
-                { label: 'Statut', name: 'statut' },
-                { label: 'RC', name: 'rc' },
-                { label: 'Identifiant Fiscale', name: 'identifiantFiscale' },
-                { label: 'CIN Gérant', name: 'cinGerant' },
-                { label: '1007', name: 'doc1007' }
-              ].map(({ label, name }) => (
+              {['modelJ', 'statut', 'rc', 'identifiantFiscale', 'cinGerant', 'doc1007'].map(name => (
                 <Box key={name}>
-                  <Typography fontWeight={500} mb={0.5}>{label}</Typography>
+                  <Typography fontWeight={500}>{name}</Typography>
                   <input
                     type="file"
                     onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
-                    style={{
-                      border: '1px solid #ccc',
-                      padding: '8px',
-                      borderRadius: '6px',
-                      width: '100%',
-                      cursor: 'pointer',
-                      backgroundColor: 'white'
-                    }}
+                    style={{ width: '100%' }}
                   />
                 </Box>
               ))}
 
+              <Typography variant="subtitle1" fontWeight={600} mt={2}>Ajouter d'autres documents :</Typography>
+              {customDocs.map((doc, i) => (
+                <Box key={i}>
+                  <TextField
+                    label="Nom du document"
+                    value={doc.name}
+                    onChange={(e) => {
+                      const updated = [...customDocs];
+                      updated[i].name = e.target.value;
+                      setCustomDocs(updated);
+                    }}
+                    fullWidth
+                    margin="dense"
+                  />
+                  <input
+                    type="file"
+                    onChange={e => {
+                      const updated = [...customDocs];
+                      updated[i].file = e.target.files?.[0] || null;
+                      setCustomDocs(updated);
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                </Box>
+              ))}
+
+              <Button startIcon={<AddCircleOutline />} onClick={() => setCustomDocs([...customDocs, { name: '', file: null }])}>
+                Ajouter un champ
+              </Button>
+
               <Button
                 variant="contained"
+                fullWidth
+                sx={{ mt: 2 }}
                 onClick={handleUpload}
-                disabled={Object.values(files).every(f => f === null)}
-                sx={{
-                  mt: 2,
-                  backgroundColor: '#001e61',
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  '&:hover': { backgroundColor: '#001447' }
-                }}
+                disabled={Object.values(files).every(f => f === null) && customDocs.length === 0}
               >
                 ENREGISTRER
               </Button>
