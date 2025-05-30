@@ -59,7 +59,7 @@ mongoose.connect(MONGO_URI)
     app.use('/api/plateformes', platformRoutes);
     app.use('/api/factures', factureRoutes);
     app.use('/api/charges', chargeRoutes);
-    app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+    app.use('/uploads', express.static('/mnt/data/uploads'));
 
     app.get('/', (_req, res) => {
       res.send('Bienvenue sur l\'API backend');
