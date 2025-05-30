@@ -29,9 +29,11 @@ const storage = multer.diskStorage({
     cb(null, dir);
   },
   filename: function (_req, file, cb) {
-    const uniqueName = Date.now() + '-' + file.originalname;
-    cb(null, uniqueName);
-  }
+  const uniqueName = Date.now() + '-' + file.originalname;
+  console.log('✅ Fichier enregistré :', uniqueName);
+  cb(null, uniqueName);
+}
+
 });
 
 const upload = multer({ storage });
