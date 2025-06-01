@@ -3,10 +3,11 @@
   import fs from 'fs';
   import multer from 'multer';
   import {
-    createVehicule,
+    addVehicule,
     getVehicules,
     updateVehicule,
-    deleteVehicule
+    deleteVehicule,
+    downloadVehiculeDocs
   } from '../controllers/vehicule.controller';
 
   const router = Router();
@@ -42,7 +43,7 @@
       { name: 'extincteur', maxCount: 1 },
       { name: 'photoVehicule', maxCount: 1 } // si tu ajoutes ça dans ton modèle
     ]),
-    createVehicule
+    addVehicule
   );
 
   // Modifier
@@ -75,5 +76,9 @@
 
     res.download(filePath);
   });
+
+
+  router.get('/:id/download',downloadVehiculeDocs);
+  router.get('/download/:vehiculeId', downloadVehiculeDocs);
 
   export default router;

@@ -5,7 +5,7 @@ import {
   Drawer, InputAdornment, Typography, MenuItem, Select,
   FormControl, InputLabel, Pagination, Avatar
 } from '@mui/material';
-import { Add, Delete, Edit, Search as SearchIcon } from '@mui/icons-material';
+import { Add, Delete, Edit, Search as SearchIcon, PictureAsPdf } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 
@@ -45,7 +45,6 @@ const VehiculesPage: React.FC = () => {
   const [chauffeurMap, setChauffeurMap] = useState<Record<string, string>>({});
   const [page, setPage] = useState(1);
   const perPage = 5;
-
   const BACKEND_URL = 'https://mme-backend.onrender.com';
 
   useEffect(() => {
@@ -135,16 +134,47 @@ const VehiculesPage: React.FC = () => {
   };
 
   const renderVehiculePhoto = (file?: string) => {
-  if (!file) return '—';
-  const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`; // 👈 URL directe comme chauffeurs
-  return (
-    <Avatar
-      src={url}
-      sx={{ width: 40, height: 40, cursor: 'pointer' }}
-      onClick={() => window.open(url, '_blank')}
-    />
-  );
-};
+    if (!file) return '—';
+    const url = `${BACKEND_URL}/uploads/vehicules/${file}`;
+    return (
+      <Avatar
+        src={url}
+        sx={{ width: 40, height: 40, cursor: 'pointer' }}
+        onClick={() => window.open(url, '_blank')}
+      />
+    );
+  };
+
+  const renderDocument = (file?: string) => {
+    if (!file) return '—';
+    const url = `${BACKEND_URL}/uploads/vehicules/${file}`;
+    const isImage = /\.(png|jpg|jpeg)$/i.test(file);
+    const isPDF = /\.pdf$/i.test(file);
+
+    if (isImage) {
+      return (
+        <Avatar
+          src={url}
+          sx={{ width: 40, height: 40, cursor: 'pointer' }}
+          onClick={() => window.open(url, '_blank')}
+        />
+      );
+    } else if (isPDF) {
+      return (
+        <Tooltip title="Voir le PDF">
+          <IconButton onClick={() => window.open(url, '_blank')}>
+            <PictureAsPdf color="error" />
+          </IconButton>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        📎 Fichier
+      </a>
+    );
+  };
 
   const filtered = vehicules.filter(v =>
     (v.nom?.toLowerCase() || '').includes(search.toLowerCase()) ||
@@ -152,6 +182,8 @@ const VehiculesPage: React.FC = () => {
   );
 
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+
+  const cellStyle = { fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' };
 
   return (
     <AdminLayout>
@@ -198,9 +230,17 @@ const VehiculesPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                {["Image", "Nom", "Chauffeur", "Matricule", "Type", "Km", "CT", "Actions"].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
-                ))}
+                <TableCell sx={cellStyle}>Image</TableCell>
+                <TableCell sx={cellStyle}>Nom</TableCell>
+                <TableCell sx={cellStyle}>Chauffeur</TableCell>
+                <TableCell sx={cellStyle}>Matricule</TableCell>
+                <TableCell sx={cellStyle}>Type</TableCell>
+                <TableCell sx={cellStyle}>Km</TableCell>
+                <TableCell sx={cellStyle}>CT</TableCell>
+                <TableCell sx={cellStyle}>Carte Grise</TableCell>
+                <TableCell sx={cellStyle}>Assurance</TableCell>
+                <TableCell sx={cellStyle}>Vignette</TableCell>
+                <TableCell sx={cellStyle}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -208,14 +248,17 @@ const VehiculesPage: React.FC = () => {
                 <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
                   <TableCell>{renderVehiculePhoto(v.photo)}</TableCell>
                   <TableCell>{v.nom}</TableCell>
-                  <TableCell>{v.chauffeur && chauffeurMap[v.chauffeur] ? chauffeurMap[v.chauffeur] : '—'}</TableCell>
+                  <TableCell>{chauffeurMap[v.chauffeur || ''] || '—'}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
                   <TableCell>{v.type}</TableCell>
                   <TableCell>{v.kilometrage}</TableCell>
                   <TableCell>{v.controle_technique}</TableCell>
+                  <TableCell>{renderDocument(v.carteGrise)}</TableCell>
+                  <TableCell>{renderDocument(v.assurance)}</TableCell>
+                  <TableCell>{renderDocument(v.vignette)}</TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
