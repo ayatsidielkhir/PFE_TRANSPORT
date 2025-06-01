@@ -48,15 +48,16 @@
   // Modifier
   router.put(
     '/:id',
-    upload.fields([
-      { name: 'carteGrise', maxCount: 1 },
-      { name: 'assurance', maxCount: 1 },
-      { name: 'vignette', maxCount: 1 },
-      { name: 'agrement', maxCount: 1 },
-      { name: 'carteVerte', maxCount: 1 },
-      { name: 'extincteur', maxCount: 1 },
-      { name: 'photoVehicule', maxCount: 1 } // si applicable
-    ]),
+   upload.fields([
+  { name: 'carteGrise', maxCount: 1 },
+  { name: 'assurance', maxCount: 1 },
+  { name: 'vignette', maxCount: 1 },
+  { name: 'agrement', maxCount: 1 },
+  { name: 'carteVerte', maxCount: 1 },
+  { name: 'extincteur', maxCount: 1 },
+  { name: 'photo', maxCount: 1 } // ✅ ici
+])
+,
     updateVehicule
   );
 
