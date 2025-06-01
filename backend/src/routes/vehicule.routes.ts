@@ -58,7 +58,7 @@
   { name: 'photo', maxCount: 1 } // ✅ ici
 ])
 ,
-    updateVehicule
+      updateVehicule
   );
 
   // Supprimer
