@@ -15,6 +15,7 @@ import dossierJuridiqueRoutes from './routes/dossierjuridique.routes';
 import platformRoutes from './routes/plateformes.routes';
 import factureRoutes from './routes/facture.routes';
 import chargeRoutes from './routes/charge.routes';
+import testRoutes from './routes/test.routes'; 
 
 dotenv.config();
 
@@ -59,7 +60,10 @@ mongoose.connect(MONGO_URI)
     app.use('/api/plateformes', platformRoutes);
     app.use('/api/factures', factureRoutes);
     app.use('/api/charges', chargeRoutes);
-    app.use('/uploads', express.static('/mnt/data/uploads'));
+
+    app.use('/api/test', testRoutes); // ⬅️ ajouter cette ligne
+
+      app.use('/uploads', express.static('/mnt/data/uploads')); // ✅ déjà correct
 
     app.get('/', (_req, res) => {
       res.send('Bienvenue sur l\'API backend');
