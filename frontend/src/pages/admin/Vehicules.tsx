@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
-  InputAdornment, Typography, Avatar, Pagination, Dialog, DialogTitle, DialogContent
+  InputAdornment, Typography, Avatar, Pagination, Dialog, DialogTitle, DialogContent,
+  Drawer, MenuItem, Select, FormControl, InputLabel
 } from '@mui/material';
 import { Delete, Edit, Search as SearchIcon, PictureAsPdf, Add } from '@mui/icons-material';
 import axios from '../../utils/axios';
@@ -38,6 +39,9 @@ const VehiculesPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedVehiculeDocs, setSelectedVehiculeDocs] = useState<Vehicule | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedVehicule, setSelectedVehicule] = useState<Vehicule | null>(null);
+  const [form, setForm] = useState<Partial<Vehicule>>({});
   const perPage = 5;
   const BACKEND_URL = 'https://mme-backend.onrender.com';
 
@@ -54,6 +58,44 @@ const VehiculesPage: React.FC = () => {
   const fetchChauffeurs = async () => {
     const res = await axios.get('/api/chauffeurs');
     setChauffeurs(res.data);
+  };
+
+  const resetForm = () => {
+    setForm({
+      nom: '', matricule: '', type: '', kilometrage: 0,
+      controle_technique: '', assurance: '', carteGrise: '', chauffeur: ''
+    });
+    setSelectedVehicule(null);
+  };
+
+  const handleAddVehicule = () => {
+    resetForm();
+    setDrawerOpen(true);
+  };
+
+  const handleEdit = (vehicule: Vehicule) => {
+    setSelectedVehicule(vehicule);
+    setForm({ ...vehicule });
+    setDrawerOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== undefined) formData.append(key, value as string);
+    });
+
+    const url = selectedVehicule ? `/api/vehicules/${selectedVehicule._id}` : `/api/vehicules`;
+    const method = selectedVehicule ? axios.put : axios.post;
+
+    try {
+      await method(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      fetchVehicules();
+      setDrawerOpen(false);
+      resetForm();
+    } catch {
+      alert("Erreur lors de l'enregistrement");
+    }
   };
 
   const renderDocument = (file?: string) => {
@@ -111,6 +153,11 @@ const VehiculesPage: React.FC = () => {
   );
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
+
+  const handleChange = (field: keyof Vehicule, value: any) => {
+  setForm((prev) => ({ ...prev, [field]: value }));
+};
+
   return (
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
@@ -146,7 +193,7 @@ const VehiculesPage: React.FC = () => {
               boxShadow: 2,
               '&:hover': { backgroundColor: '#001447' }
             }}
-            onClick={() => alert('Ajout de véhicule à implémenter')}
+            onClick={handleAddVehicule}
           >
             Ajouter un véhicule
           </Button>
@@ -176,7 +223,12 @@ const VehiculesPage: React.FC = () => {
                   <TableCell>{renderDocument(v.vignette)}</TableCell>
                   <TableCell>{renderVoirPlus(v)}</TableCell>
                   <TableCell>
-                    <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                    <Tooltip title="Modifier">
+                      <IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(v)}><Edit /></IconButton>
+                    </Tooltip>
+                    <Tooltip title="Supprimer">
+                      <IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(v._id)}><Delete /></IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
@@ -220,6 +272,54 @@ const VehiculesPage: React.FC = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={400}>
+            <Typography variant="h6" fontWeight="bold" mb={2}>
+              {selectedVehicule ? 'Modifier un véhicule' : 'Ajouter un véhicule'}
+            </Typography>
+            {(['nom', 'matricule', 'type', 'kilometrage', 'controle_technique'] as (keyof Vehicule)[]).map((field) => (
+              <TextField
+                key={field}
+                fullWidth
+                label={field}
+                name={field}
+                value={form[field] || ''}
+                onChange={(e) => handleChange(field, e.target.value)}
+                sx={{ mb: 2 }}
+              />
+            ))}
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Chauffeur</InputLabel>
+              <Select
+                value={form.chauffeur || ''}
+                onChange={e => setForm({ ...form, chauffeur: e.target.value })}
+                label="Chauffeur"
+              >
+                {chauffeurs.map(c => (
+                  <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {['assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photo'].map(field => (
+              <Box key={field} mb={2}>
+                <Typography>{field}</Typography>
+                <input
+                  name={field}
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setForm({ ...form, [field]: file });
+                  }}
+                />
+              </Box>
+            ))}
+            <Button fullWidth variant="contained" onClick={handleSubmit}>
+              {selectedVehicule ? 'Mettre à jour' : 'Ajouter'}
+            </Button>
+          </Box>
+        </Drawer>
       </Box>
     </AdminLayout>
   );
