@@ -135,16 +135,16 @@ const VehiculesPage: React.FC = () => {
   };
 
   const renderVehiculePhoto = (file?: string) => {
-    if (!file) return '—';
-    const url = `${BACKEND_URL}/uploads/vehicules/${file}`;
-    return (
-      <Avatar
-        src={url}
-        sx={{ width: 40, height: 40, cursor: 'pointer' }}
-        onClick={() => window.open(url, '_blank')}
-      />
-    );
-  };
+  if (!file) return '—';
+  const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`; // 👈 URL directe comme chauffeurs
+  return (
+    <Avatar
+      src={url}
+      sx={{ width: 40, height: 40, cursor: 'pointer' }}
+      onClick={() => window.open(url, '_blank')}
+    />
+  );
+};
 
   const filtered = vehicules.filter(v =>
     (v.nom?.toLowerCase() || '').includes(search.toLowerCase()) ||
