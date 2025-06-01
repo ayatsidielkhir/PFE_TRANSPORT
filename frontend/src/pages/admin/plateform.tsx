@@ -38,9 +38,13 @@ const PlateformesPage: React.FC = () => {
 
     try {
       if (form._id) {
-        await axios.put(`https://mme-backend.onrender.com/api/plateformes/${form._id}`, formData);
+        await axios.put(`https://mme-backend.onrender.com/api/plateformes/${form._id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       } else {
-        await axios.post('https://mme-backend.onrender.com/api/plateformes', formData);
+        await axios.post('https://mme-backend.onrender.com/api/plateformes', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       }
       setDrawerOpen(false);
       setForm({ nom: '', email: '', password: '', lien: '' });
@@ -110,15 +114,19 @@ const PlateformesPage: React.FC = () => {
                   sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}
                 >
                   <TableCell>
-                    {p.logo ? <Avatar src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`} /> : '—'}
+                    {p.logo ? (
+                      <Avatar
+                        src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`}
+                        alt="logo"
+                        variant="rounded"
+                      />
+                    ) : '—'}
                   </TableCell>
                   <TableCell>{p.nom}</TableCell>
                   <TableCell>{p.email}</TableCell>
                   <TableCell>{p.password}</TableCell>
                   <TableCell>
-                    <Link href={p.lien} target="_blank" rel="noopener noreferrer">
-                      {p.lien}
-                    </Link>
+                    <Link href={p.lien} target="_blank" rel="noopener noreferrer">{p.lien}</Link>
                   </TableCell>
                   <TableCell>
                     <Tooltip title="Modifier">
@@ -135,12 +143,7 @@ const PlateformesPage: React.FC = () => {
         </Paper>
 
         <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(plateformes.length / perPage)}
-            page={page}
-            onChange={(_, val) => setPage(val)}
-            color="primary"
-          />
+          <Pagination count={Math.ceil(plateformes.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
         </Box>
 
         <Drawer
@@ -151,10 +154,10 @@ const PlateformesPage: React.FC = () => {
         >
           <Box p={3} display="flex" flexDirection="column" gap={2}>
             <Typography variant="h6" fontWeight={600}>Ajouter / Modifier une plateforme</Typography>
-            <TextField label="Nom" name="nom" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} fullWidth />
-            <TextField label="Email" name="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} fullWidth />
-            <TextField label="Mot de passe" name="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} fullWidth />
-            <TextField label="Lien" name="lien" value={form.lien} onChange={(e) => setForm({ ...form, lien: e.target.value })} fullWidth />
+            <TextField label="Nom" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} fullWidth />
+            <TextField label="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} fullWidth />
+            <TextField label="Mot de passe" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} fullWidth />
+            <TextField label="Lien" value={form.lien} onChange={(e) => setForm({ ...form, lien: e.target.value })} fullWidth />
             <Button variant="outlined" component="label">
               Télécharger Logo
               <input type="file" hidden onChange={e => setLogo(e.target.files?.[0] || null)} />
@@ -162,12 +165,7 @@ const PlateformesPage: React.FC = () => {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              sx={{
-                backgroundColor: '#001e61',
-                textTransform: 'none',
-                fontWeight: 'bold',
-                '&:hover': { backgroundColor: '#001447' }
-              }}
+              sx={{ backgroundColor: '#001e61', textTransform: 'none', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}
             >
               {form._id ? 'Mettre à jour' : 'Ajouter'}
             </Button>
