@@ -11,12 +11,12 @@ const router = express.Router();
 // Configuration de Multer pour gérer les fichiers
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const dir = path.resolve(__dirname, '../../uploads/juridique');
-    fs.mkdirSync(dir, { recursive: true }); // Crée le répertoire si nécessaire
+    const dir = path.resolve('/mnt/data/uploads/juridique'); // ✅ disque persistant
+    fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (_req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname); // Nom unique pour éviter les conflits
+    cb(null, Date.now() + '-' + file.originalname);
   }
 });
 
