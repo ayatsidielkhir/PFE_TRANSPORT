@@ -82,31 +82,57 @@
     };
 
     const handleSave = async () => {
-      const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && typeof value !== 'object') {
-          formData.append(key, value as string);
-        }
-      });
+  const formData = new FormData();
 
-  const fileFields = ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule'];
-      fileFields.forEach(field => {
-        const input = document.querySelector(`input[name="${field}"]`) as HTMLInputElement;
-        if (input?.files?.[0]) {
-          formData.append(field, input.files[0]);
-        }
-      });
+  // Champs texte
+  Object.entries(form).forEach(([key, value]) => {
+    if (
+      value !== undefined &&
+      value !== null &&
+      typeof value !== 'object' &&
+      key !== 'photo' // évite d'ajouter l'ancien nom de fichier 'photo'
+    ) {
+      formData.append(key, value.toString());
+    }
+  });
 
-      try {
-        const url = isEditing && form._id ? `/api/vehicules/${form._id}` : `/api/vehicules`;
-        const method = isEditing ? axios.put : axios.post;
-        await method(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        fetchVehicules();
-        setDrawerOpen(false);
-      } catch (err) {
-        alert("Erreur lors de l'enregistrement du véhicule.");
+  // Champs fichiers : ne pas envoyer s'ils sont vides
+  const fileFields = [
+    'carteGrise',
+    'assurance',
+    'vignette',
+    'agrement',
+    'carteVerte',
+    'extincteur',
+    'photoVehicule'
+  ];
+
+  fileFields.forEach((field) => {
+    const input = document.querySelector(`input[name="${field}"]`) as HTMLInputElement;
+    if (input?.files?.length) {
+      const file = input.files[0];
+      if (file && file.name) {
+        formData.append(field, file);
       }
-    };
+    }
+  });
+
+  try {
+    const url = isEditing && form._id ? `/api/vehicules/${form._id}` : `/api/vehicules`;
+    const method = isEditing ? axios.put : axios.post;
+
+    await method(url, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    await fetchVehicules();
+    setDrawerOpen(false);
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de l'enregistrement du véhicule.");
+  }
+};
+
 
     const handleDelete = async (id?: string) => {
       if (!id) return;
