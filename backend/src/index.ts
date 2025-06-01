@@ -63,7 +63,7 @@ mongoose.connect(MONGO_URI)
 
     app.use('/api/test', testRoutes); // ⬅️ ajouter cette ligne
 
-      app.use('/uploads', express.static('/mnt/data/uploads')); // ✅ déjà correct
+    app.use('/uploads', express.static('/mnt/data/uploads')); // ✅ déjà correct
 
     app.get('/', (_req, res) => {
       res.send('Bienvenue sur l\'API backend');
