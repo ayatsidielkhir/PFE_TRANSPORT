@@ -3,7 +3,7 @@ import {
   Box, Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
   Drawer, InputAdornment, Typography, MenuItem, Select,
-  FormControl, InputLabel, Pagination, Avatar
+  FormControl, InputLabel, Pagination, Avatar, Dialog
 } from '@mui/material';
 import { Add, Delete, Edit, Search as SearchIcon, PictureAsPdf } from '@mui/icons-material';
 import axios from '../../utils/axios';
@@ -44,6 +44,8 @@ const VehiculesPage: React.FC = () => {
   });
   const [chauffeurMap, setChauffeurMap] = useState<Record<string, string>>({});
   const [page, setPage] = useState(1);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedVehiculeDocs, setSelectedVehiculeDocs] = useState<Vehicule | null>(null);
   const perPage = 5;
   const BACKEND_URL = 'https://mme-backend.onrender.com';
 
@@ -88,39 +90,26 @@ const VehiculesPage: React.FC = () => {
 
   const handleSave = async () => {
     const formData = new FormData();
-
     Object.entries(form).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && typeof value !== 'object') {
+      if (value !== undefined && typeof value !== 'object') {
         formData.append(key, value.toString());
       }
     });
-
-    const fileFields = [
-      'carteGrise', 'assurance', 'vignette',
-      'agrement', 'carteVerte', 'extincteur', 'photoVehicule'
-    ];
-
+    const fileFields = ["carteGrise", "assurance", "vignette", "agrement", "carteVerte", "extincteur", "photoVehicule"];
     fileFields.forEach((field) => {
       const input = document.querySelector(`input[name="${field}"]`) as HTMLInputElement;
       if (input?.files?.length) {
         const file = input.files[0];
-        if (file && file.name) {
-          formData.append(field, file);
-        }
+        formData.append(field, file);
       }
     });
-
     try {
       const url = isEditing && form._id ? `/api/vehicules/${form._id}` : `/api/vehicules`;
       const method = isEditing ? axios.put : axios.post;
-
-      await method(url, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
+      await method(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       await fetchVehicules();
       setDrawerOpen(false);
-    } catch (err) {
+    } catch {
       alert("Erreur lors de l'enregistrement du véhicule.");
     }
   };
@@ -133,33 +122,13 @@ const VehiculesPage: React.FC = () => {
     }
   };
 
-  const renderVehiculePhoto = (file?: string) => {
-    if (!file) return '—';
-    const url = `${BACKEND_URL}/uploads/vehicules/${file}`;
-    return (
-      <Avatar
-        src={url}
-        sx={{ width: 40, height: 40, cursor: 'pointer' }}
-        onClick={() => window.open(url, '_blank')}
-      />
-    );
-  };
-
   const renderDocument = (file?: string) => {
     if (!file) return '—';
     const url = `${BACKEND_URL}/uploads/vehicules/${file}`;
-    const isImage = /\.(png|jpg|jpeg)$/i.test(file);
-    const isPDF = /\.pdf$/i.test(file);
-
-    if (isImage) {
-      return (
-        <Avatar
-          src={url}
-          sx={{ width: 40, height: 40, cursor: 'pointer' }}
-          onClick={() => window.open(url, '_blank')}
-        />
-      );
-    } else if (isPDF) {
+    if (/(.png|.jpg|.jpeg)$/i.test(file)) {
+      return <Avatar src={url} sx={{ width: 40, height: 40 }} onClick={() => window.open(url, '_blank')} />;
+    }
+    if (/\.pdf$/i.test(file)) {
       return (
         <Tooltip title="Voir le PDF">
           <IconButton onClick={() => window.open(url, '_blank')}>
@@ -168,34 +137,40 @@ const VehiculesPage: React.FC = () => {
         </Tooltip>
       );
     }
+    return <a href={url} target="_blank" rel="noopener noreferrer">📎 Fichier</a>;
+  };
 
+  const renderVoirPlus = (vehicule: Vehicule) => {
+    const otherDocs = [vehicule.agrement, vehicule.carteVerte, vehicule.extincteur];
+    const hasDocs = otherDocs.some(doc => doc);
+    if (!hasDocs) return '—';
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer">
-        📎 Fichier
-      </a>
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={() => {
+          setSelectedVehiculeDocs(vehicule);
+          setDialogOpen(true);
+        }}
+      >
+        ...
+      </Button>
     );
   };
 
   const filtered = vehicules.filter(v =>
-    (v.nom?.toLowerCase() || '').includes(search.toLowerCase()) ||
-    (v.matricule?.toLowerCase() || '').includes(search.toLowerCase())
+    v.nom?.toLowerCase().includes(search.toLowerCase()) ||
+    v.matricule?.toLowerCase().includes(search.toLowerCase())
   );
-
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-
-  const cellStyle = { fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' };
 
   return (
     <AdminLayout>
-      <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
-          Gestion des Véhicules
-        </Typography>
-
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box p={3}>
+        <Box display="flex" justifyContent="space-between" mb={2}>
           <TextField
             size="small"
-            placeholder="Rechercher un véhicule..."
+            placeholder="Rechercher..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             InputProps={{
@@ -205,48 +180,31 @@ const VehiculesPage: React.FC = () => {
                 </InputAdornment>
               )
             }}
-            sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
           />
-
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            sx={{
-              backgroundColor: '#001e61',
-              borderRadius: 3,
-              textTransform: 'none',
-              fontWeight: 'bold',
-              px: 3,
-              boxShadow: 2,
-              '&:hover': { backgroundColor: '#001447' }
-            }}
-            onClick={handleAdd}
-          >
-            Ajouter un véhicule
-          </Button>
+          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>Ajouter</Button>
         </Box>
-
-        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Paper>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={cellStyle}>Image</TableCell>
-                <TableCell sx={cellStyle}>Nom</TableCell>
-                <TableCell sx={cellStyle}>Chauffeur</TableCell>
-                <TableCell sx={cellStyle}>Matricule</TableCell>
-                <TableCell sx={cellStyle}>Type</TableCell>
-                <TableCell sx={cellStyle}>Km</TableCell>
-                <TableCell sx={cellStyle}>CT</TableCell>
-                <TableCell sx={cellStyle}>Carte Grise</TableCell>
-                <TableCell sx={cellStyle}>Assurance</TableCell>
-                <TableCell sx={cellStyle}>Vignette</TableCell>
-                <TableCell sx={cellStyle}>Actions</TableCell>
+                <TableCell>Photo</TableCell>
+                <TableCell>Nom</TableCell>
+                <TableCell>Chauffeur</TableCell>
+                <TableCell>Matricule</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Km</TableCell>
+                <TableCell>CT</TableCell>
+                <TableCell>Carte Grise</TableCell>
+                <TableCell>Assurance</TableCell>
+                <TableCell>Vignette</TableCell>
+                <TableCell>Autres Docs</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginated.map((v, i) => (
-                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell>{renderVehiculePhoto(v.photo)}</TableCell>
+              {paginated.map(v => (
+                <TableRow key={v._id}>
+                  <TableCell>{renderDocument(v.photo)}</TableCell>
                   <TableCell>{v.nom}</TableCell>
                   <TableCell>{chauffeurMap[v.chauffeur || ''] || '—'}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
@@ -256,54 +214,49 @@ const VehiculesPage: React.FC = () => {
                   <TableCell>{renderDocument(v.carteGrise)}</TableCell>
                   <TableCell>{renderDocument(v.assurance)}</TableCell>
                   <TableCell>{renderDocument(v.vignette)}</TableCell>
+                  <TableCell>{renderVoirPlus(v)}</TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                    <IconButton onClick={() => handleEdit(v)}><Edit /></IconButton>
+                    <IconButton onClick={() => handleDelete(v._id)}><Delete /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </Paper>
+        <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, v) => setPage(v)} />
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} color="primary" />
-        </Box>
-
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400}>
-            <Typography variant="h6" fontWeight={600} mb={2}>{isEditing ? 'Modifier' : 'Ajouter'} Véhicule</Typography>
-            <TextField fullWidth label="Nom" value={form.nom} onChange={(e) => handleChange('nom', e.target.value)} margin="normal" />
-            <TextField fullWidth label="Matricule" value={form.matricule} onChange={(e) => handleChange('matricule', e.target.value)} margin="normal" />
-            <TextField fullWidth label="Type" value={form.type} onChange={(e) => handleChange('type', e.target.value)} margin="normal" />
-            <TextField fullWidth label="Kilométrage" type="number" value={form.kilometrage} onChange={(e) => handleChange('kilometrage', parseFloat(e.target.value))} margin="normal" />
-            <TextField fullWidth label="Contrôle technique" value={form.controle_technique} onChange={(e) => handleChange('controle_technique', e.target.value)} margin="normal" />
-
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Chauffeur</InputLabel>
-              <Select
-                value={form.chauffeur || ''}
-                onChange={(e) => handleChange('chauffeur', e.target.value)}
-                label="Chauffeur"
-              >
-                {chauffeurs.map(c => (
-                  <MenuItem key={c._id} value={c._id}>{`${c.nom} ${c.prenom}`}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {["carteGrise", "assurance", "vignette", "agrement", "carteVerte", "extincteur", "photoVehicule"].map(field => (
-              <Box key={field} my={1}>
-                <Typography variant="body2">{field}</Typography>
-                <input type="file" name={field} />
-              </Box>
-            ))}
-
-            <Button fullWidth variant="contained" onClick={handleSave} sx={{ backgroundColor: '#001e61', textTransform: 'none', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}>
-              {isEditing ? 'Mettre à jour' : 'Ajouter'}
-            </Button>
+        {/* Dialog pour afficher les autres documents */}
+        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+          <Box p={3}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>Documents supplémentaires</Typography>
+            {selectedVehiculeDocs && (
+              <>
+                {selectedVehiculeDocs.agrement && (
+                  <Box mb={2}>
+                    <Typography>Agrément</Typography>
+                    <a href={`${BACKEND_URL}/uploads/vehicules/${selectedVehiculeDocs.agrement}`} target="_blank">{selectedVehiculeDocs.agrement}</a>
+                  </Box>
+                )}
+                {selectedVehiculeDocs.carteVerte && (
+                  <Box mb={2}>
+                    <Typography>Carte Verte</Typography>
+                    <a href={`${BACKEND_URL}/uploads/vehicules/${selectedVehiculeDocs.carteVerte}`} target="_blank">{selectedVehiculeDocs.carteVerte}</a>
+                  </Box>
+                )}
+                {selectedVehiculeDocs.extincteur && (
+                  <Box mb={2}>
+                    <Typography>Extincteur</Typography>
+                    <a href={`${BACKEND_URL}/uploads/vehicules/${selectedVehiculeDocs.extincteur}`} target="_blank">{selectedVehiculeDocs.extincteur}</a>
+                  </Box>
+                )}
+              </>
+            )}
+            <Box mt={2} display="flex" justifyContent="flex-end">
+              <Button onClick={() => setDialogOpen(false)} variant="contained">Fermer</Button>
+            </Box>
           </Box>
-        </Drawer>
+        </Dialog>
       </Box>
     </AdminLayout>
   );
