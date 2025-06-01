@@ -1,187 +1,207 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, IconButton, Pagination, InputAdornment, Paper, Typography
+  Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent,
+  IconButton, Drawer, Snackbar, Alert, Tooltip, TextField
 } from '@mui/material';
-import { Delete, Edit, Add, Search as SearchIcon } from '@mui/icons-material';
+import { InsertDriveFile, Delete, AddCircleOutline } from '@mui/icons-material';
 import axios from '../../utils/axios';
-import AdminLayout from '../../components/Layout';
+import Layout from '../../components/Layout';
 
-interface Partenaire {
-  _id: string;
-  nom: string;
-  ice: string;
-  logo?: string;
-  adresse: string;
+interface Dossier {
+  [key: string]: string | undefined;
 }
 
-const PartenairesPage: React.FC = () => {
-  const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
+const DossierJuridique: React.FC = () => {
+  const [dossier, setDossier] = useState<Dossier | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editData, setEditData] = useState<Partenaire | null>(null);
-  const [form, setForm] = useState({ nom: '', ice: '', adresse: '', logo: null as File | null });
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const perPage = 5;
+  const [files, setFiles] = useState<{ [key: string]: File | null }>({});
+  const [customDocs, setCustomDocs] = useState<{ name: string, file: File | null }[]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  const fetchPartenaires = async () => {
-    const res = await axios.get('/api/partenaires');
-    setPartenaires(res.data);
-  };
+  const standardDocs = ['modelJ', 'statut', 'rc', 'identifiantFiscale', 'cinGerant', 'doc1007'];
 
   useEffect(() => {
-    fetchPartenaires();
+    fetchDossier();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, files } = e.target;
-    if (name === 'logo' && files) {
-      setForm((prev) => ({ ...prev, logo: files[0] }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
+  const fetchDossier = async () => {
+    const res = await axios.get('/api/dossier-juridique');
+    setDossier(res.data || {});
   };
 
-  const handleSubmit = async () => {
+  const handleView = (fileName: string | undefined) => {
+    if (!fileName) return;
+    setSelectedDoc(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
+    setOpenDialog(true);
+  };
+
+  const handleDelete = async (field: string) => {
+    await axios.delete(`/api/dossier-juridique/${field}`);
+    fetchDossier();
+  };
+
+  const handleFileChange = (name: string, file: File | null) => {
+    setFiles(prev => ({ ...prev, [name]: file }));
+  };
+
+  const handleUpload = async () => {
     const formData = new FormData();
-    formData.append('nom', form.nom);
-    formData.append('ice', form.ice);
-    formData.append('adresse', form.adresse);
-    if (form.logo) formData.append('logo', form.logo);
+    Object.entries(files).forEach(([key, file]) => {
+      if (file) formData.append(key, file);
+    });
+    customDocs.forEach((doc, i) => {
+      if (doc.file) formData.append(`custom_${doc.name || 'doc' + i}`, doc.file);
+    });
 
-    if (editData) {
-      await axios.put(`/api/partenaires/${editData._id}`, formData);
-    } else {
-      await axios.post('/api/partenaires', formData);
+    try {
+      const res = await axios.post('/api/dossier-juridique', formData);
+      if (res.status === 201) {
+        setFiles({});
+        setCustomDocs([]);
+        setDrawerOpen(false);
+        setSnackbarOpen(true);
+        fetchDossier();
+      }
+    } catch (err) {
+      console.error("Erreur d'upload", err);
     }
-
-    setDrawerOpen(false);
-    setEditData(null);
-    setForm({ nom: '', ice: '', adresse: '', logo: null });
-    fetchPartenaires();
   };
 
-  const handleDelete = async (id: string) => {
-    await axios.delete(`/api/partenaires/${id}`);
-    fetchPartenaires();
-  };
-
-  const filtered = partenaires.filter(p =>
-    p.nom.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  const allFields = dossier ? Object.entries(dossier) : [];
 
   return (
-    <AdminLayout>
-      <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>Liste des Partenaires</Typography>
-
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <TextField
-            size="small"
-            placeholder="Rechercher par nom"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ width: '30%', backgroundColor: 'white', borderRadius: 1 }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => {
-              setEditData(null);
-              setForm({ nom: '', ice: '', adresse: '', logo: null });
-              setDrawerOpen(true);
-            }}
-            sx={{
-              backgroundColor: '#001e61',
-              fontWeight: 'bold',
-              '&:hover': { backgroundColor: '#001447' },
-              borderRadius: 3,
-              px: 3
-            }}
-          >
-            Ajouter
-          </Button>
+    <Layout>
+      <Box p={4}>
+        <Box display="flex" justifyContent="space-between" mb={2}>
+          <Typography variant="h5" fontWeight={600}>Dossier Juridique</Typography>
+          <Button variant="contained" onClick={() => setDrawerOpen(true)}>Ajouter / Modifier</Button>
         </Box>
 
-        <Paper elevation={2} sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper}>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                {['Logo', 'Nom', 'ICE', 'Adresse', 'Actions'].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
-                ))}
+              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                <TableCell><strong>Type</strong></TableCell>
+                <TableCell><strong>Actions</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginated.map((p, i) => (
-                <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
+              {allFields.map(([key, value], index) => (
+                <TableRow key={index}>
+                  <TableCell>{key}</TableCell>
                   <TableCell>
-                    {p.logo ? (
-                      <Box
-                        component="img"
-                        src={`https://mme-backend.onrender.com/uploads/partenaires/${p.logo}`}
-                        alt="logo partenaire"
-                        sx={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 2 }}
-                      />
-                    ) : 'N/A'}
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{p.nom}</TableCell>
-                  <TableCell>{p.ice}</TableCell>
-                  <TableCell>{p.adresse}</TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => {
-                      setEditData(p);
-                      setForm({ nom: p.nom, ice: p.ice, adresse: p.adresse, logo: null });
-                      setDrawerOpen(true);
-                    }} sx={{ color: '#001e61' }}><Edit /></IconButton>
-                    <IconButton onClick={() => handleDelete(p._id)} sx={{ color: '#d32f2f' }}><Delete /></IconButton>
+                    {value ? (
+                      <>
+                        <Tooltip title="Voir le document">
+                          <IconButton onClick={() => handleView(value)} sx={{ color: '#0288d1' }}>
+                            <InsertDriveFile />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Supprimer le document">
+                          <IconButton onClick={() => handleDelete(key)} sx={{ color: '#d32f2f' }}>
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    ) : 'Non disponible'}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </Paper>
+        </TableContainer>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(filtered.length / perPage)}
-            page={page}
-            onChange={(_, val) => setPage(val)}
-            color="primary"
-          />
-        </Box>
+        {/* Vue du document */}
+        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Visualiser le document</DialogTitle>
+          <DialogContent>
+            {selectedDoc && (
+              <>
+                <Box component="iframe" src={selectedDoc} width="100%" height="600px" />
+                <Button href={selectedDoc} target="_blank" download fullWidth variant="outlined" sx={{ mt: 2 }}>
+                  Télécharger
+                </Button>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
 
+        {/* Formulaire Drawer */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box mt={8} p={3} width={400}>
-            <Typography variant="h6" fontWeight={600} mb={2}>
-              {editData ? 'Modifier Partenaire' : 'Ajouter un Partenaire'}
-            </Typography>
-            <TextField label="Nom" name="nom" fullWidth margin="normal" value={form.nom} onChange={handleInputChange} />
-            <TextField label="ICE" name="ice" fullWidth margin="normal" value={form.ice} onChange={handleInputChange} />
-            <TextField label="Adresse" name="adresse" fullWidth margin="normal" value={form.adresse} onChange={handleInputChange} />
-            <TextField type="file" name="logo" fullWidth margin="normal" inputProps={{ accept: 'image/*' }} onChange={handleInputChange} />
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ mt: 2, backgroundColor: '#001e61', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}
-              onClick={handleSubmit}
-            >
-              Enregistrer
-            </Button>
+          <Box p={3} width={400}>
+            <Typography variant="h6" fontWeight={600} mb={3}>Documents à importer</Typography>
+            <Box display="flex" flexDirection="column" gap={2}>
+              {standardDocs.map(name => (
+                <Box key={name}>
+                  <Typography fontWeight={500}>{name}</Typography>
+                  <input
+                    type="file"
+                    onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
+                    style={{ width: '100%' }}
+                  />
+                </Box>
+              ))}
+
+              <Typography variant="subtitle1" fontWeight={600} mt={2}>Ajouter d'autres documents :</Typography>
+              {customDocs.map((doc, i) => (
+                <Box key={i}>
+                  <TextField
+                    label="Nom du document"
+                    value={doc.name}
+                    onChange={(e) => {
+                      const updated = [...customDocs];
+                      updated[i].name = e.target.value;
+                      setCustomDocs(updated);
+                    }}
+                    fullWidth
+                    margin="dense"
+                  />
+                  <input
+                    type="file"
+                    onChange={e => {
+                      const updated = [...customDocs];
+                      updated[i].file = e.target.files?.[0] || null;
+                      setCustomDocs(updated);
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                </Box>
+              ))}
+
+              <Button startIcon={<AddCircleOutline />} onClick={() => setCustomDocs([...customDocs, { name: '', file: null }])}>
+                Ajouter un champ
+              </Button>
+
+              <Button
+                variant="contained"
+                fullWidth
+                sx={{ mt: 2 }}
+                onClick={handleUpload}
+                disabled={Object.values(files).every(f => f === null) && customDocs.length === 0}
+              >
+                ENREGISTRER
+              </Button>
+            </Box>
           </Box>
         </Drawer>
+
+        {/* Notification */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
+            Documents enregistrés avec succès ✅
+          </Alert>
+        </Snackbar>
       </Box>
-    </AdminLayout>
+    </Layout>
   );
 };
 
-export default PartenairesPage;
+export default DossierJuridique;
