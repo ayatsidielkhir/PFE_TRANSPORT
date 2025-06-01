@@ -18,7 +18,6 @@ const vehiculeSchema = new mongoose.Schema(
       enum: ['Camion', 'Tracteur', 'Voiture'],
       required: true,
       set: (val: string) => val.charAt(0).toUpperCase() + val.slice(1).toLowerCase()
-
     },
     kilometrage: {
       type: Number,
@@ -47,6 +46,9 @@ const vehiculeSchema = new mongoose.Schema(
       type: String
     },
     chauffeur: {
+      type: String
+    },
+    photo: { // ✅ Ajout du champ photo
       type: String
     }
   },

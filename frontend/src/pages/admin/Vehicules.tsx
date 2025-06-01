@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
-  Drawer, InputAdornment, Typography, Dialog, MenuItem, Select,
+  Drawer, InputAdornment, Typography, MenuItem, Select,
   FormControl, InputLabel, Pagination
 } from '@mui/material';
 import { Add, Delete, Edit, Search as SearchIcon } from '@mui/icons-material';
@@ -22,6 +22,7 @@ interface Vehicule {
   agrement?: string;
   carteVerte?: string;
   extincteur?: string;
+  photo?: string;
   chauffeur?: string;
 }
 
@@ -45,13 +46,8 @@ const VehiculesPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const perPage = 5;
 
-  useEffect(() => {
-    fetchVehicules();
-  }, []);
-
-  useEffect(() => {
-    fetchChauffeurs();
-  }, []);
+  useEffect(() => { fetchVehicules(); }, []);
+  useEffect(() => { fetchChauffeurs(); }, []);
 
   const fetchVehicules = async () => {
     const res = await axios.get('/api/vehicules');
@@ -63,9 +59,7 @@ const VehiculesPage: React.FC = () => {
     setChauffeurs(res.data);
     const map: Record<string, string> = {};
     res.data.forEach((c: Chauffeur) => {
-      if (c._id) {
-        map[c._id.toString()] = `${c.nom} ${c.prenom}`;
-      }
+      if (c._id) map[c._id.toString()] = `${c.nom} ${c.prenom}`;
     });
     setChauffeurMap(map);
   };
@@ -88,19 +82,27 @@ const VehiculesPage: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!form.nom || !form.matricule || !form.type || !form.kilometrage || !form.controle_technique) {
-      alert("Merci de remplir tous les champs obligatoires.");
-      return;
-    }
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && typeof value !== 'object') {
+        formData.append(key, value as string);
+      }
+    });
+
+    const fileFields = ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photo'];
+    fileFields.forEach(field => {
+      const input = document.querySelector(`input[name="${field}"]`) as HTMLInputElement;
+      if (input?.files?.[0]) {
+        formData.append(field, input.files[0]);
+      }
+    });
 
     try {
-      const res = isEditing && form._id
-        ? await axios.put(`/api/vehicules/${form._id}`, form)
-        : await axios.post('/api/vehicules', form);
-      if ([200, 201].includes(res.status)) {
-        fetchVehicules();
-        setDrawerOpen(false);
-      }
+      const url = isEditing && form._id ? `/api/vehicules/${form._id}` : `/api/vehicules`;
+      const method = isEditing ? axios.put : axios.post;
+      await method(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      fetchVehicules();
+      setDrawerOpen(false);
     } catch (err) {
       alert("Erreur lors de l'enregistrement du véhicule.");
     }
@@ -147,15 +149,7 @@ const VehiculesPage: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<Add />}
-            sx={{
-              backgroundColor: '#001e61',
-              borderRadius: 3,
-              textTransform: 'none',
-              fontWeight: 'bold',
-              px: 3,
-              boxShadow: 2,
-              '&:hover': { backgroundColor: '#001447' }
-            }}
+            sx={{ backgroundColor: '#001e61', borderRadius: 3, textTransform: 'none', fontWeight: 'bold', px: 3, boxShadow: 2, '&:hover': { backgroundColor: '#001447' } }}
             onClick={handleAdd}
           >
             Ajouter un véhicule
@@ -166,7 +160,7 @@ const VehiculesPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                {["Nom", "Chauffeur", "Matricule", "Type", "Km", "CT", "Actions"].map(h => (
+                {["Image", "Nom", "Chauffeur", "Matricule", "Type", "Km", "CT", "Actions"].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -174,6 +168,11 @@ const VehiculesPage: React.FC = () => {
             <TableBody>
               {paginated.map((v, i) => (
                 <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                  <TableCell>
+                    {v.photo ? (
+                      <img src={`/uploads/vehicules/${v.photo}`} alt="Véhicule" width={50} height={50} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                    ) : '—'}
+                  </TableCell>
                   <TableCell>{v.nom}</TableCell>
                   <TableCell>{v.chauffeur && chauffeurMap[v.chauffeur] ? chauffeurMap[v.chauffeur] : '—'}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
@@ -191,12 +190,7 @@ const VehiculesPage: React.FC = () => {
         </Paper>
 
         <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(filtered.length / perPage)}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
-          />
+          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} color="primary" />
         </Box>
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
@@ -221,17 +215,14 @@ const VehiculesPage: React.FC = () => {
               </Select>
             </FormControl>
 
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleSave}
-              sx={{
-                backgroundColor: '#001e61',
-                textTransform: 'none',
-                fontWeight: 'bold',
-                '&:hover': { backgroundColor: '#001447' }
-              }}
-            >
+            {["carteGrise", "assurance", "vignette", "agrement", "carteVerte", "extincteur", "photo"].map(field => (
+              <Box key={field} my={1}>
+                <Typography variant="body2">{field}</Typography>
+                <input type="file" name={field} />
+              </Box>
+            ))}
+
+            <Button fullWidth variant="contained" onClick={handleSave} sx={{ backgroundColor: '#001e61', textTransform: 'none', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}>
               {isEditing ? 'Mettre à jour' : 'Ajouter'}
             </Button>
           </Box>

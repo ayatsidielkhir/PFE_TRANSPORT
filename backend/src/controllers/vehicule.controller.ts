@@ -12,18 +12,9 @@ export const getVehicules = async (_req: Request, res: Response) => {
 
 export const createVehicule = async (req: Request, res: Response) => {
   try {
-    const {
-      nom,
-      matricule,
-      type,
-      kilometrage,
-      controle_technique,
-      chauffeur
-    } = req.body;
+    const { nom, matricule, type, kilometrage, controle_technique, chauffeur } = req.body;
 
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     const vehicule = new Vehicule({
       nom,
@@ -38,42 +29,28 @@ export const createVehicule = async (req: Request, res: Response) => {
       agrement: files?.agrement?.[0]?.filename || '',
       carteVerte: files?.carteVerte?.[0]?.filename || '',
       extincteur: files?.extincteur?.[0]?.filename || '',
+      photo: files?.photo?.[0]?.filename || '' // ✅ Ajout de l'image du véhicule
     });
 
     await vehicule.save();
     res.status(201).json(vehicule);
   } catch (err) {
-    console.error('❌ Erreur création véhicule :', err);
     res.status(400).json({ message: 'Erreur création', error: err });
   }
 };
 
 export const updateVehicule = async (req: Request, res: Response) => {
   try {
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const updates: any = { ...req.body, kilometrage: Number(req.body.kilometrage) };
 
-    const updates: any = {
-      ...req.body,
-      kilometrage: Number(req.body.kilometrage),
-    };
-
-    const fileFields = ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur'];
-
-    fileFields.forEach((field) => {
-      if (files?.[field]?.[0]) {
-        updates[field] = files[field][0].filename;
-      }
+    ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photo'].forEach(field => {
+      if (files?.[field]?.[0]) updates[field] = files[field][0].filename;
     });
 
-    const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-    });
-
+    const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, { new: true });
     res.status(200).json(updated);
   } catch (err) {
-    console.error('❌ Erreur modification véhicule :', err);
     res.status(400).json({ message: 'Erreur modification', error: err });
   }
 };

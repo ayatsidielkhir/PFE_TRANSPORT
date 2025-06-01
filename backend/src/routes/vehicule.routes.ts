@@ -1,34 +1,78 @@
-import express from 'express';
-import {
-  getVehicules,
-  createVehicule,
-  updateVehicule,
-  deleteVehicule
-} from '../controllers/vehicule.controller';
+  import { Router, Request, Response ,RequestHandler} from 'express';
+  import path from 'path';
+  import fs from 'fs';
+  import multer from 'multer';
+  import {
+    createVehicule,
+    getVehicules,
+    updateVehicule,
+    deleteVehicule
+  } from '../controllers/vehicule.controller';
 
-import upload from '../middleware/upload'; // le fichier unique
+  const router = Router();
 
-const router = express.Router();
+  // ✅ Config Multer pour /mnt/data/uploads/vehicules
+  const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = path.join('/mnt/data/uploads', 'vehicules');
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      cb(null, Date.now() + '-' + file.originalname);
+    }
+  });
 
-router.get('/', getVehicules);
-router.post('/', upload.fields([
-  { name: 'carteGrise', maxCount: 1 },
-  { name: 'assurance', maxCount: 1 },
-  { name: 'vignette', maxCount: 1 },
-  { name: 'agrement', maxCount: 1 },
-  { name: 'carteVerte', maxCount: 1 },
-  { name: 'extincteur', maxCount: 1 }
-]), createVehicule);
+  const upload = multer({ storage });
 
-router.put('/:id', upload.fields([
-  { name: 'carteGrise', maxCount: 1 },
-  { name: 'assurance', maxCount: 1 },
-  { name: 'vignette', maxCount: 1 },
-  { name: 'agrement', maxCount: 1 },
-  { name: 'carteVerte', maxCount: 1 },
-  { name: 'extincteur', maxCount: 1 }
-]), updateVehicule);
+  // ✅ ROUTES CRUD
 
-router.delete('/:id', deleteVehicule);
+  // Tous les véhicules
+  router.get('/', getVehicules);
 
-export default router;
+  // Ajouter un véhicule avec fichiers
+  router.post(
+    '/',
+    upload.fields([
+      { name: 'carteGrise', maxCount: 1 },
+      { name: 'assurance', maxCount: 1 },
+      { name: 'vignette', maxCount: 1 },
+      { name: 'agrement', maxCount: 1 },
+      { name: 'carteVerte', maxCount: 1 },
+      { name: 'extincteur', maxCount: 1 },
+      { name: 'photoVehicule', maxCount: 1 } // si tu ajoutes ça dans ton modèle
+    ]),
+    createVehicule
+  );
+
+  // Modifier
+  router.put(
+    '/:id',
+    upload.fields([
+      { name: 'carteGrise', maxCount: 1 },
+      { name: 'assurance', maxCount: 1 },
+      { name: 'vignette', maxCount: 1 },
+      { name: 'agrement', maxCount: 1 },
+      { name: 'carteVerte', maxCount: 1 },
+      { name: 'extincteur', maxCount: 1 },
+      { name: 'photoVehicule', maxCount: 1 } // si applicable
+    ]),
+    updateVehicule
+  );
+
+  // Supprimer
+  router.delete('/:id', deleteVehicule);
+
+  router.get('/download/:filename', (req: Request, res: Response) => {
+    const filename = req.params.filename;
+    const filePath = path.join('/mnt/data/uploads/vehicules', filename);
+
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({ message: 'Fichier introuvable' });
+      return;
+    }
+
+    res.download(filePath);
+  });
+
+  export default router;
