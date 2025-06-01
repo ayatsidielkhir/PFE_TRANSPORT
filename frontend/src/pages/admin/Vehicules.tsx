@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Dialog, DialogTitle, DialogContent, Typography, InputAdornment, Paper
+  Box, Button, TextField, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
+  InputAdornment, Typography, Avatar, Pagination, Dialog, DialogTitle, DialogContent
 } from '@mui/material';
-import { Delete, Edit, Search as SearchIcon, Add, PictureAsPdf } from '@mui/icons-material';
+import { Delete, Edit, Search as SearchIcon, PictureAsPdf, Add } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 
@@ -71,7 +71,7 @@ const VehiculesPage: React.FC = () => {
         </Tooltip>
       );
     }
-    return <a href={url} target="_blank" rel="noopener noreferrer">📎</a>;
+    return <a href={url} target="_blank" rel="noopener noreferrer">📎 Fichier</a>;
   };
 
   const renderVoirPlus = (vehicule: Vehicule) => {
@@ -92,6 +92,19 @@ const VehiculesPage: React.FC = () => {
     );
   };
 
+  const chauffeurMap = chauffeurs.reduce((acc, ch) => {
+    acc[ch._id] = `${ch.nom} ${ch.prenom}`;
+    return acc;
+  }, {} as Record<string, string>);
+
+  const handleDelete = async (id?: string) => {
+    if (!id) return;
+    if (window.confirm('Supprimer ce véhicule ?')) {
+      await axios.delete(`/api/vehicules/${id}`);
+      fetchVehicules();
+    }
+  };
+
   const filtered = vehicules.filter(v =>
     v.nom?.toLowerCase().includes(search.toLowerCase()) ||
     v.matricule?.toLowerCase().includes(search.toLowerCase())
@@ -108,7 +121,7 @@ const VehiculesPage: React.FC = () => {
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <TextField
             size="small"
-            placeholder="Rechercher..."
+            placeholder="Rechercher un véhicule..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             InputProps={{
@@ -120,13 +133,30 @@ const VehiculesPage: React.FC = () => {
             }}
             sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
           />
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            sx={{
+              backgroundColor: '#001e61',
+              borderRadius: 3,
+              textTransform: 'none',
+              fontWeight: 'bold',
+              px: 3,
+              boxShadow: 2,
+              '&:hover': { backgroundColor: '#001447' }
+            }}
+            onClick={() => alert('Ajout de véhicule à implémenter')}
+          >
+            Ajouter un véhicule
+          </Button>
         </Box>
 
         <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <Table>
             <TableHead>
               <TableRow>
-                {["Photo", "Nom", "Matricule", "Type", "Km", "CT", "Carte Grise", "Assurance", "Vignette", "Autres Docs"].map(h => (
+                {['Photo', 'Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Carte Grise', 'Assurance', 'Vignette', 'Autres Docs', 'Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -136,6 +166,7 @@ const VehiculesPage: React.FC = () => {
                 <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
                   <TableCell>{renderDocument(v.photo)}</TableCell>
                   <TableCell>{v.nom}</TableCell>
+                  <TableCell>{chauffeurMap[v.chauffeur || ''] || '—'}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
                   <TableCell>{v.type}</TableCell>
                   <TableCell>{v.kilometrage}</TableCell>
@@ -144,6 +175,9 @@ const VehiculesPage: React.FC = () => {
                   <TableCell>{renderDocument(v.assurance)}</TableCell>
                   <TableCell>{renderDocument(v.vignette)}</TableCell>
                   <TableCell>{renderVoirPlus(v)}</TableCell>
+                  <TableCell>
+                    <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -166,19 +200,19 @@ const VehiculesPage: React.FC = () => {
               <>
                 {selectedVehiculeDocs.agrement && (
                   <Box mb={2}>
-                    <Typography>Agrément</Typography>
+                    <Typography fontWeight={500}>Agrément</Typography>
                     <a href={`${BACKEND_URL}/uploads/vehicules/${selectedVehiculeDocs.agrement}`} target="_blank">{selectedVehiculeDocs.agrement}</a>
                   </Box>
                 )}
                 {selectedVehiculeDocs.carteVerte && (
                   <Box mb={2}>
-                    <Typography>Carte Verte</Typography>
+                    <Typography fontWeight={500}>Carte Verte</Typography>
                     <a href={`${BACKEND_URL}/uploads/vehicules/${selectedVehiculeDocs.carteVerte}`} target="_blank">{selectedVehiculeDocs.carteVerte}</a>
                   </Box>
                 )}
                 {selectedVehiculeDocs.extincteur && (
                   <Box mb={2}>
-                    <Typography>Extincteur</Typography>
+                    <Typography fontWeight={500}>Extincteur</Typography>
                     <a href={`${BACKEND_URL}/uploads/vehicules/${selectedVehiculeDocs.extincteur}`} target="_blank">{selectedVehiculeDocs.extincteur}</a>
                   </Box>
                 )}
