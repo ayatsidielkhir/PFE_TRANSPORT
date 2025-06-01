@@ -29,29 +29,51 @@ export const createVehicule = async (req: Request, res: Response) => {
       agrement: files?.agrement?.[0]?.filename || '',
       carteVerte: files?.carteVerte?.[0]?.filename || '',
       extincteur: files?.extincteur?.[0]?.filename || '',
-      photo: files?.photo?.[0]?.filename || '' // ✅ Ajout de l'image du véhicule
+      photo: files?.photoVehicule?.[0]?.filename || '' // ✅ attention ici
     });
 
     await vehicule.save();
     res.status(201).json(vehicule);
   } catch (err) {
-    res.status(400).json({ message: 'Erreur création', error: err });
+    res.status(400).json({ message: 'Erreur création véhicule', error: err });
   }
 };
 
 export const updateVehicule = async (req: Request, res: Response) => {
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    const updates: any = { ...req.body, kilometrage: Number(req.body.kilometrage) };
 
-    ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photo'].forEach(field => {
-      if (files?.[field]?.[0]) updates[field] = files[field][0].filename;
+    const updates: any = {
+      ...req.body,
+      kilometrage: Number(req.body.kilometrage)
+    };
+
+    // Liste des champs de fichiers
+    const fileFields = [
+      'carteGrise',
+      'assurance',
+      'vignette',
+      'agrement',
+      'carteVerte',
+      'extincteur',
+      'photoVehicule' // ✅ le champ photo
+    ];
+
+    // Ajout des fichiers présents dans la requête aux updates
+    fileFields.forEach(field => {
+      if (files?.[field]?.[0]) {
+        if (field === 'photoVehicule') {
+          updates.photo = files[field][0].filename; // mappe vers le champ `photo` dans le modèle
+        } else {
+          updates[field] = files[field][0].filename;
+        }
+      }
     });
 
     const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, { new: true });
     res.status(200).json(updated);
   } catch (err) {
-    res.status(400).json({ message: 'Erreur modification', error: err });
+    res.status(400).json({ message: 'Erreur modification véhicule', error: err });
   }
 };
 
