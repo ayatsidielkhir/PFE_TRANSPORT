@@ -46,6 +46,13 @@ const VehiculesPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const perPage = 5;
 
+  const BACKEND_URL = 'https://mme-backend.onrender.com';
+
+  useEffect(() => {
+    fetchVehicules();
+    fetchChauffeurs();
+  }, []);
+
   const fetchVehicules = async () => {
     const res = await axios.get('/api/vehicules');
     setVehicules(res.data);
@@ -56,15 +63,10 @@ const VehiculesPage: React.FC = () => {
     setChauffeurs(res.data);
     const map: Record<string, string> = {};
     res.data.forEach((c: Chauffeur) => {
-      if (c._id) map[c._id.toString()] = `${c.nom} ${c.prenom}`;
+      if (c._id) map[c._id] = `${c.nom} ${c.prenom}`;
     });
     setChauffeurMap(map);
   };
-
-  useEffect(() => {
-    fetchVehicules();
-    fetchChauffeurs();
-  }, []);
 
   const handleChange = (field: keyof Vehicule, value: any) => {
     setForm({ ...form, [field]: value });
@@ -89,12 +91,7 @@ const VehiculesPage: React.FC = () => {
     const formData = new FormData();
 
     Object.entries(form).forEach(([key, value]) => {
-      if (
-        value !== undefined &&
-        value !== null &&
-        typeof value !== 'object' &&
-        key !== 'photo'
-      ) {
+      if (value !== undefined && value !== null && typeof value !== 'object') {
         formData.append(key, value.toString());
       }
     });
@@ -139,7 +136,7 @@ const VehiculesPage: React.FC = () => {
 
   const renderVehiculePhoto = (file?: string) => {
     if (!file) return '—';
-    const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
+    const url = `${BACKEND_URL}/uploads/vehicules/${file}`;
     return (
       <Avatar
         src={url}
