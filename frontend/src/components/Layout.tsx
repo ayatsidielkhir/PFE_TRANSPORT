@@ -161,7 +161,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           minHeight: '100vh',
           padding: 3,
           pt: '100px',
-          pl: isMobile ? 0 : `${drawerWidth}px`
+          // ❌ supprimé : pl dynamique qui ajoutait un espace
+          // ✅ plus propre : le contenu commence dès la fin du Drawer
+          ml: isMobile ? 0 : 0
         }}
       >
         {children}
