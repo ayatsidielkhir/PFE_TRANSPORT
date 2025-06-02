@@ -1,3 +1,4 @@
+
 import { Router, Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -12,7 +13,6 @@ import {
 
 const router = Router();
 
-// ✅ Configuration de Multer pour le dossier des véhicules
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const dir = path.join('/mnt/data/uploads', 'vehicules');
@@ -26,10 +26,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ✅ Récupérer tous les véhicules
 router.get('/', getVehicules);
 
-// ✅ Ajouter un véhicule avec upload
 router.post(
   '/',
   upload.fields([
@@ -44,7 +42,6 @@ router.post(
   addVehicule
 );
 
-// ✅ Modifier un véhicule
 router.put(
   '/:id',
   upload.fields([
@@ -59,8 +56,8 @@ router.put(
   updateVehicule
 );
 
-// ✅ Supprimer un véhicule
 router.delete('/:id', deleteVehicule);
+
 
 // ✅ Télécharger un seul fichier
 
@@ -79,6 +76,7 @@ router.delete('/:id', deleteVehicule);
 // ✅ Télécharger tous les fichiers d’un véhicule en ZIP
   router.get('/:id/download', downloadVehiculeDocs);
 
-  router.get('/download/:vehiculeId', downloadVehiculeDocs);
+router.get('/download/:vehiculeId', downloadVehiculeDocs);
 
-  export default router;
+export default router;
+

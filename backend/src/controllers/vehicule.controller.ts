@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
 
-// ✅ Créer un véhicule
+// ✅ Ajouter un véhicule
 export const addVehicule: RequestHandler = async (req, res) => {
   try {
     const body = req.body;
@@ -29,7 +29,7 @@ export const addVehicule: RequestHandler = async (req, res) => {
     await newVehicule.save();
     res.status(201).json(newVehicule);
   } catch (err) {
-    console.error('❌ Erreur ajout véhicule :', err);
+    console.error('Erreur ajout véhicule :', err);
     res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };
@@ -51,7 +51,8 @@ export const updateVehicule: RequestHandler = async (req, res) => {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     const fieldsToUpdate = [
-      'carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule'
+      'carteGrise', 'assurance', 'vignette', 'agrement',
+      'carteVerte', 'extincteur', 'photoVehicule'
     ];
 
     fieldsToUpdate.forEach((field) => {
@@ -63,7 +64,7 @@ export const updateVehicule: RequestHandler = async (req, res) => {
     const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, { new: true });
     res.status(200).json(updated);
   } catch (err) {
-    console.error('❌ Erreur update véhicule :', err);
+    console.error('Erreur modification véhicule :', err);
     res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };
@@ -78,7 +79,7 @@ export const deleteVehicule: RequestHandler = async (req, res) => {
   }
 };
 
-// ✅ Télécharger les fichiers du véhicule en ZIP
+// ✅ Télécharger tous les fichiers ZIP
 export const downloadVehiculeDocs: RequestHandler = async (req, res) => {
   try {
     const { vehiculeId } = req.params;
@@ -90,9 +91,8 @@ export const downloadVehiculeDocs: RequestHandler = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=vehicule-${nomNettoye}.zip`);
 
     const archive = archiver('zip', { zlib: { level: 9 } });
-
     archive.on('error', (err) => {
-      console.error('Erreur archive:', err);
+      console.error('Erreur archive ZIP :', err);
       res.status(500).end();
     });
 
@@ -101,15 +101,12 @@ export const downloadVehiculeDocs: RequestHandler = async (req, res) => {
     for (const [key, filename] of Object.entries(docs)) {
       const filepath = path.join('/mnt/data/uploads/vehicules', filename as string);
       if (fs.existsSync(filepath)) {
-        const extension = path.extname(filename as string);
-        const docName = `${key}${extension}`;
-        archive.file(filepath, { name: docName });
+        archive.file(filepath, { name: `${key}${path.extname(filename as string)}` });
       }
     }
 
     await archive.finalize();
   } catch (err) {
-    console.error('Erreur dans le téléchargement ZIP :', err);
-    res.status(500).send('Erreur serveur lors de la création du zip');
+    res.status(500).json({ message: 'Erreur ZIP', error: err });
   }
 };
