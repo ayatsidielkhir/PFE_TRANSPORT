@@ -46,7 +46,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <Box sx={{ display: 'flex' }}>
       {/* TOPBAR */}
-      <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#001e61', boxShadow: 1 }}>
+      <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#f8f9fa', boxShadow: 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Box display="flex" alignItems="center">
             <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
@@ -55,14 +55,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Box display="flex" alignItems="center" gap={2} ml={2}>
           <Box
             sx={{
-              backgroundColor: 'white',
-              padding: '2px 6px',
-              borderRadius: 1.5,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               height: '44px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              width:'20px'
             }}
           >
             <img
@@ -109,7 +107,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
-            bgcolor: '#f8f9fa',
+            bgcolor: '#001e61',
             borderRight: '1px solid #ddd',
             position: 'fixed',
             zIndex: 1200,
