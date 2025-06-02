@@ -4,13 +4,16 @@ import {
   TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent,
   IconButton, Drawer, Snackbar, Alert, Tooltip, TextField
 } from '@mui/material';
-import { InsertDriveFile, Delete, AddCircleOutline } from '@mui/icons-material';
+import { InsertDriveFile, AddCircleOutline } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import Layout from '../../components/Layout';
 
 interface Dossier {
   [key: string]: string | undefined;
 }
+
+const standardDocs = ['modelJ', 'statut', 'rc', 'identifiantFiscale', 'cinGerant', 'doc1007'];
+const hiddenKeys = ['_id', '__v', 'createdAt', 'updatedAt'];
 
 const DossierJuridique: React.FC = () => {
   const [dossier, setDossier] = useState<Dossier | null>(null);
@@ -21,26 +24,19 @@ const DossierJuridique: React.FC = () => {
   const [customDocs, setCustomDocs] = useState<{ name: string, file: File | null }[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  const standardDocs = ['modelJ', 'statut', 'rc', 'identifiantFiscale', 'cinGerant', 'doc1007'];
-
-  useEffect(() => {
-    fetchDossier();
-  }, []);
-
   const fetchDossier = async () => {
     const res = await axios.get('/api/dossier-juridique');
     setDossier(res.data || {});
   };
 
+  useEffect(() => {
+    fetchDossier();
+  }, []);
+
   const handleView = (fileName: string | undefined) => {
     if (!fileName) return;
     setSelectedDoc(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
     setOpenDialog(true);
-  };
-
-  const handleDelete = async (field: string) => {
-    await axios.delete(`/api/dossier-juridique/${field}`);
-    fetchDossier();
   };
 
   const handleFileChange = (name: string, file: File | null) => {
@@ -70,8 +66,6 @@ const DossierJuridique: React.FC = () => {
     }
   };
 
-  const allFields = dossier ? Object.entries(dossier) : [];
-
   return (
     <Layout>
       <Box p={4}>
@@ -85,27 +79,22 @@ const DossierJuridique: React.FC = () => {
             <TableHead>
               <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                 <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
+                <TableCell><strong>Document</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {allFields.map(([key, value], index) => (
-                <TableRow key={index}>
+              {Object.entries(dossier || {})
+                .filter(([key]) => !hiddenKeys.includes(key))
+                .map(([key, value]) => (
+                <TableRow key={key}>
                   <TableCell>{key}</TableCell>
                   <TableCell>
                     {value ? (
-                      <>
-                        <Tooltip title="Voir le document">
-                          <IconButton onClick={() => handleView(value)} sx={{ color: '#0288d1' }}>
-                            <InsertDriveFile />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Supprimer le document">
-                          <IconButton onClick={() => handleDelete(key)} sx={{ color: '#d32f2f' }}>
-                            <Delete />
-                          </IconButton>
-                        </Tooltip>
-                      </>
+                      <Tooltip title="Voir le document">
+                        <IconButton onClick={() => handleView(value)} sx={{ color: '#0288d1' }}>
+                          <InsertDriveFile />
+                        </IconButton>
+                      </Tooltip>
                     ) : 'Non disponible'}
                   </TableCell>
                 </TableRow>
@@ -114,7 +103,6 @@ const DossierJuridique: React.FC = () => {
           </Table>
         </TableContainer>
 
-        {/* Vue du document */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>Visualiser le document</DialogTitle>
           <DialogContent>
@@ -129,66 +117,54 @@ const DossierJuridique: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Formulaire Drawer */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={400}>
             <Typography variant="h6" fontWeight={600} mb={3}>Documents à importer</Typography>
-            <Box display="flex" flexDirection="column" gap={2}>
-              {standardDocs.map(name => (
-                <Box key={name}>
-                  <Typography fontWeight={500}>{name}</Typography>
-                  <input
-                    type="file"
-                    onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
-                    style={{ width: '100%' }}
-                  />
-                </Box>
-              ))}
+            {standardDocs.map(name => (
+              <Box key={name} mb={2}>
+                <Typography fontWeight={500}>{name}</Typography>
+                <input type="file" onChange={e => handleFileChange(name, e.target.files?.[0] || null)} />
+              </Box>
+            ))}
 
-              <Typography variant="subtitle1" fontWeight={600} mt={2}>Ajouter d'autres documents :</Typography>
-              {customDocs.map((doc, i) => (
-                <Box key={i}>
-                  <TextField
-                    label="Nom du document"
-                    value={doc.name}
-                    onChange={(e) => {
-                      const updated = [...customDocs];
-                      updated[i].name = e.target.value;
-                      setCustomDocs(updated);
-                    }}
-                    fullWidth
-                    margin="dense"
-                  />
-                  <input
-                    type="file"
-                    onChange={e => {
-                      const updated = [...customDocs];
-                      updated[i].file = e.target.files?.[0] || null;
-                      setCustomDocs(updated);
-                    }}
-                    style={{ width: '100%' }}
-                  />
-                </Box>
-              ))}
+            <Typography variant="subtitle1" fontWeight={600} mt={3}>Ajouter d'autres documents :</Typography>
+            {customDocs.map((doc, i) => (
+              <Box key={i} mb={2}>
+                <TextField
+                  label="Nom du document"
+                  value={doc.name}
+                  onChange={(e) => {
+                    const updated = [...customDocs];
+                    updated[i].name = e.target.value;
+                    setCustomDocs(updated);
+                  }}
+                  fullWidth
+                  margin="dense"
+                />
+                <input type="file" onChange={e => {
+                  const updated = [...customDocs];
+                  updated[i].file = e.target.files?.[0] || null;
+                  setCustomDocs(updated);
+                }} />
+              </Box>
+            ))}
 
-              <Button startIcon={<AddCircleOutline />} onClick={() => setCustomDocs([...customDocs, { name: '', file: null }])}>
-                Ajouter un champ
-              </Button>
+            <Button startIcon={<AddCircleOutline />} onClick={() => setCustomDocs([...customDocs, { name: '', file: null }])}>
+              Ajouter un champ
+            </Button>
 
-              <Button
-                variant="contained"
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={handleUpload}
-                disabled={Object.values(files).every(f => f === null) && customDocs.length === 0}
-              >
-                ENREGISTRER
-              </Button>
-            </Box>
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ mt: 2 }}
+              onClick={handleUpload}
+              disabled={Object.values(files).every(f => f === null) && customDocs.length === 0}
+            >
+              ENREGISTRER
+            </Button>
           </Box>
         </Drawer>
 
-        {/* Notification */}
         <Snackbar
           open={snackbarOpen}
           autoHideDuration={4000}
