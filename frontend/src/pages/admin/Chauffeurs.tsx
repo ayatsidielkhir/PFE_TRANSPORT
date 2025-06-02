@@ -1,14 +1,15 @@
-// ✅ Page Chauffeurs avec style moderne, Drawer amélioré, 2 colonnes et meilleure UI
+// ✅ Page Chauffeurs avec style moderne, Drawer amélioré, responsive mobile et meilleure UI
 
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
   TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Dialog, DialogTitle, DialogContent, Typography, InputAdornment, Paper
+  Dialog, DialogTitle, DialogContent, Typography, InputAdornment, Paper, useMediaQuery
 } from '@mui/material';
-import { Delete, Edit, Search as SearchIcon, Add } from '@mui/icons-material';
+import { Delete, Edit, Search as SearchIcon, Add, Person } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
+import { useTheme } from '@mui/material/styles';
 
 interface Chauffeur {
   _id: string;
@@ -34,6 +35,9 @@ const ChauffeursPage: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [page, setPage] = useState(1);
   const perPage = 5;
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [form, setForm] = useState<Record<string, string | Blob | null>>({
     nom: '', prenom: '', telephone: '', cin: '', adresse: '',
@@ -141,14 +145,14 @@ const ChauffeursPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3} sx={{ backgroundColor: '#f5f6fa', minHeight: '100vh' }}>
+      <Box p={isMobile ? 1 : 3} sx={{ minHeight: '100vh' }}>
         <Box maxWidth="1400px" mx="auto">
           <Paper elevation={3} sx={{ borderRadius: 4, p: 3, backgroundColor: 'white', boxShadow: 3 }}>
-            <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
-              🚗 Gestion des Chauffeurs
+            <Typography variant="h4" fontWeight="bold" color="primary" mb={3} display="flex" alignItems="center" gap={1}>
+              <Person /> Gestion des Chauffeurs
             </Typography>
 
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box display={isMobile ? 'block' : 'flex'} justifyContent="space-between" alignItems="center" mb={2}>
               <TextField
                 size="small"
                 placeholder="Rechercher un chauffeur..."
@@ -161,7 +165,7 @@ const ChauffeursPage: React.FC = () => {
                     </InputAdornment>
                   )
                 }}
-                sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
+                sx={{ width: isMobile ? '100%' : '35%', backgroundColor: 'white', borderRadius: 1, mb: isMobile ? 2 : 0 }}
               />
 
               <Button
@@ -174,7 +178,8 @@ const ChauffeursPage: React.FC = () => {
                   fontWeight: 'bold',
                   px: 3,
                   boxShadow: 2,
-                  '&:hover': { backgroundColor: '#001447' }
+                  '&:hover': { backgroundColor: '#001447' },
+                  width: isMobile ? '100%' : 'auto'
                 }}
                 onClick={() => { setDrawerOpen(true); resetForm(); }}
               >
@@ -182,49 +187,54 @@ const ChauffeursPage: React.FC = () => {
               </Button>
             </Box>
 
-            <Table>
-              <TableHead>
-                <TableRow>
-                  {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
-                    <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginated.map((c, i) => (
-                  <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                    <TableCell>{renderDocumentAvatar(c.photo)}</TableCell>
-                    <TableCell>{c.nom}</TableCell>
-                    <TableCell>{c.prenom}</TableCell>
-                    <TableCell>{c.telephone}</TableCell>
-                    <TableCell>{c.cin}</TableCell>
-                    <TableCell>{c.adresse}</TableCell>
-                    <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                    <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                    <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                    <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
-                    <TableCell>
-                      <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
-                      <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {/* Tableau non affiché sur mobile */}
+            {!isMobile && (
+              <>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
+                        <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paginated.map((c, i) => (
+                      <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                        <TableCell><Avatar src={`https://mme-backend.onrender.com/uploads/chauffeurs/${c.photo}`} sx={{ width: 45, height: 45 }} /></TableCell>
+                        <TableCell>{c.nom}</TableCell>
+                        <TableCell>{c.prenom}</TableCell>
+                        <TableCell>{c.telephone}</TableCell>
+                        <TableCell>{c.cin}</TableCell>
+                        <TableCell>{c.adresse}</TableCell>
+                        <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
+                        <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
+                        <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
+                        <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
+                        <TableCell>
+                          <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
+                          <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
 
-            <Box display="flex" justifyContent="center" mt={2}>
-              <Pagination
-                count={Math.ceil(filtered.length / perPage)}
-                page={page}
-                onChange={(_, value) => setPage(value)}
-                color="primary"
-              />
-            </Box>
+                <Box display="flex" justifyContent="center" mt={2}>
+                  <Pagination
+                    count={Math.ceil(filtered.length / perPage)}
+                    page={page}
+                    onChange={(_, value) => setPage(value)}
+                    color="primary"
+                  />
+                </Box>
+              </>
+            )}
           </Paper>
         </Box>
 
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
-          <DialogTitle>Visualiser le document</DialogTitle>
+          <DialogTitle sx={{ mt: 2 }}>Visualiser le document</DialogTitle>
           <DialogContent>
             <Box component="img" src={dialogImageSrc} alt="document" width="100%" />
           </DialogContent>
@@ -232,12 +242,12 @@ const ChauffeursPage: React.FC = () => {
 
         {/* Drawer modernisé avec deux colonnes */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={450}>
+          <Box p={3} width={isMobile ? '100vw' : 450}>
             <Box display="flex" justifyContent="center" mb={3}>
               <label htmlFor="photo-input">
                 <Avatar
                   src={previewPhoto || ''}
-                  sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: 3, boxShadow: 2, backgroundColor: '#f0f0f0' }}
+                  sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0' }}
                 />
               </label>
               <input id="photo-input" name="photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleInputChange} />
