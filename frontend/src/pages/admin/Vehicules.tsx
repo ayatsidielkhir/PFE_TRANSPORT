@@ -1,10 +1,8 @@
-// ✅ Page Véhicules complète avec tableau, drawer stylé, responsive, gestion fichiers (image + PDF)
-
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Dialog, DialogTitle, DialogContent, Typography, InputAdornment, Paper, useMediaQuery,
+  Typography, InputAdornment, Paper, useMediaQuery,
   Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import { Delete, Edit, Search as SearchIcon, PictureAsPdf, DriveEta, Add } from '@mui/icons-material';
@@ -110,7 +108,7 @@ const VehiculesPage: React.FC = () => {
   };
 
   const renderDocumentAvatar = (file: string | undefined) => {
-    if (!file) return '—';
+    if (!file || typeof file !== 'string') return '—';
     const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
     if (/\.(jpg|jpeg|png|gif|webp)$/i.test(file)) {
       return <Avatar variant="rounded" src={url} sx={{ width: 35, height: 45 }} />;
@@ -197,7 +195,13 @@ const VehiculesPage: React.FC = () => {
                     <TableCell>{renderDocumentAvatar(v.assurance)}</TableCell>
                     <TableCell>{renderDocumentAvatar(v.carteGrise)}</TableCell>
                     <TableCell>
-                      {[v.vignette, v.agrement, v.carteVerte, v.extincteur].filter(Boolean).map(f => renderDocumentAvatar(f)).map((el, idx) => <Box key={idx} display="inline-block" mr={0.5}>{el}</Box>)}
+                      {[v.vignette, v.agrement, v.carteVerte, v.extincteur]
+                        .filter(f => typeof f === 'string' && f)
+                        .map((f, idx) => (
+                          <Box key={idx} display="inline-block" mr={0.5}>
+                            {renderDocumentAvatar(f)}
+                          </Box>
+                        ))}
                     </TableCell>
                     <TableCell>
                       <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
@@ -214,7 +218,6 @@ const VehiculesPage: React.FC = () => {
           </Box>
         </Paper>
 
-        {/* ✅ Drawer moderne et responsive */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={isMobile ? '100vw' : 450}>
             <Box display="flex" justifyContent="center" mb={3}>
