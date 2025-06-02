@@ -2,27 +2,16 @@ import { Request, Response } from 'express';
 import DossierJuridique from '../models/DossierJuridique';
 import path from 'path';
 import fs from 'fs';
+import { RequestHandler } from 'express';
 
-export const getDossier = async (_: Request, res: Response) => {
+export const getDossier: RequestHandler = async (_req, res) => {
   try {
-    const raw = await DossierJuridique.findOne().lean();
-
-    if (!raw) return res.json({});
-
-    const { _id, __v, createdAt, updatedAt, ...docs } = raw;
-
-    // Filtrer uniquement les documents valides (non vides)
-    const cleaned = Object.fromEntries(
-      Object.entries(docs).filter(([_, value]) => typeof value === 'string' && value.length > 0)
-    );
-
-    res.json(cleaned);
+    const data = await DossierJuridique.findOne();
+    res.json(data || {});
   } catch (error) {
-    console.error('Erreur lors de la récupération du dossier juridique:', error);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: 'Erreur serveur', error });
   }
 };
-
 export const uploadDossier = async (req: Request, res: Response) => {
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
