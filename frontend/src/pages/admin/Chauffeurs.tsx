@@ -52,7 +52,7 @@ const ChauffeursPage: React.FC = () => {
       <Avatar
         variant="rounded"
         src={isImageFile(file) ? url : '/pdf-icon.png'}
-        sx={{ width: 45, height: 60, cursor: 'pointer', border: '1px solid #ccc' }}
+        sx={{ width: 35, height: 45, cursor: 'pointer', border: '1px solid #ccc' }}
         onClick={() => { setDialogImageSrc(url); setOpenDialog(true); }}
       />
     );
@@ -145,11 +145,12 @@ const ChauffeursPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={isMobile ? 1 : 3} sx={{ minHeight: '100vh' }}>
+      <Box p={isMobile ? 1 : 2} sx={{ minHeight: '100vh' }}>
         <Box maxWidth="1400px" mx="auto">
-          <Paper elevation={3} sx={{ borderRadius: 4, p: 3, backgroundColor: 'white', boxShadow: 3 }}>
+          <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
             <Typography variant="h4" fontWeight="bold" color="primary" mb={3} display="flex" alignItems="center" gap={1}>
-              <Person /> Gestion des Chauffeurs
+              <Person sx={{ width: 32, height: 32 }} />
+               Gestion des Chauffeurs
             </Typography>
 
             <Box display={isMobile ? 'block' : 'flex'} justifyContent="space-between" alignItems="center" mb={2}>
@@ -187,60 +188,55 @@ const ChauffeursPage: React.FC = () => {
               </Button>
             </Box>
 
-            {/* Tableau non affiché sur mobile */}
-            {!isMobile && (
-              <>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
-                        <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {paginated.map((c, i) => (
-                      <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                        <TableCell><Avatar src={`https://mme-backend.onrender.com/uploads/chauffeurs/${c.photo}`} sx={{ width: 45, height: 45 }} /></TableCell>
-                        <TableCell>{c.nom}</TableCell>
-                        <TableCell>{c.prenom}</TableCell>
-                        <TableCell>{c.telephone}</TableCell>
-                        <TableCell>{c.cin}</TableCell>
-                        <TableCell>{c.adresse}</TableCell>
-                        <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                        <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                        <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                        <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
-                        <TableCell>
-                          <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
-                          <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            {/* ✅ Tableau également visible sur mobile */}
+            <Table size={isMobile ? 'small' : 'medium'}>
+              <TableHead>
+                <TableRow>
+                  {['Photo', 'Nom', 'Prénom', 'Téléphone', 'CIN', 'Adresse', 'CIN', 'Permis', 'Visa', 'Certificat', 'Actions'].map(h => (
+                    <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginated.map((c, i) => (
+                  <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                    <TableCell><Avatar src={`https://mme-backend.onrender.com/uploads/chauffeurs/${c.photo}`} sx={{ width: 45, height: 45, borderRadius: '50%' }} /></TableCell>
+                    <TableCell>{c.nom}</TableCell>
+                    <TableCell>{c.prenom}</TableCell>
+                    <TableCell>{c.telephone}</TableCell>
+                    <TableCell>{c.cin}</TableCell>
+                    <TableCell>{c.adresse}</TableCell>
+                    <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
+                    <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
+                    <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
+                    <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
+                    <TableCell>
+                      <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
+                      <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
-                <Box display="flex" justifyContent="center" mt={2}>
-                  <Pagination
-                    count={Math.ceil(filtered.length / perPage)}
-                    page={page}
-                    onChange={(_, value) => setPage(value)}
-                    color="primary"
-                  />
-                </Box>
-              </>
-            )}
+            <Box display="flex" justifyContent="center" mt={2}>
+              <Pagination
+                count={Math.ceil(filtered.length / perPage)}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                color="primary"
+              />
+            </Box>
           </Paper>
         </Box>
 
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
           <DialogTitle sx={{ mt: 2 }}>Visualiser le document</DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ mt: 1 }}>
             <Box component="img" src={dialogImageSrc} alt="document" width="100%" />
           </DialogContent>
         </Dialog>
 
-        {/* Drawer modernisé avec deux colonnes */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={isMobile ? '100vw' : 450}>
             <Box display="flex" justifyContent="center" mb={3}>
