@@ -8,6 +8,7 @@ const storage = multer.diskStorage({
     if (req.baseUrl.includes('vehicule')) folder = 'vehicules';
     else if (req.baseUrl.includes('chauffeur')) folder = 'chauffeurs';
     else if (req.baseUrl.includes('dossier-juridique')) folder = 'juridique';
+    else if (req.baseUrl.includes('plateformes')) folder = 'platforms'; // ✅ Ajout important ici
 
     const dir = path.resolve('/mnt/data/uploads', folder);
     if (!fs.existsSync(dir)) {
