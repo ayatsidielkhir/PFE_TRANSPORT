@@ -6,21 +6,12 @@ import path from 'path';
 import ejs from 'ejs';
 import fs from 'fs/promises';
 
-export const generateManualFacture: RequestHandler = async (req, res) => {
-  console.log('🔍 Données reçues pour la facture :', req.body);
-  try {
-    const {
-      date,
-      partenaire,
-      ice,
-      tracteur,
-      lignes,
-      tva,
-      totalHT,
-      totalTTC
-    } = req.body;
 
-    if (!date || !partenaire || !lignes || lignes.length === 0) {
+export const generateManualFacture: RequestHandler = async (req, res) => {
+  try {
+    const { date, partenaire, ice, tracteur, lignes, tva, totalHT, totalTTC } = req.body;
+
+    if (!date || !partenaire || lignes.length === 0) {
       res.status(400).json({ message: 'Champs obligatoires manquants.' });
       return;
     }
@@ -34,6 +25,12 @@ export const generateManualFacture: RequestHandler = async (req, res) => {
     const mois = date.slice(0, 7);
     const count = await Facture.countDocuments({ mois });
     const numero = `${(count + 1).toString().padStart(3, '0')}/${new Date().getFullYear()}`;
+
+    const existing = await Facture.findOne({ numero });
+    if (existing) {
+      res.status(409).json({ message: `Une facture avec le numéro ${numero} existe déjà.` });
+      return;
+    }
 
     const templatePath = path.join(__dirname, '..', 'templates', 'facture.ejs');
     const logoPath = path.resolve(__dirname, '../../', 'assets', 'logo.png');
@@ -63,8 +60,11 @@ export const generateManualFacture: RequestHandler = async (req, res) => {
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
     const filename = `facture_${numero.replace('/', '-')}_${Date.now()}.pdf`;
-    const fileDir = path.resolve(__dirname, '../../uploads/factures');
+
+    // ✅ Disque persistant Render
+    const fileDir = '/mnt/data/uploads/factures';
     await fs.mkdir(fileDir, { recursive: true });
+
     const filePath = path.join(fileDir, filename);
     await page.pdf({ path: filePath, format: 'A4' });
     await browser.close();
@@ -86,18 +86,16 @@ export const generateManualFacture: RequestHandler = async (req, res) => {
     });
 
     await facture.save();
+
     res.status(201).json({ message: 'Facture générée', fileUrl });
   } catch (error: any) {
     console.error('❌ Erreur génération facture :', error);
-    res.status(500).json({
-      message: 'Erreur serveur',
-      error: error.message,
-      stack: error.stack,
-      data: req.body
-    });
+    res.status(500).json({ message: 'Erreur serveur', error: error.message || error });
   }
 };
 
+
+// ✅ Récupérer toutes les factures
 export const getAllFactures: RequestHandler = async (_req, res) => {
   try {
     const factures = await Facture.find().populate('partenaire', 'nom').sort({ createdAt: -1 });
@@ -107,6 +105,7 @@ export const getAllFactures: RequestHandler = async (_req, res) => {
   }
 };
 
+// ✅ Dernière facture
 export const getLatestFacture: RequestHandler = async (_req, res) => {
   try {
     const last = await Facture.findOne().sort({ createdAt: -1 });
@@ -120,6 +119,7 @@ export const getLatestFacture: RequestHandler = async (_req, res) => {
   }
 };
 
+// ✅ Supprimer une facture
 export const deleteFacture: RequestHandler = async (req, res) => {
   try {
     const deleted = await Facture.findByIdAndDelete(req.params.id);
@@ -133,6 +133,25 @@ export const deleteFacture: RequestHandler = async (req, res) => {
   }
 };
 
+// ✅ Modifier une facture
+export const updateFacture: RequestHandler = async (req, res) => {
+  try {
+    const updated = await Facture.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    if (!updated) {
+      res.status(404).json({ message: 'Facture non trouvée' });
+      return;
+    }
+    res.status(200).json(updated);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', error: err });
+  }
+};
+
+// ✅ Récupérer une facture par ID
 export const getFactureById: RequestHandler = async (req, res) => {
   try {
     const facture = await Facture.findById(req.params.id).populate('partenaire', 'nom');
@@ -146,6 +165,7 @@ export const getFactureById: RequestHandler = async (req, res) => {
   }
 };
 
+// ✅ Modifier le statut (payée/impayée)
 export const updateStatutFacture: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
@@ -161,18 +181,5 @@ export const updateStatutFacture: RequestHandler = async (req, res) => {
     res.json({ message: 'Statut mis à jour', statut: facture.statut });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', error: err });
-  }
-};
-
-export const updateFacture: RequestHandler = async (req, res) => {
-  try {
-    const updated = await Facture.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) {
-      res.status(404).json({ message: 'Facture introuvable' });
-      return;
-    }
-    res.json({ message: 'Facture mise à jour', facture: updated });
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error });
   }
 };

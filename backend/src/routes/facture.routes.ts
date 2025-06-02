@@ -11,15 +11,12 @@ import {
 
 const router = express.Router();
 
-// Routes spécifiques d'abord
-router.get('/latest', getLatestFacture);
-router.post('/manual', generateManualFacture);
-
-// Routes générales ensuite
 router.get('/', getAllFactures);
+router.get('/latest', getLatestFacture);
 router.get('/:id', getFactureById);
-router.delete('/:id', deleteFacture);
+router.post('/manual', generateManualFacture);
 router.put('/:id', updateFacture);
 router.put('/:id/statut', updateStatutFacture);
+router.delete('/:id', deleteFacture);
 
 export default router;
