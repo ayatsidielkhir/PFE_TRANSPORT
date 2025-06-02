@@ -28,7 +28,14 @@ const sidebarItems = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(() => {
+    return localStorage.getItem('drawerOpen') === 'true';
+  });
+
+  const [activePath, setActivePath] = useState(() => {
+    return localStorage.getItem('activePath') || '';
+  });
+
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -40,6 +47,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   } catch {
     role = 'guest';
   }
+
+  const toggleDrawer = () => {
+    setOpen(prev => {
+      localStorage.setItem('drawerOpen', String(!prev));
+      return !prev;
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -53,13 +67,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           key={item.label}
           onClick={() => {
             navigate(item.path);
-            if (isMobile) setOpen(false); // ferme le menu sur mobile
+            setActivePath(item.path);
+            localStorage.setItem('activePath', item.path);
+            if (isMobile) setOpen(false);
           }}
           sx={{
             mb: 1.8,
             px: 2,
             py: 1.5,
             borderRadius: 2,
+            backgroundColor: activePath === item.path ? '#dbefff' : 'transparent',
             '&:hover': {
               backgroundColor: '#e0f0ff',
               transform: 'scale(1.02)',
@@ -84,7 +101,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#002b88', boxShadow: 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Box display="flex" alignItems="center">
-            <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
+            <IconButton color="inherit" edge="start" onClick={toggleDrawer}>
               <Menu />
             </IconButton>
             <Box display="flex" alignItems="center" gap={2} ml={2}>
@@ -114,7 +131,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </Toolbar>
       </AppBar>
 
-      {/* DRAWER responsive */}
+      {/* SIDEBAR */}
       <Drawer
         variant={isMobile ? 'temporary' : 'persistent'}
         open={open}
@@ -144,7 +161,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           minHeight: '100vh',
           padding: 3,
           pt: '100px',
-          pl: isMobile ? 0 : (open ? `${drawerWidth}px` : '24px')
+          pl: isMobile ? 0 : `${drawerWidth}px`
         }}
       >
         {children}
