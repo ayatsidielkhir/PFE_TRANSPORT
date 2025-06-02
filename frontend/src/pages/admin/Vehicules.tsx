@@ -194,15 +194,18 @@ const VehiculesPage: React.FC = () => {
                     <TableCell>{v.controle_technique}</TableCell>
                     <TableCell>{renderDocumentAvatar(v.assurance)}</TableCell>
                     <TableCell>{renderDocumentAvatar(v.carteGrise)}</TableCell>
-                    <TableCell>
-                      {[v.vignette, v.agrement, v.carteVerte, v.extincteur]
-                        .filter(f => typeof f === 'string' && f)
-                        .map((f, idx) => (
-                          <Box key={idx} display="inline-block" mr={0.5}>
-                            {renderDocumentAvatar(f)}
-                          </Box>
-                        ))}
-                    </TableCell>
+                      <TableCell>
+                        {Array.isArray([v.vignette, v.agrement, v.carteVerte, v.extincteur])
+                          ? [v.vignette, v.agrement, v.carteVerte, v.extincteur]
+                              .filter(f => typeof f === 'string' && !!f)
+                              .map((f, idx) => (
+                                <Box key={idx} display="inline-block" mr={0.5}>
+                                  {renderDocumentAvatar(f)}
+                                </Box>
+                              ))
+                          : '—'}
+                      </TableCell>
+
                     <TableCell>
                       <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
                       <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(v._id!)}><Delete /></IconButton></Tooltip>
