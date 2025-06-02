@@ -1,17 +1,14 @@
-// dossierjuridique.routes.ts
-
 import express from 'express';
-import { getDossier, uploadDossier } from '../controllers/dossierjuridique.controller';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { getDossier, uploadDossier } from '../controllers/dossierjuridique.controller';
 
 const router = express.Router();
 
-// Configuration de Multer pour gérer les fichiers
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const dir = path.resolve('/mnt/data/uploads/juridique'); // ✅ disque persistant
+    const dir = path.resolve('/mnt/data/uploads/juridique');
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -20,11 +17,9 @@ const storage = multer.diskStorage({
   }
 });
 
-// Initialisation de Multer
 const upload = multer({ storage });
 
-// Routes
-router.get('/', getDossier); // Récupérer le dossier juridique
-router.post('/', upload.any(), uploadDossier); // Upload des fichiers
+router.get('/', getDossier);
+router.post('/', upload.any(), uploadDossier);
 
 export default router;
