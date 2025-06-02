@@ -7,17 +7,30 @@ import ejs from 'ejs';
 import fs from 'fs'; 
 
 
-// Fonction : Générer la facture PDF et l’envoyer
 export const generateManualFacture: RequestHandler = async (req, res, next) => {
   try {
-    const { client, ice, date, numero, lignes, tracteur, totalHT, tva, totalTTC } = req.body;
+    const {
+      client: clientId,
+      ice,
+      date,
+      numero,
+      lignes,
+      tracteur,
+      totalHT,
+      tva,
+      totalTTC,
+    } = req.body;
 
-    // 1. Charger le template EJS
+    // 🔎 Chercher le nom du client
+    const partenaire = await Partenaire.findById(clientId);
+    const clientNom = partenaire?.nom || '—';
+
+    // 📄 Générer le HTML à partir du template EJS
     const templatePath = path.resolve(__dirname, '../templates/facture.ejs');
     const template = fs.readFileSync(templatePath, 'utf8');
 
     const html = ejs.render(template, {
-      client,
+      client: clientNom, // ✅ corrige le .nom dans le template
       ice,
       date,
       numero,
@@ -28,9 +41,9 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
       totalTTC
     });
 
-    // 2. Lancer Puppeteer (pas besoin de executablePath sur Render)
+    // 🚀 Lancer Puppeteer pour créer le PDF
     const browser = await puppeteer.launch({
-      headless: true, // ✅ recommandé depuis Puppeteer v19+
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -40,17 +53,43 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
     const pdfBuffer = await page.pdf({ format: 'A4' });
     await browser.close();
 
-    // 3. Envoyer le PDF généré en réponse
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename=facture-${numero}.pdf`
+    // 📁 Créer le dossier de factures s'il n'existe pas
+    const factureDir = path.resolve('/mnt/data/factures');
+    if (!fs.existsSync(factureDir)) {
+      fs.mkdirSync(factureDir, { recursive: true });
+    }
+
+    // 📝 Enregistrer le PDF dans le disque
+    const fileName = `facture-${numero}.pdf`;
+    const filePath = path.join(factureDir, fileName);
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    const fileUrl = `/uploads/factures/${fileName}`;
+
+    // 💾 Enregistrer la facture dans MongoDB
+    const saved = await Facture.create({
+      numero,
+      date,
+      client: { nom: clientNom }, // pour affichage dans le frontend
+      ice,
+      tracteur,
+      lignes,
+      totalHT,
+      tva,
+      totalTTC,
+      statut: 'impayée',
+      fileUrl
     });
-    res.send(pdfBuffer);
+
+    // 📤 Réponse avec lien PDF
+    res.status(201).json({ message: 'Facture générée', fileUrl });
+
   } catch (error) {
-    console.error('Erreur génération facture :', error);
+    console.error('❌ Erreur génération facture :', error);
     next(error);
   }
 };
+
 
 
 // ✅ Récupérer toutes les factures

@@ -76,8 +76,6 @@
       text-align: right;
     }
 
-
-
     .signature {
       margin-top: 200px;
       font-weight: 300;
@@ -100,7 +98,7 @@
     <div class="top">
       <div class="info">
         <p><span>Facture N° :</span> <%= numero %></p>
-        <p><span>CLIENT :</span> <%= client.nom %></p>
+        <p><span>CLIENT :</span> <%= client %></p> <!-- ✅ corrigé ici -->
         <p><span>Tanger le :</span> <%= date %></p>
         <p><span>ICE N° :</span> <%= ice %></p>
         <p><span>Tracteur :</span> <%= tracteur %></p>
@@ -145,17 +143,12 @@
       </tr>
     </table>
 
-
-
-    <!-- Signature -->
     <div class="signature">
-           <!-- Montant en lettres -->
-    <p class="montant-lettre"> Arrêtée la présente facture à la somme de :<span> <%= totalTTC.toFixed(2) %> Dirhams</span></p>
-
+      <p class="montant-lettre"> Arrêtée la présente facture à la somme de :
+        <span><%= totalTTC.toFixed(2) %> Dirhams</span>
+      </p>
       <p>Signature</p>
     </div>
   </div>
-
-
 </body>
 </html>
