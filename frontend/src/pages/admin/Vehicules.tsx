@@ -1,4 +1,3 @@
-// ✅ Page Véhicules complète avec style moderne et affichage "Docs" dans un Dialog
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,6 +10,8 @@ import { Delete, Edit, Search as SearchIcon, PictureAsPdf, Add } from '@mui/icon
 import { useTheme } from '@mui/material/styles';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
+import { DriveEta } from '@mui/icons-material'; 
+
 
 interface Vehicule {
   _id?: string;
@@ -108,6 +109,16 @@ const VehiculesPage: React.FC = () => {
   const handleChange = (field: keyof Vehicule | 'photoVehicule', value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
+  const handleDelete = async (id: string) => {
+  if (!window.confirm("Supprimer ce véhicule ?")) return;
+  try {
+    await axios.delete(`/api/vehicules/${id}`);
+    fetchVehicules(); // recharge les données
+  } catch {
+    alert("Erreur lors de la suppression");
+  }
+};
+
 
   const renderDocument = (file?: string) => {
     if (!file) return '—';
@@ -138,6 +149,7 @@ const VehiculesPage: React.FC = () => {
       <Box p={3} maxWidth="1400px" mx="auto">
         <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
           <Typography variant="h5" fontWeight="bold" color="#001447" mb={3}>
+             <DriveEta sx={{ fontSize: 28 }} />
             Gestion des Véhicules
           </Typography>
 
@@ -207,11 +219,12 @@ const VehiculesPage: React.FC = () => {
                         <Edit />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer">
-                      <IconButton sx={{ color: '#d32f2f' }}>
+                      <Tooltip title="Supprimer">
+                      <IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(v._id!)}>
                         <Delete />
                       </IconButton>
                     </Tooltip>
+
                   </TableCell>
                 </TableRow>
               ))}
@@ -228,56 +241,56 @@ const VehiculesPage: React.FC = () => {
           </Box>
         </Paper>
 
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={isMobile ? '100vw' : 450}>
-            <Typography variant="h6" fontWeight="bold" mb={2}>
-              {selectedVehicule ? 'Modifier un véhicule' : 'Ajouter un véhicule'}
-            </Typography>
+          <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+            <Box p={3} width={isMobile ? '100vw' : 450}>
+              <Typography variant="h6" fontWeight="bold" mb={2}>
+                {selectedVehicule ? 'Modifier un véhicule' : 'Ajouter un véhicule'}
+              </Typography>
 
-            {['nom', 'matricule', 'type', 'kilometrage', 'controle_technique'].map(field => (
-              <TextField
-                key={field}
-                fullWidth
-                label={field}
-                value={form[field as keyof Vehicule] || ''}
-                onChange={(e) => handleChange(field as keyof Vehicule, e.target.value)}
-                sx={{ mb: 2 }}
-              />
-            ))}
-
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Chauffeur</InputLabel>
-              <Select
-                value={form.chauffeur || ''}
-                onChange={e => setForm({ ...form, chauffeur: e.target.value })}
-                label="Chauffeur"
-              >
-                {chauffeurs.map(c => (
-                  <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Typography mt={2} fontWeight={600} mb={1}>Documents</Typography>
-            {[ 'assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule' ].map(field => (
-              <Box key={field} mb={2}>
-                <Typography fontSize={14}>{field}</Typography>
-                <input
-                  name={field}
-                  type="file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleChange(field as any, file);
-                  }}
+              {['nom', 'matricule', 'type', 'kilometrage', 'controle_technique'].map(field => (
+                <TextField
+                  key={field}
+                  fullWidth
+                  label={field}
+                  value={form[field as keyof Vehicule] || ''}
+                  onChange={(e) => handleChange(field as keyof Vehicule, e.target.value)}
+                  sx={{ mb: 2 }}
                 />
-              </Box>
-            ))}
+              ))}
 
-            <Button fullWidth variant="contained" onClick={handleSubmit}>
-              {selectedVehicule ? 'Mettre à jour' : 'Ajouter'}
-            </Button>
-          </Box>
-        </Drawer>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Chauffeur</InputLabel>
+                <Select
+                  value={form.chauffeur || ''}
+                  onChange={e => setForm({ ...form, chauffeur: e.target.value })}
+                  label="Chauffeur"
+                >
+                  {chauffeurs.map(c => (
+                    <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Typography mt={2} fontWeight={600} mb={1}>Documents</Typography>
+              {[ 'assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule' ].map(field => (
+                <Box key={field} mb={2}>
+                  <Typography fontSize={14}>{field}</Typography>
+                  <input
+                    name={field}
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleChange(field as any, file);
+                    }}
+                  />
+                </Box>
+              ))}
+
+              <Button fullWidth variant="contained" onClick={handleSubmit}>
+                {selectedVehicule ? 'Mettre à jour' : 'Ajouter'}
+              </Button>
+            </Box>
+          </Drawer>
 
         <Dialog open={openDocsDialog} onClose={() => setOpenDocsDialog(false)} maxWidth="md">
           <DialogTitle>Autres documents</DialogTitle>
