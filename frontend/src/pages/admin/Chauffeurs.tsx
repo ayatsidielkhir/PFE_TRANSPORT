@@ -145,7 +145,7 @@ const ChauffeursPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={isMobile ? 1 : 2} sx={{ minHeight: '100vh' }}>
+      <Box p={isMobile ? 1 : 2} sx={{ minHeight: '100vh',backgroundColor: '#fcfcfc' }}>
         <Box maxWidth="1400px" mx="auto">
           <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
             <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
@@ -243,7 +243,7 @@ const ChauffeursPage: React.FC = () => {
               <label htmlFor="photo-input">
                 <Avatar
                   src={previewPhoto || ''}
-                  sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0',marginTop:20 }}
+                  sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0',marginTop:10 }}
                 />
               </label>
               <input id="photo-input" name="photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleInputChange} />
