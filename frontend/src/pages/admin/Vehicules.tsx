@@ -1,3 +1,5 @@
+// ✅ Page Véhicules complète, moderne, avec affichage des documents et section "Autres documents"
+
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell,
@@ -115,7 +117,7 @@ const VehiculesPage: React.FC = () => {
         </Tooltip>
       );
     }
-    return <a href={url} target="_blank" rel="noopener noreferrer">📎 Fichier</a>;
+    return <a href={url} target="_blank" rel="noopener noreferrer">📎</a>;
   };
 
   const filtered = vehicules.filter(v =>
@@ -226,9 +228,10 @@ const VehiculesPage: React.FC = () => {
               </Select>
             </FormControl>
 
+            <Typography mt={2} fontWeight={600} mb={1}>Documents</Typography>
             {[ 'assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule' ].map(field => (
               <Box key={field} mb={2}>
-                <Typography>{field}</Typography>
+                <Typography fontSize={14}>{field}</Typography>
                 <input
                   name={field}
                   type="file"
