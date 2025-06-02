@@ -1,3 +1,5 @@
+// ✅ Page Chauffeurs avec style moderne, Drawer amélioré, 2 colonnes et meilleure UI
+
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
@@ -44,8 +46,9 @@ const ChauffeursPage: React.FC = () => {
     const url = `https://mme-backend.onrender.com/uploads/chauffeurs/${file}`;
     return (
       <Avatar
+        variant="rounded"
         src={isImageFile(file) ? url : '/pdf-icon.png'}
-        sx={{ width: 40, height: 40, cursor: 'pointer' }}
+        sx={{ width: 45, height: 60, cursor: 'pointer', border: '1px solid #ccc' }}
         onClick={() => { setDialogImageSrc(url); setOpenDialog(true); }}
       />
     );
@@ -138,84 +141,86 @@ const ChauffeursPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
-          Gestion des Chauffeurs
-        </Typography>
+      <Box p={3} sx={{ backgroundColor: '#f5f6fa', minHeight: '100vh' }}>
+        <Box maxWidth="1400px" mx="auto">
+          <Paper elevation={3} sx={{ borderRadius: 4, p: 3, backgroundColor: 'white', boxShadow: 3 }}>
+            <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
+              🚗 Gestion des Chauffeurs
+            </Typography>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <TextField
-            size="small"
-            placeholder="Rechercher un chauffeur..."
-            value={search}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-            sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
-          />
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <TextField
+                size="small"
+                placeholder="Rechercher un chauffeur..."
+                value={search}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
+              />
 
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            sx={{
-              backgroundColor: '#001e61',
-              borderRadius: 3,
-              textTransform: 'none',
-              fontWeight: 'bold',
-              px: 3,
-              boxShadow: 2,
-              '&:hover': { backgroundColor: '#001447' }
-            }}
-            onClick={() => { setDrawerOpen(true); resetForm(); }}
-          >
-            Ajouter un chauffeur
-          </Button>
-        </Box>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                sx={{
+                  backgroundColor: '#001e61',
+                  borderRadius: 3,
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  px: 3,
+                  boxShadow: 2,
+                  '&:hover': { backgroundColor: '#001447' }
+                }}
+                onClick={() => { setDrawerOpen(true); resetForm(); }}
+              >
+                Ajouter un chauffeur
+              </Button>
+            </Box>
 
-        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginated.map((c, i) => (
-                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell>{renderDocumentAvatar(c.photo)}</TableCell>
-                  <TableCell>{c.nom}</TableCell>
-                  <TableCell>{c.prenom}</TableCell>
-                  <TableCell>{c.telephone}</TableCell>
-                  <TableCell>{c.cin}</TableCell>
-                  <TableCell>{c.adresse}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
-                  <TableCell>
-                    <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
-                  </TableCell>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
+                    <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
+                  ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Paper>
+              </TableHead>
+              <TableBody>
+                {paginated.map((c, i) => (
+                  <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                    <TableCell>{renderDocumentAvatar(c.photo)}</TableCell>
+                    <TableCell>{c.nom}</TableCell>
+                    <TableCell>{c.prenom}</TableCell>
+                    <TableCell>{c.telephone}</TableCell>
+                    <TableCell>{c.cin}</TableCell>
+                    <TableCell>{c.adresse}</TableCell>
+                    <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
+                    <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
+                    <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
+                    <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
+                    <TableCell>
+                      <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
+                      <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(filtered.length / perPage)}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
-          />
+            <Box display="flex" justifyContent="center" mt={2}>
+              <Pagination
+                count={Math.ceil(filtered.length / perPage)}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                color="primary"
+              />
+            </Box>
+          </Paper>
         </Box>
 
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
@@ -225,52 +230,47 @@ const ChauffeursPage: React.FC = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Drawer modernisé avec deux colonnes */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400}>
-            <Box display="flex" justifyContent="center" mb={2}>
+          <Box p={3} width={450}>
+            <Box display="flex" justifyContent="center" mb={3}>
               <label htmlFor="photo-input">
                 <Avatar
                   src={previewPhoto || ''}
-                  sx={{ width: 100, height: 100, cursor: 'pointer',marginTop:'30px' }}
+                  sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: 3, boxShadow: 2, backgroundColor: '#f0f0f0' }}
                 />
               </label>
-              <input
-                id="photo-input"
-                name="photo"
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleInputChange}
-              />
+              <input id="photo-input" name="photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleInputChange} />
             </Box>
-            {['nom', 'prenom', 'telephone', 'cin', 'adresse'].map(field => (
-              <TextField
-                key={field}
-                fullWidth
-                label={field.charAt(0).toUpperCase() + field.slice(1)}
-                name={field}
-                value={form[field] as string}
-                onChange={handleInputChange}
-                sx={{ mb: 2 }}
-              />
-            ))}
-            {['scanCIN', 'scanPermis', 'scanVisa', 'certificatBonneConduite'].map(field => (
-              <Box key={field} sx={{ mb: 2 }}>
-                <Typography fontWeight={500} mb={0.5}>{field}</Typography>
-                <input type="file" name={field} onChange={handleInputChange} />
-              </Box>
-            ))}
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleSubmit}
-              sx={{
-                backgroundColor: '#001e61',
-                textTransform: 'none',
-                fontWeight: 'bold',
-                '&:hover': { backgroundColor: '#001447' }
-              }}
-            >
+
+            <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+              {['nom', 'prenom', 'telephone', 'cin', 'adresse'].map(field => (
+                <Box key={field} flex="1 1 45%">
+                  <TextField
+                    fullWidth
+                    label={field.charAt(0).toUpperCase() + field.slice(1)}
+                    name={field}
+                    value={form[field] as string}
+                    onChange={handleInputChange}
+                    sx={{ '& .MuiInputBase-root': { borderRadius: '12px', backgroundColor: '#f9fafb' } }}
+                  />
+                </Box>
+              ))}
+            </Box>
+
+            <Box display="flex" flexWrap="wrap" gap={2}>
+              {['scanCIN', 'scanPermis', 'scanVisa', 'certificatBonneConduite'].map(field => (
+                <Box key={field} flex="1 1 45%">
+                  <Typography fontWeight={500} mb={0.5}>{field}</Typography>
+                  <Button component="label" variant="outlined" fullWidth sx={{ borderRadius: '12px', backgroundColor: '#ffffff', textTransform: 'none', fontSize: '14px', py: 1 }}>
+                    {form[field] instanceof File ? (form[field] as File).name : 'Choisir un fichier'}
+                    <input type="file" name={field} hidden onChange={handleInputChange} />
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+
+            <Button fullWidth variant="contained" onClick={handleSubmit} sx={{ mt: 4, backgroundColor: '#001e61', borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', py: 1.5, fontSize: '16px', '&:hover': { backgroundColor: '#001447' } }}>
               {selectedChauffeur ? 'Mettre à jour' : 'Ajouter'}
             </Button>
           </Box>
