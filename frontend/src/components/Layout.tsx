@@ -1,6 +1,6 @@
 import {
   AppBar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon,
-  ListItemText, Toolbar, Typography, Button
+  ListItemText, Toolbar, Typography, Button, useMediaQuery
 } from '@mui/material';
 import {
   Menu, Logout, DirectionsBus, Badge, AccountTree, Payment, BusinessCenter,
@@ -9,6 +9,7 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../logoMme-.png';
+import { useTheme } from '@mui/material/styles';
 
 const drawerWidth = 240;
 
@@ -27,8 +28,10 @@ const sidebarItems = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const token = localStorage.getItem('token');
   let role = 'guest';
@@ -43,43 +46,57 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     navigate('/login');
   };
 
+  const drawerContent = (
+    <List sx={{ mt: 2 }}>
+      {(sidebarItems as any)[role]?.map((item: any) => (
+        <ListItemButton
+          key={item.label}
+          onClick={() => {
+            navigate(item.path);
+            if (isMobile) setOpen(false); // ferme le menu sur mobile
+          }}
+          sx={{
+            mb: 1.8,
+            px: 2,
+            py: 1.5,
+            borderRadius: 2,
+            '&:hover': {
+              backgroundColor: '#e0f0ff',
+              transform: 'scale(1.02)',
+              transition: 'all 0.2s'
+            }
+          }}
+        >
+          <ListItemIcon sx={{ color: '#001e61', minWidth: 36 }}>{item.icon}</ListItemIcon>
+          <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 500 }} />
+        </ListItemButton>
+      )) || (
+        <ListItemButton>
+          <ListItemText primary="Aucun accès" />
+        </ListItemButton>
+      )}
+    </List>
+  );
+
   return (
     <Box sx={{ display: 'flex' }}>
       {/* TOPBAR */}
-      <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#001e61', boxShadow: 1 }}>
+      <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#002b88', boxShadow: 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Box display="flex" alignItems="center">
             <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
               <Menu />
             </IconButton>
-          <Box display="flex" alignItems="center" gap={2} ml={2}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '44px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-              width:'20px'
-            }}
-          >
-            <img
-              src={logo}
-              alt="MEXPRESS Logo"
-              style={{
-                height: '40px',
-                objectFit: 'contain'
-              }}
-            />
+            <Box display="flex" alignItems="center" gap={2} ml={2}>
+              <Box sx={{ height: '55px' }}>
+                <img src={logo} alt="MEXPRESS Logo" style={{ height: '55px', objectFit: 'contain' }} />
+              </Box>
+              <Typography variant="h6" noWrap sx={{ fontWeight: 'bold', color: 'white' }}>
+                MME - Système de gestion de Transport
+              </Typography>
+            </Box>
           </Box>
 
-  <Typography variant="h6" noWrap sx={{ fontWeight: 'bold', color: 'white' }}>
-    MME - Système de gestion de Transport
-  </Typography>
-</Box>
-
-
-          </Box>
           <Button
             onClick={handleLogout}
             variant="contained"
@@ -97,10 +114,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </Toolbar>
       </AppBar>
 
-      {/* SIDEBAR */}
+      {/* DRAWER responsive */}
       <Drawer
+        variant={isMobile ? 'temporary' : 'persistent'}
         open={open}
-        variant="persistent"
+        onClose={() => setOpen(false)}
         sx={{
           width: drawerWidth,
           flexShrink: 0,
@@ -109,39 +127,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             boxSizing: 'border-box',
             bgcolor: '#f8f9fa',
             borderRight: '1px solid #ddd',
-            position: 'fixed',
-            zIndex: 1200,
             pt: 8,
             px: 1
           }
         }}
       >
-        <List sx={{ mt: 2 }}>
-          {(sidebarItems as any)[role]?.map((item: any, index: number) => (
-            <ListItemButton
-              key={item.label}
-              onClick={() => navigate(item.path)}
-              sx={{
-                mb: 1.8,
-                px: 2,
-                py: 1.5,
-                borderRadius: 2,
-                '&:hover': {
-                  backgroundColor: '#e0f0ff',
-                  transform: 'scale(1.02)',
-                  transition: 'all 0.2s'
-                }
-              }}
-            >
-              <ListItemIcon sx={{ color: '#001e61', minWidth: 36 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 500 }} />
-            </ListItemButton>
-          )) || (
-            <ListItemButton>
-              <ListItemText primary="Aucun accès" />
-            </ListItemButton>
-          )}
-        </List>
+        {drawerContent}
       </Drawer>
 
       {/* CONTENU */}
@@ -152,12 +143,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           backgroundColor: '#fcfcfc',
           minHeight: '100vh',
           padding: 3,
-          pl: open ? '80px' : '24px',
-          pt: '100px'
+          pt: '100px',
+          pl: isMobile ? 0 : (open ? `${drawerWidth}px` : '24px')
         }}
       >
         {children}
       </Box>
     </Box>
-  )
-};
+  );
+}

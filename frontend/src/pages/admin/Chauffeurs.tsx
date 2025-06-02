@@ -6,10 +6,11 @@ import {
   TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
   Dialog, DialogTitle, DialogContent, Typography, InputAdornment, Paper, useMediaQuery
 } from '@mui/material';
-import { Delete, Edit, Search as SearchIcon, Add, Person } from '@mui/icons-material';
+import { Delete, Edit, Search as SearchIcon, PictureAsPdf, Add, DriveEta } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 import { useTheme } from '@mui/material/styles';
+import { Person } from '@mui/icons-material';
 
 interface Chauffeur {
   _id: string;
@@ -46,17 +47,29 @@ const ChauffeursPage: React.FC = () => {
 
   const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
   const renderDocumentAvatar = (file: string | undefined) => {
-    if (!file) return '—';
-    const url = `https://mme-backend.onrender.com/uploads/chauffeurs/${file}`;
+  if (!file) return '—';
+  const url = `https://mme-backend.onrender.com/uploads/chauffeurs/${file}`;
+  if (/\.(jpg|jpeg|png|gif|webp)$/i.test(file)) {
     return (
       <Avatar
         variant="rounded"
-        src={isImageFile(file) ? url : '/pdf-icon.png'}
+        src={url}
         sx={{ width: 35, height: 45, cursor: 'pointer', border: '1px solid #ccc' }}
         onClick={() => { setDialogImageSrc(url); setOpenDialog(true); }}
       />
     );
-  };
+  } else if (/\.pdf$/i.test(file)) {
+    return (
+      <Tooltip title="Voir le PDF">
+        <IconButton onClick={() => window.open(url)} sx={{ color: '#d32f2f' }}>
+          <PictureAsPdf />
+        </IconButton>
+      </Tooltip>
+    );
+  }
+  return '—';
+};
+
 
   const fetchChauffeurs = async () => {
     const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');

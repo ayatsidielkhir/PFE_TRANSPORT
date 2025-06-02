@@ -1,13 +1,12 @@
-// ✅ Page Véhicules complète, moderne, avec affichage des documents et section "Autres documents"
-
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
+  TableHead, TableRow, Paper, IconButton, Tooltip,
   InputAdornment, Typography, Avatar, Pagination, Dialog, DialogTitle, DialogContent,
-  Drawer, MenuItem, Select, FormControl, InputLabel
+  Drawer, MenuItem, Select, FormControl, InputLabel, useMediaQuery
 } from '@mui/material';
-import { Delete, Edit, Search as SearchIcon, PictureAsPdf, Add } from '@mui/icons-material';
+import { Delete, Edit, Search as SearchIcon, PictureAsPdf, Add, DriveEta } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 
@@ -34,6 +33,17 @@ interface Chauffeur {
   prenom: string;
 }
 
+const fileFields = [
+  'assurance',
+  'carteGrise',
+  'vignette',
+  'agrement',
+  'carteVerte',
+  'extincteur',
+  'photoVehicule'
+] as const;
+type FileField = typeof fileFields[number];
+
 const VehiculesPage: React.FC = () => {
   const [vehicules, setVehicules] = useState<Vehicule[]>([]);
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
@@ -42,6 +52,11 @@ const VehiculesPage: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedVehicule, setSelectedVehicule] = useState<Vehicule | null>(null);
   const [form, setForm] = useState<Partial<Vehicule & { photoVehicule?: File }>>({});
+  const [openDocsDialog, setOpenDocsDialog] = useState(false);
+  const [docsVehicule, setDocsVehicule] = useState<Vehicule | null>(null);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const perPage = 5;
   const BACKEND_URL = 'https://mme-backend.onrender.com';
 
@@ -105,19 +120,19 @@ const VehiculesPage: React.FC = () => {
   const renderDocument = (file?: string) => {
     if (!file) return '—';
     const url = `${BACKEND_URL}/uploads/vehicules/${file}`;
-    if (/(.png|.jpg|.jpeg)$/i.test(file)) {
-      return <Avatar src={url} sx={{ width: 40, height: 40 }} onClick={() => window.open(url, '_blank')} />;
+    if (/\.(png|jpg|jpeg)$/i.test(file)) {
+      return <Avatar variant="rounded" src={url} sx={{ width: 40, height: 50, cursor: 'pointer' }} onClick={() => window.open(url)} />;
     }
     if (/\.pdf$/i.test(file)) {
       return (
         <Tooltip title="Voir le PDF">
-          <IconButton onClick={() => window.open(url, '_blank')}>
+          <IconButton onClick={() => window.open(url)}>
             <PictureAsPdf color="error" />
           </IconButton>
         </Tooltip>
       );
     }
-    return <a href={url} target="_blank" rel="noopener noreferrer">📎</a>;
+    return '—';
   };
 
   const filtered = vehicules.filter(v =>
@@ -129,31 +144,44 @@ const VehiculesPage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" mb={3}>
-          Gestion des Véhicules
-        </Typography>
+        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
+          <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
+            <DriveEta /> Gestion des Véhicules
+          </Typography>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <TextField
-            size="small"
-            placeholder="Rechercher un véhicule..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-            sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
-          />
-          <Button variant="contained" startIcon={<Add />} onClick={handleAddVehicule}>
-            Ajouter un véhicule
-          </Button>
-        </Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <TextField
+              size="small"
+              placeholder="Rechercher un véhicule..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                )
+              }}
+              sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
+            />
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              sx={{
+                backgroundColor: '#001e61',
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 'bold',
+                px: 3,
+                boxShadow: 2,
+                '&:hover': { backgroundColor: '#001447' }
+              }}
+              onClick={handleAddVehicule}
+            >
+              Ajouter un véhicule
+            </Button>
+          </Box>
 
-        <Paper>
           <Table>
             <TableHead>
               <TableRow>
@@ -165,6 +193,7 @@ const VehiculesPage: React.FC = () => {
                 <TableCell>CT</TableCell>
                 <TableCell>Carte Grise</TableCell>
                 <TableCell>Assurance</TableCell>
+                <TableCell>Docs</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -180,40 +209,47 @@ const VehiculesPage: React.FC = () => {
                   <TableCell>{renderDocument(v.carteGrise)}</TableCell>
                   <TableCell>{renderDocument(v.assurance)}</TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleEdit(v)}><Edit /></IconButton>
-                    <IconButton color="error"><Delete /></IconButton>
+                    <Button size="small" variant="outlined" onClick={() => { setDocsVehicule(v); setOpenDocsDialog(true); }}>Voir</Button>
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }}><Delete /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
+          <Box display="flex" justifyContent="center" mt={2}>
+            <Pagination
+              count={Math.ceil(filtered.length / perPage)}
+              page={page}
+              onChange={(_, value) => setPage(value)}
+              color="primary"
+            />
+          </Box>
         </Paper>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(filtered.length / perPage)}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
-          />
-        </Box>
-
+        {/* Drawer stylisé */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400}>
-            <Typography variant="h6" fontWeight="bold" mb={2}>
+          <Box p={3} width={isMobile ? '100vw' : 450}>
+            <Typography variant="h6" fontWeight="bold" mb={3}>
               {selectedVehicule ? 'Modifier un véhicule' : 'Ajouter un véhicule'}
             </Typography>
 
-            {['nom', 'matricule', 'type', 'kilometrage', 'controle_technique'].map(field => (
-              <TextField
-                key={field}
-                fullWidth
-                label={field}
-                value={form[field as keyof Vehicule] || ''}
-                onChange={(e) => handleChange(field as keyof Vehicule, e.target.value)}
-                sx={{ mb: 2 }}
-              />
-            ))}
+            <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+              {['nom', 'matricule', 'type', 'kilometrage', 'controle_technique'].map(field => (
+                <Box key={field} flex="1 1 45%">
+                  <TextField
+                    fullWidth
+                    label={field.charAt(0).toUpperCase() + field.slice(1)}
+                    value={form[field as keyof Vehicule] || ''}
+                    onChange={(e) => handleChange(field as keyof Vehicule, e.target.value)}
+                    sx={{ '& .MuiInputBase-root': { borderRadius: '12px', backgroundColor: '#f9fafb' } }}
+                  />
+                </Box>
+              ))}
+            </Box>
 
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel>Chauffeur</InputLabel>
@@ -228,26 +264,69 @@ const VehiculesPage: React.FC = () => {
               </Select>
             </FormControl>
 
-            <Typography mt={2} fontWeight={600} mb={1}>Documents</Typography>
-            {[ 'assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule' ].map(field => (
-              <Box key={field} mb={2}>
-                <Typography fontSize={14}>{field}</Typography>
-                <input
-                  name={field}
-                  type="file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleChange(field as any, file);
-                  }}
-                />
-              </Box>
-            ))}
+            <Box display="flex" flexWrap="wrap" gap={2}>
+              {fileFields.map((field: FileField) => (
+                <Box key={field} flex="1 1 45%">
+                  <Typography fontWeight={500} mb={0.5}>{field}</Typography>
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ borderRadius: '12px', backgroundColor: '#ffffff', textTransform: 'none', fontSize: '14px', py: 1 }}
+                  >
+                    {form[field] instanceof File ? (form[field] as File).name : 'Choisir un fichier'}
+                    <input
+                      type="file"
+                      name={field}
+                      hidden
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleChange(field, file);
+                      }}
+                    />
+                  </Button>
+                </Box>
+              ))}
+            </Box>
 
-            <Button fullWidth variant="contained" onClick={handleSubmit}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleSubmit}
+              sx={{
+                mt: 4,
+                backgroundColor: '#001e61',
+                borderRadius: '12px',
+                textTransform: 'none',
+                fontWeight: 'bold',
+                py: 1.5,
+                fontSize: '16px',
+                '&:hover': { backgroundColor: '#001447' }
+              }}
+            >
               {selectedVehicule ? 'Mettre à jour' : 'Ajouter'}
             </Button>
           </Box>
         </Drawer>
+
+        <Dialog open={openDocsDialog} onClose={() => setOpenDocsDialog(false)} maxWidth="md">
+          <DialogTitle>Autres documents</DialogTitle>
+          <DialogContent dividers>
+            <Box display="flex" flexWrap="wrap" gap={2} mt={1}>
+              {[
+                { label: 'Vignette', file: docsVehicule?.vignette },
+                { label: 'Agrément', file: docsVehicule?.agrement },
+                { label: 'Carte Verte', file: docsVehicule?.carteVerte },
+                { label: 'Extincteur', file: docsVehicule?.extincteur }
+              ].map(({ label, file }) => (
+                <Box key={label} width={130} textAlign="center">
+                  <Typography fontSize={14} fontWeight="bold" mb={1}>{label}</Typography>
+                  {renderDocument(file)}
+                </Box>
+              ))}
+            </Box>
+          </DialogContent>
+        </Dialog>
       </Box>
     </AdminLayout>
   );
