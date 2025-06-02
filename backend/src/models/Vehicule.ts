@@ -19,7 +19,7 @@ const vehiculeSchema = new mongoose.Schema(
     carteVerte: { type: String },
     extincteur: { type: String },
     chauffeur: { type: String },
-    photo: { type: String }
+    photoVehicule: { type: String }, // ✅ au lieu de "photo"
   },
   { timestamps: true }
 );

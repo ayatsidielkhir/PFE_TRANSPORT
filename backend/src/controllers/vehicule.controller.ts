@@ -54,9 +54,7 @@ export const addVehicule = async (req: Request, res: Response) => {
 
 export const updateVehicule = async (req: Request, res: Response) => {
   try {
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     const updates: any = {
       ...req.body,
@@ -65,22 +63,28 @@ export const updateVehicule = async (req: Request, res: Response) => {
 
     const fileFields = ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule'];
 
+    const vehicule = await Vehicule.findById(req.params.id);
+    if (!vehicule) return res.status(404).json({ message: 'Véhicule introuvable' });
+
     fileFields.forEach((field) => {
       if (files?.[field]?.[0]) {
+        const oldFile = (vehicule as any)[field];
+        if (oldFile) {
+          const filePath = path.join('/mnt/data/uploads/vehicules', oldFile);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        }
         updates[field] = files[field][0].filename;
       }
     });
 
-    const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-    });
-
+    const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, { new: true });
     res.status(200).json(updated);
   } catch (err) {
     console.error('❌ Erreur modification véhicule :', err);
     res.status(400).json({ message: 'Erreur modification', error: err });
   }
 };
+
 
 export const deleteVehicule = async (req: Request, res: Response) => {
   try {

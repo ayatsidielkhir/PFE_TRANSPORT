@@ -1,11 +1,12 @@
+// ✅ Fichier complet VehiculesPage.tsx avec image du véhicule + docs limités + popup docs restants
+
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
-  Drawer, InputAdornment, Avatar, Typography, Dialog, MenuItem, Select,
-  FormControl, InputLabel, Pagination
+  Drawer, InputAdornment, Avatar, Typography, Dialog, Pagination
 } from '@mui/material';
-import { Add, Delete, Edit, Search, Download } from '@mui/icons-material';
+import { Add, Delete, Edit, Search } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 
@@ -16,31 +17,25 @@ interface Vehicule {
   type: string;
   kilometrage: number;
   controle_technique: string;
-  assurance: string;
-  carteGrise: string;
+  assurance?: string;
+  carteGrise?: string;
   vignette?: string;
   agrement?: string;
   carteVerte?: string;
   extincteur?: string;
+  photoVehicule?: string;
   chauffeur?: string;
-}
-
-interface Chauffeur {
-  _id: string;
-  nom: string;
-  prenom: string;
 }
 
 const VehiculesPage: React.FC = () => {
   const [vehicules, setVehicules] = useState<Vehicule[]>([]);
-  const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState<Vehicule>({
-    nom: '', matricule: '', type: '', kilometrage: 0,
-    controle_technique: '', chauffeur: '', assurance: '', carteGrise: ''
-  });
+  const [form, setForm] = useState<Vehicule>({ nom: '', matricule: '', type: '', kilometrage: 0, controle_technique: '' });
+
+  const [photoVehiculeFile, setPhotoVehiculeFile] = useState<File | null>(null);
+  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
 
   const [assuranceFile, setAssuranceFile] = useState<File | null>(null);
   const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null);
@@ -48,13 +43,13 @@ const VehiculesPage: React.FC = () => {
   const [agrementFile, setAgrementFile] = useState<File | null>(null);
   const [carteVerteFile, setCarteVerteFile] = useState<File | null>(null);
   const [extincteurFile, setExtincteurFile] = useState<File | null>(null);
-  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [selectedDocs, setSelectedDocs] = useState<Vehicule | null>(null);
+
   const [page, setPage] = useState(1);
   const perPage = 5;
 
   useEffect(() => {
     fetchVehicules();
-    fetchChauffeurs();
   }, []);
 
   const fetchVehicules = async () => {
@@ -62,18 +57,14 @@ const VehiculesPage: React.FC = () => {
     setVehicules(res.data);
   };
 
-  const fetchChauffeurs = async () => {
-    const res = await axios.get('/api/chauffeurs');
-    setChauffeurs(res.data);
-  };
-
   const handleChange = (field: keyof Vehicule, value: any) => {
     setForm({ ...form, [field]: value });
   };
 
   const handleAdd = () => {
-    setForm({ nom: '', matricule: '', type: '', kilometrage: 0,
-      controle_technique: '', chauffeur: '', assurance: '', carteGrise: '' });
+    setForm({ nom: '', matricule: '', type: '', kilometrage: 0, controle_technique: '' });
+    setPhotoVehiculeFile(null);
+    setPreviewPhotoUrl(null);
     setAssuranceFile(null);
     setCarteGriseFile(null);
     setVignetteFile(null);
@@ -85,70 +76,52 @@ const VehiculesPage: React.FC = () => {
   };
 
   const handleEdit = (vehicule: Vehicule) => {
-    setForm({ ...vehicule });
-    setAssuranceFile(null);
-    setCarteGriseFile(null);
-    setVignetteFile(null);
-    setAgrementFile(null);
-    setCarteVerteFile(null);
-    setExtincteurFile(null);
+    setForm(vehicule);
+    setPreviewPhotoUrl(vehicule.photoVehicule ? `https://mme-backend.onrender.com/uploads/vehicules/${vehicule.photoVehicule}` : null);
     setIsEditing(true);
     setDrawerOpen(true);
-    if (isEditing) {
-      const confirmUpdate = window.confirm("Voulez-vous vraiment modifier ce véhicule ?");
-      if (!confirmUpdate) return;
-    }
   };
 
   const handleSave = async () => {
-    if (!form.nom || !form.matricule || !form.type || !form.kilometrage || !form.controle_technique) {
-      alert("Merci de remplir tous les champs obligatoires.");
-      return;
-    }
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
+    if (photoVehiculeFile) formData.append('photoVehicule', photoVehiculeFile);
     if (assuranceFile) formData.append('assurance', assuranceFile);
     if (carteGriseFile) formData.append('carteGrise', carteGriseFile);
     if (vignetteFile) formData.append('vignette', vignetteFile);
     if (agrementFile) formData.append('agrement', agrementFile);
     if (carteVerteFile) formData.append('carteVerte', carteVerteFile);
     if (extincteurFile) formData.append('extincteur', extincteurFile);
+
     try {
       const res = isEditing && form._id
-        ? await axios.put(`/api/vehicules/${form._id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-        : await axios.post('/api/vehicules', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        ? await axios.put(`/api/vehicules/${form._id}`, formData)
+        : await axios.post('/api/vehicules', formData);
       if ([200, 201].includes(res.status)) {
         fetchVehicules();
         setDrawerOpen(false);
       }
     } catch (err) {
-      console.error('❌ Erreur lors de l\'enregistrement :', err);
-      alert("Erreur lors de l'enregistrement du véhicule.");
+      alert("Erreur lors de l'enregistrement.");
     }
   };
 
   const handleDelete = async (id?: string) => {
-    if (!id) return;
-    if (window.confirm('Supprimer ce véhicule ?')) {
-      try {
-        await axios.delete(`/api/vehicules/${id}`);
-        fetchVehicules();
-        alert('Véhicule supprimé avec succès.');
-      } catch (err) {
-        alert("Erreur lors de la suppression.");
-      }
+    if (id && window.confirm('Supprimer ce véhicule ?')) {
+      await axios.delete(`/api/vehicules/${id}`);
+      fetchVehicules();
     }
   };
 
   const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';
     const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
-    const isPdf = /\.pdf$/i.test(file);
+    const isPdf = file.endsWith('.pdf');
     return (
       <Avatar
         src={isPdf ? '/pdf-icon.png' : url}
         sx={{ width: 40, height: 40, cursor: 'pointer' }}
-        onClick={() => setPreviewFileUrl(url)}
+        onClick={() => window.open(url, '_blank')}
       />
     );
   };
@@ -162,58 +135,57 @@ const VehiculesPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
-          Gestion des Véhicules
-        </Typography>
-
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box p={3}>
+        <Box display="flex" justifyContent="space-between" mb={2}>
           <TextField
             placeholder="Rechercher..."
             size="small"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
+            InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }}
           />
-          <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: 'primary.main', borderRadius: 3, fontWeight: 'bold', textTransform: 'none', px: 3 }} onClick={handleAdd}>
-            Ajouter Véhicule
-          </Button>
+          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>Ajouter Véhicule</Button>
         </Box>
 
-        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Paper>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
-                {['Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Vignette', 'Agrément', 'Carte Verte', 'Extincteur', 'Actions'].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
-                ))}
+              <TableRow>
+                <TableCell>Photo</TableCell>
+                <TableCell>Nom</TableCell>
+                <TableCell>Matricule</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Km</TableCell>
+                <TableCell>CT</TableCell>
+                <TableCell>Assurance</TableCell>
+                <TableCell>Carte Grise</TableCell>
+                <TableCell>Vignette</TableCell>
+                <TableCell>Docs</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginated.map((v, i) => (
-                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{v.nom}</TableCell>
-                  <TableCell>{v.chauffeur}</TableCell>
+              {paginated.map(v => (
+                <TableRow key={v._id}>
+                  <TableCell>
+                    {v.photoVehicule ? (
+                      <Avatar variant="rounded" src={`https://mme-backend.onrender.com/uploads/vehicules/${v.photoVehicule}`} sx={{ width: 60, height: 60 }} />
+                    ) : 'N/A'}
+                  </TableCell>
+                  <TableCell>{v.nom}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
                   <TableCell>{v.type}</TableCell>
-                  <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
+                  <TableCell>{v.kilometrage}</TableCell>
                   <TableCell>{v.controle_technique}</TableCell>
                   <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
                   <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
                   <TableCell>{renderFileAvatar(v.vignette)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.agrement)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.carteVerte)}</TableCell>
-                  <TableCell>{renderFileAvatar(v.extincteur)}</TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton color="primary" onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton color="error" onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                    <IconButton onClick={() => setSelectedDocs(v)}>...</IconButton>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleEdit(v)}><Edit /></IconButton>
+                    <IconButton onClick={() => handleDelete(v._id)}><Delete /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -221,9 +193,24 @@ const VehiculesPage: React.FC = () => {
           </Table>
         </Paper>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} color="primary" />
-        </Box>
+        <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} />
+
+        {/* Pop-up Docs */}
+        <Dialog open={!!selectedDocs} onClose={() => setSelectedDocs(null)}>
+          <Box p={3}>
+            <Typography variant="h6" mb={2}>Autres Documents</Typography>
+            {['agrement', 'carteVerte', 'extincteur'].map((key) => {
+              const file = selectedDocs?.[key as keyof Vehicule] as string;
+              return file ? (
+                <Box key={key} display="flex" alignItems="center" mb={1}>
+                  <Typography sx={{ width: 130 }}>{key} :</Typography>
+                  {renderFileAvatar(file)}
+                </Box>
+              ) : null;
+            })}
+            <Button fullWidth onClick={() => setSelectedDocs(null)} sx={{ mt: 2 }}>Fermer</Button>
+          </Box>
+        </Dialog>
       </Box>
     </AdminLayout>
   );
