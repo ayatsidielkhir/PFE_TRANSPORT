@@ -1,6 +1,3 @@
-// ✅ FRONTEND CORRIGÉ : VehiculesPage.tsx
-
-// 🔁 Importations et hooks (inchangés)
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell,
@@ -12,7 +9,6 @@ import { Delete, Edit, Search as SearchIcon, PictureAsPdf, Add } from '@mui/icon
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 
-// 🔁 Interfaces (inchangées)
 interface Vehicule {
   _id?: string;
   nom: string;
@@ -41,8 +37,6 @@ const VehiculesPage: React.FC = () => {
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedVehiculeDocs, setSelectedVehiculeDocs] = useState<Vehicule | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedVehicule, setSelectedVehicule] = useState<Vehicule | null>(null);
   const [form, setForm] = useState<Partial<Vehicule & { photoVehicule?: File }>>({});
@@ -124,52 +118,135 @@ const VehiculesPage: React.FC = () => {
     return <a href={url} target="_blank" rel="noopener noreferrer">📎 Fichier</a>;
   };
 
+  const filtered = vehicules.filter(v =>
+    v.nom?.toLowerCase().includes(search.toLowerCase()) ||
+    v.matricule?.toLowerCase().includes(search.toLowerCase())
+  );
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+
   return (
-    <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-      <Box p={3} width={400}>
-        {['nom', 'matricule', 'type', 'kilometrage', 'controle_technique'].map(field => (
+    <AdminLayout>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h4" fontWeight="bold" mb={3}>
+          Gestion des Véhicules
+        </Typography>
+
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <TextField
-            key={field}
-            fullWidth
-            label={field}
-            value={form[field as keyof Vehicule] || ''}
-            onChange={(e) => handleChange(field as keyof Vehicule, e.target.value)}
-            sx={{ mb: 2 }}
+            size="small"
+            placeholder="Rechercher un véhicule..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+            sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
           />
-        ))}
+          <Button variant="contained" startIcon={<Add />} onClick={handleAddVehicule}>
+            Ajouter un véhicule
+          </Button>
+        </Box>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel>Chauffeur</InputLabel>
-          <Select
-            value={form.chauffeur || ''}
-            onChange={e => setForm({ ...form, chauffeur: e.target.value })}
-            label="Chauffeur"
-          >
-            {chauffeurs.map(c => (
-              <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
+        <Paper>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Photo</TableCell>
+                <TableCell>Nom</TableCell>
+                <TableCell>Matricule</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Kilométrage</TableCell>
+                <TableCell>CT</TableCell>
+                <TableCell>Carte Grise</TableCell>
+                <TableCell>Assurance</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {paginated.map(v => (
+                <TableRow key={v._id}>
+                  <TableCell>{renderDocument(v.photo)}</TableCell>
+                  <TableCell>{v.nom}</TableCell>
+                  <TableCell>{v.matricule}</TableCell>
+                  <TableCell>{v.type}</TableCell>
+                  <TableCell>{v.kilometrage}</TableCell>
+                  <TableCell>{v.controle_technique}</TableCell>
+                  <TableCell>{renderDocument(v.carteGrise)}</TableCell>
+                  <TableCell>{renderDocument(v.assurance)}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleEdit(v)}><Edit /></IconButton>
+                    <IconButton color="error"><Delete /></IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination
+            count={Math.ceil(filtered.length / perPage)}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+          />
+        </Box>
+
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={400}>
+            <Typography variant="h6" fontWeight="bold" mb={2}>
+              {selectedVehicule ? 'Modifier un véhicule' : 'Ajouter un véhicule'}
+            </Typography>
+
+            {['nom', 'matricule', 'type', 'kilometrage', 'controle_technique'].map(field => (
+              <TextField
+                key={field}
+                fullWidth
+                label={field}
+                value={form[field as keyof Vehicule] || ''}
+                onChange={(e) => handleChange(field as keyof Vehicule, e.target.value)}
+                sx={{ mb: 2 }}
+              />
             ))}
-          </Select>
-        </FormControl>
 
-        {[ 'assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule' ].map(field => (
-          <Box key={field} mb={2}>
-            <Typography>{field}</Typography>
-            <input
-              name={field}
-              type="file"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleChange(field as any, file);
-              }}
-            />
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Chauffeur</InputLabel>
+              <Select
+                value={form.chauffeur || ''}
+                onChange={e => setForm({ ...form, chauffeur: e.target.value })}
+                label="Chauffeur"
+              >
+                {chauffeurs.map(c => (
+                  <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {[ 'assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule' ].map(field => (
+              <Box key={field} mb={2}>
+                <Typography>{field}</Typography>
+                <input
+                  name={field}
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleChange(field as any, file);
+                  }}
+                />
+              </Box>
+            ))}
+
+            <Button fullWidth variant="contained" onClick={handleSubmit}>
+              {selectedVehicule ? 'Mettre à jour' : 'Ajouter'}
+            </Button>
           </Box>
-        ))}
-
-        <Button fullWidth variant="contained" onClick={handleSubmit}>
-          {selectedVehicule ? 'Mettre à jour' : 'Ajouter'}
-        </Button>
+        </Drawer>
       </Box>
-    </Drawer>
+    </AdminLayout>
   );
 };
 
