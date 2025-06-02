@@ -145,7 +145,7 @@ const ChauffeursPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={isMobile ? 1 : 2} sx={{ minHeight: '100vh',backgroundColor: '#fcfcfc' }}>
+      <Box p={isMobile ? 1 : 2} sx={{ minHeight: '100vh' }}>
         <Box maxWidth="1400px" mx="auto">
           <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
             <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>

@@ -151,7 +151,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         component="main"
         sx={{
           flexGrow: 1,
-          backgroundColor: 'white',
+          backgroundColor: '#fcfcfc',
           minHeight: '100vh',
           padding: 3,
           pl: open ? '80px' : '24px',
