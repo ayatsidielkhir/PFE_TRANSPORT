@@ -13,7 +13,7 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
     const { client, ice, date, numero, lignes, tracteur, totalHT, tva, totalTTC } = req.body;
 
     // 1. Charger le template EJS
-    const templatePath = path.resolve(__dirname, '../../templates/facture.ejs');
+    const templatePath = path.resolve(__dirname, '../templates/facture.ejs');
     const template = fs.readFileSync(templatePath, 'utf8');
 
     const html = ejs.render(template, {
