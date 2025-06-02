@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc && cp -r src/templates dist/",
     "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "postinstall": "puppeteer install"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +27,7 @@
     "jspdf-autotable": "^5.0.2",
     "mongoose": "^8.13.2",
     "multer": "^1.4.5-lts.2",
-    "puppeteer": "^24.9.0",
+    "puppeteer": "^24.10.0",
     "tesseract.js": "^6.0.1",
     "xlsx": "^0.18.5"
   },
