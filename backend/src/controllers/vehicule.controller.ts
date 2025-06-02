@@ -27,10 +27,18 @@ export const addVehicule: RequestHandler = async (req, res) => {
     });
 
     await newVehicule.save();
-    res.status(201).json(newVehicule);
+    res.status(201).json({
+      success: true,
+      message: 'Véhicule ajouté avec succès.',
+      data: newVehicule
+    });
   } catch (err) {
     console.error('Erreur ajout véhicule :', err);
-    res.status(500).json({ message: 'Erreur serveur', error: err });
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'ajout du véhicule.',
+      error: err
+    });
   }
 };
 
@@ -38,9 +46,16 @@ export const addVehicule: RequestHandler = async (req, res) => {
 export const getVehicules: RequestHandler = async (_req, res) => {
   try {
     const vehicules = await Vehicule.find();
-    res.json(vehicules);
+    res.status(200).json({
+      success: true,
+      data: vehicules
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des véhicules.',
+      error: err
+    });
   }
 };
 
@@ -62,10 +77,19 @@ export const updateVehicule: RequestHandler = async (req, res) => {
     });
 
     const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, { new: true });
-    res.status(200).json(updated);
+
+    res.status(200).json({
+      success: true,
+      message: 'Véhicule mis à jour avec succès.',
+      data: updated
+    });
   } catch (err) {
     console.error('Erreur modification véhicule :', err);
-    res.status(500).json({ message: 'Erreur serveur', error: err });
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la modification du véhicule.',
+      error: err
+    });
   }
 };
 
@@ -73,9 +97,16 @@ export const updateVehicule: RequestHandler = async (req, res) => {
 export const deleteVehicule: RequestHandler = async (req, res) => {
   try {
     await Vehicule.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Véhicule supprimé avec succès' });
+    res.status(200).json({
+      success: true,
+      message: 'Véhicule supprimé avec succès.'
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression du véhicule.',
+      error: err
+    });
   }
 };
 
@@ -84,7 +115,6 @@ export const downloadVehiculeDocs: RequestHandler = async (req, res) => {
   try {
     const { vehiculeId } = req.params;
     const { nom, ...docs } = req.query;
-
     const nomNettoye = (nom as string || vehiculeId).replace(/[^a-zA-Z0-9_-]/g, '_');
 
     res.setHeader('Content-Type', 'application/zip');
@@ -107,6 +137,10 @@ export const downloadVehiculeDocs: RequestHandler = async (req, res) => {
 
     await archive.finalize();
   } catch (err) {
-    res.status(500).json({ message: 'Erreur ZIP', error: err });
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la création de l\'archive ZIP.',
+      error: err
+    });
   }
 };
