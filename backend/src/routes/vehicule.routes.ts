@@ -84,11 +84,4 @@ router.put(
 
 router.delete('/:id', deleteVehicule);
 
-
-// ✅ Télécharger tous les fichiers en ZIP
-router.get('/:id/download', downloadVehiculeDocs);
-
-// (Optionnel doublon – peut être supprimé si inutile)
-router.get('/download/:vehiculeId', downloadVehiculeDocs);
-
 export default router;
