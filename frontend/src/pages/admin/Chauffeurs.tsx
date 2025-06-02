@@ -148,8 +148,8 @@ const ChauffeursPage: React.FC = () => {
       <Box p={isMobile ? 1 : 2} sx={{ minHeight: '100vh' }}>
         <Box maxWidth="1400px" mx="auto">
           <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
-            <Typography variant="h4" fontWeight="bold" color="primary" mb={3} display="flex" alignItems="center" gap={1}>
-              <Person sx={{ width: 32, height: 32 }} />
+            <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
+              <Person sx={{ width: 35, height: 32 }} />
                Gestion des Chauffeurs
             </Typography>
 
@@ -243,7 +243,7 @@ const ChauffeursPage: React.FC = () => {
               <label htmlFor="photo-input">
                 <Avatar
                   src={previewPhoto || ''}
-                  sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0' }}
+                  sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0',marginTop:20 }}
                 />
               </label>
               <input id="photo-input" name="photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleInputChange} />
