@@ -4,93 +4,51 @@ import Partenaire from '../models/partenaire.model';
 import puppeteer from 'puppeteer';
 import path from 'path';
 import ejs from 'ejs';
-import fs from 'fs/promises';
+import fs from 'fs'; 
 
 
-export const generateManualFacture: RequestHandler = async (req, res) => {
+// Fonction : Générer la facture PDF et l’envoyer
+export const generateManualFacture: RequestHandler = async (req, res, next) => {
   try {
-    const { date, partenaire, ice, tracteur, lignes, tva, totalHT, totalTTC } = req.body;
+    const { client, ice, date, numero, lignes, tracteur, totalHT, tva, totalTTC } = req.body;
 
-    if (!date || !partenaire || lignes.length === 0) {
-      res.status(400).json({ message: 'Champs obligatoires manquants.' });
-      return;
-    }
+    // 1. Charger le template EJS
+    const templatePath = path.resolve(__dirname, '../../templates/facture.ejs');
+    const template = fs.readFileSync(templatePath, 'utf8');
 
-    const client = await Partenaire.findById(partenaire);
-    if (!client) {
-      res.status(404).json({ message: 'Client introuvable' });
-      return;
-    }
-
-    const mois = date.slice(0, 7);
-    const count = await Facture.countDocuments({ mois });
-    const numero = `${(count + 1).toString().padStart(3, '0')}/${new Date().getFullYear()}`;
-
-    const existing = await Facture.findOne({ numero });
-    if (existing) {
-      res.status(409).json({ message: `Une facture avec le numéro ${numero} existe déjà.` });
-      return;
-    }
-
-    const templatePath = path.join(__dirname, '..', 'templates', 'facture.ejs');
-    const logoPath = path.resolve(__dirname, '../../', 'assets', 'logo.png');
-
-    try {
-      await fs.access(templatePath);
-    } catch {
-      res.status(500).json({ message: `Template facture.ejs introuvable à ${templatePath}` });
-      return;
-    }
-
-    const html = await ejs.renderFile(templatePath, {
-      numero,
-      date,
+    const html = ejs.render(template, {
       client,
       ice,
-      tracteur,
+      date,
+      numero,
       lignes,
-      tva,
+      tracteur,
       totalHT,
-      totalTTC,
-      logoPath
+      tva,
+      totalTTC
     });
 
-    const browser = await puppeteer.launch({ headless: true });
+    // 2. Lancer Puppeteer (pas besoin de executablePath sur Render)
+    const browser = await puppeteer.launch({
+      headless: true, // ✅ recommandé depuis Puppeteer v19+
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
-    const filename = `facture_${numero.replace('/', '-')}_${Date.now()}.pdf`;
-
-    // ✅ Disque persistant Render
-    const fileDir = '/mnt/data/uploads/factures';
-    await fs.mkdir(fileDir, { recursive: true });
-
-    const filePath = path.join(fileDir, filename);
-    await page.pdf({ path: filePath, format: 'A4' });
+    const pdfBuffer = await page.pdf({ format: 'A4' });
     await browser.close();
 
-    const fileUrl = `/uploads/factures/${filename}`;
-
-    const facture = new Facture({
-      numero,
-      date,
-      mois,
-      partenaire,
-      ice,
-      tracteur,
-      lignes,
-      tva,
-      totalHT,
-      totalTTC,
-      fileUrl
+    // 3. Envoyer le PDF généré en réponse
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=facture-${numero}.pdf`
     });
-
-    await facture.save();
-
-    res.status(201).json({ message: 'Facture générée', fileUrl });
-  } catch (error: any) {
-    console.error('❌ Erreur génération facture :', error);
-    res.status(500).json({ message: 'Erreur serveur', error: error.message || error });
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Erreur génération facture :', error);
+    next(error);
   }
 };
 
