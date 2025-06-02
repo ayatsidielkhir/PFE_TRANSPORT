@@ -9,11 +9,14 @@ import axios from '../../utils/axios';
 import Layout from '../../components/Layout';
 
 interface Dossier {
+  modelJ?: string;
+  statut?: string;
+  rc?: string;
+  identifiantFiscale?: string;
+  cinGerant?: string;
+  doc1007?: string;
   [key: string]: string | undefined;
 }
-
-const standardDocs = ['modelJ', 'statut', 'rc', 'identifiantFiscale', 'cinGerant', 'doc1007'];
-const hiddenKeys = ['_id', '__v', 'createdAt', 'updatedAt'];
 
 const DossierJuridique: React.FC = () => {
   const [dossier, setDossier] = useState<Dossier | null>(null);
@@ -21,17 +24,17 @@ const DossierJuridique: React.FC = () => {
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [files, setFiles] = useState<{ [key: string]: File | null }>({});
-  const [customDocs, setCustomDocs] = useState<{ name: string, file: File | null }[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-
-  const fetchDossier = async () => {
-    const res = await axios.get('/api/dossier-juridique');
-    setDossier(res.data || {});
-  };
+  const [customDocs, setCustomDocs] = useState<{ name: string, file: File | null }[]>([]);
 
   useEffect(() => {
     fetchDossier();
   }, []);
+
+  const fetchDossier = async () => {
+    const res = await axios.get('/api/dossier-juridique');
+    setDossier(res.data?.data || res.data); // ✅ corrige selon ton API
+  };
 
   const handleView = (fileName: string | undefined) => {
     if (!fileName) return;
@@ -54,17 +57,27 @@ const DossierJuridique: React.FC = () => {
 
     try {
       const res = await axios.post('/api/dossier-juridique', formData);
+      console.log('Upload response:', res.data);
       if (res.status === 201) {
         setFiles({});
         setCustomDocs([]);
+        fetchDossier(); // 🔁 recharge les données
         setDrawerOpen(false);
         setSnackbarOpen(true);
-        fetchDossier();
       }
     } catch (err) {
       console.error("Erreur d'upload", err);
     }
   };
+
+  const rows = [
+    { label: 'Model J', field: dossier?.modelJ },
+    { label: 'Statut', field: dossier?.statut },
+    { label: 'RC', field: dossier?.rc },
+    { label: 'Identifiant Fiscale', field: dossier?.identifiantFiscale },
+    { label: 'CIN Gérant', field: dossier?.cinGerant },
+    { label: '1007', field: dossier?.doc1007 }
+  ];
 
   return (
     <Layout>
@@ -79,19 +92,17 @@ const DossierJuridique: React.FC = () => {
             <TableHead>
               <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                 <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Document</strong></TableCell>
+                <TableCell><strong>Action</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {Object.entries(dossier || {})
-                .filter(([key]) => !hiddenKeys.includes(key))
-                .map(([key, value]) => (
-                <TableRow key={key}>
-                  <TableCell>{key}</TableCell>
+              {rows.map((row, index) => (
+                <TableRow key={index}>
+                  <TableCell>{row.label}</TableCell>
                   <TableCell>
-                    {value ? (
+                    {row.field ? (
                       <Tooltip title="Voir le document">
-                        <IconButton onClick={() => handleView(value)} sx={{ color: '#0288d1' }}>
+                        <IconButton onClick={() => handleView(row.field)} sx={{ color: '#0288d1' }}>
                           <InsertDriveFile />
                         </IconButton>
                       </Tooltip>
@@ -120,48 +131,58 @@ const DossierJuridique: React.FC = () => {
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={400}>
             <Typography variant="h6" fontWeight={600} mb={3}>Documents à importer</Typography>
-            {standardDocs.map(name => (
-              <Box key={name} mb={2}>
-                <Typography fontWeight={500}>{name}</Typography>
-                <input type="file" onChange={e => handleFileChange(name, e.target.files?.[0] || null)} />
-              </Box>
-            ))}
+            <Box display="flex" flexDirection="column" gap={2}>
+              {['modelJ', 'statut', 'rc', 'identifiantFiscale', 'cinGerant', 'doc1007'].map(name => (
+                <Box key={name}>
+                  <Typography fontWeight={500}>{name}</Typography>
+                  <input
+                    type="file"
+                    onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
+                    style={{ width: '100%' }}
+                  />
+                </Box>
+              ))}
 
-            <Typography variant="subtitle1" fontWeight={600} mt={3}>Ajouter d'autres documents :</Typography>
-            {customDocs.map((doc, i) => (
-              <Box key={i} mb={2}>
-                <TextField
-                  label="Nom du document"
-                  value={doc.name}
-                  onChange={(e) => {
-                    const updated = [...customDocs];
-                    updated[i].name = e.target.value;
-                    setCustomDocs(updated);
-                  }}
-                  fullWidth
-                  margin="dense"
-                />
-                <input type="file" onChange={e => {
-                  const updated = [...customDocs];
-                  updated[i].file = e.target.files?.[0] || null;
-                  setCustomDocs(updated);
-                }} />
-              </Box>
-            ))}
+              <Typography variant="subtitle1" fontWeight={600} mt={2}>Ajouter d'autres documents :</Typography>
+              {customDocs.map((doc, i) => (
+                <Box key={i}>
+                  <TextField
+                    label="Nom du document"
+                    value={doc.name}
+                    onChange={(e) => {
+                      const updated = [...customDocs];
+                      updated[i].name = e.target.value;
+                      setCustomDocs(updated);
+                    }}
+                    fullWidth
+                    margin="dense"
+                  />
+                  <input
+                    type="file"
+                    onChange={e => {
+                      const updated = [...customDocs];
+                      updated[i].file = e.target.files?.[0] || null;
+                      setCustomDocs(updated);
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                </Box>
+              ))}
 
-            <Button startIcon={<AddCircleOutline />} onClick={() => setCustomDocs([...customDocs, { name: '', file: null }])}>
-              Ajouter un champ
-            </Button>
+              <Button startIcon={<AddCircleOutline />} onClick={() => setCustomDocs([...customDocs, { name: '', file: null }])}>
+                Ajouter un champ
+              </Button>
 
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ mt: 2 }}
-              onClick={handleUpload}
-              disabled={Object.values(files).every(f => f === null) && customDocs.length === 0}
-            >
-              ENREGISTRER
-            </Button>
+              <Button
+                variant="contained"
+                fullWidth
+                sx={{ mt: 2 }}
+                onClick={handleUpload}
+                disabled={Object.values(files).every(f => f === null) && customDocs.length === 0}
+              >
+                ENREGISTRER
+              </Button>
+            </Box>
           </Box>
         </Drawer>
 
@@ -172,7 +193,7 @@ const DossierJuridique: React.FC = () => {
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
           <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
-            Documents enregistrés avec succès ✅
+            Documents juridiques enregistrés avec succès ✅
           </Alert>
         </Snackbar>
       </Box>
@@ -180,4 +201,4 @@ const DossierJuridique: React.FC = () => {
   );
 };
 
-export default DossierJuridique;
+export default DossierJuridique;  

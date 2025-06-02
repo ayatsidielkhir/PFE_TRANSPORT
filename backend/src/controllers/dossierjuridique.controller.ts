@@ -1,16 +1,11 @@
-import { Request, Response } from 'express';
+ import { Request, Response } from 'express';
 import DossierJuridique from '../models/DossierJuridique';
-import path from 'path';
-import fs from 'fs';
-import { RequestHandler } from 'express';
+import Dossier from '../models/DossierJuridique'; // Assure-toi d’avoir ce fichier mongoose
 
-export const getDossier: RequestHandler = async (_req, res) => {
-  try {
-    const data = await DossierJuridique.findOne();
-    res.json(data || {});
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error });
-  }
+
+export const getDossier = async (_: Request, res: Response) => {
+  const data = await DossierJuridique.findOne();
+  res.json(data);
 };
 export const uploadDossier = async (req: Request, res: Response) => {
   try {
@@ -24,13 +19,12 @@ export const uploadDossier = async (req: Request, res: Response) => {
       }
     });
 
-    let dossier = await DossierJuridique.findOne();
+    const existing = await Dossier.findOne();
 
-    if (dossier) {
-      await DossierJuridique.updateOne({}, { $set: dataToSave });
+    if (existing) {
+      await Dossier.updateOne({}, { $set: dataToSave });
     } else {
-      dossier = new DossierJuridique(dataToSave);
-      await dossier.save();
+      await Dossier.create(dataToSave);
     }
 
     res.status(201).json({ message: 'Documents enregistrés avec succès ✅', data: dataToSave });
@@ -39,5 +33,3 @@ export const uploadDossier = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Erreur lors de l'enregistrement des documents", error });
   }
 };
-
-
