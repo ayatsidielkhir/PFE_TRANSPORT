@@ -1,146 +1,88 @@
-import { RequestHandler } from 'express';
+import { Request, Response } from 'express';
 import Vehicule from '../models/Vehicule';
-import fs from 'fs';
-import path from 'path';
-import archiver from 'archiver';
 
-// ✅ Ajouter un véhicule
-export const addVehicule: RequestHandler = async (req, res) => {
+export const getVehicules = async (_req: Request, res: Response) => {
   try {
-    const body = req.body;
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const vehicules = await Vehicule.find().sort({ createdAt: -1 });
+    res.status(200).json(vehicules);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', error: err });
+  }
+};
 
-    const newVehicule = new Vehicule({
-      nom: body.nom,
-      matricule: body.matricule,
-      type: body.type,
-      kilometrage: body.kilometrage,
-      controle_technique: body.controle_technique,
-      chauffeur: body.chauffeur,
+export const createVehicule = async (req: Request, res: Response) => {
+  try {
+    const {
+      nom,
+      matricule,
+      type,
+      kilometrage,
+      controle_technique,
+      chauffeur
+    } = req.body;
+
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
+    const vehicule = new Vehicule({
+      nom,
+      matricule,
+      type,
+      kilometrage: Number(kilometrage),
+      controle_technique,
+      chauffeur,
       carteGrise: files?.carteGrise?.[0]?.filename || '',
       assurance: files?.assurance?.[0]?.filename || '',
       vignette: files?.vignette?.[0]?.filename || '',
       agrement: files?.agrement?.[0]?.filename || '',
       carteVerte: files?.carteVerte?.[0]?.filename || '',
       extincteur: files?.extincteur?.[0]?.filename || '',
-      photo: files?.photoVehicule?.[0]?.filename || '',
     });
 
-    await newVehicule.save();
-    res.status(201).json({
-      success: true,
-      message: 'Véhicule ajouté avec succès.',
-      data: newVehicule
-    });
+    await vehicule.save();
+    res.status(201).json(vehicule);
   } catch (err) {
-    console.error('Erreur ajout véhicule :', err);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de l\'ajout du véhicule.',
-      error: err
-    });
+    console.error('❌ Erreur création véhicule :', err);
+    res.status(400).json({ message: 'Erreur création', error: err });
   }
 };
 
-// ✅ Récupérer tous les véhicules
-export const getVehicules: RequestHandler = async (_req, res) => {
+export const updateVehicule = async (req: Request, res: Response) => {
   try {
-    const vehicules = await Vehicule.find();
-    res.status(200).json({
-      success: true,
-      data: vehicules
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération des véhicules.',
-      error: err
-    });
-  }
-};
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
 
-// ✅ Modifier un véhicule
-export const updateVehicule: RequestHandler = async (req, res) => {
-  try {
-    const updates: any = req.body;
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const updates: any = {
+      ...req.body,
+      kilometrage: Number(req.body.kilometrage),
+    };
 
-    const fieldsToUpdate = [
-      'carteGrise', 'assurance', 'vignette', 'agrement',
-      'carteVerte', 'extincteur', 'photoVehicule'
-    ];
+    const fileFields = ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur'];
 
-    fieldsToUpdate.forEach((field) => {
-      if (files && files[field]) {
-        updates[field === 'photoVehicule' ? 'photo' : field] = files[field][0].filename;
+    fileFields.forEach((field) => {
+      if (files?.[field]?.[0]) {
+        updates[field] = files[field][0].filename;
       }
     });
 
-    const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, { new: true });
+    const updated = await Vehicule.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    });
 
-    res.status(200).json({
-      success: true,
-      message: 'Véhicule mis à jour avec succès.',
-      data: updated
-    });
+    res.status(200).json(updated);
   } catch (err) {
-    console.error('Erreur modification véhicule :', err);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la modification du véhicule.',
-      error: err
-    });
+    console.error('❌ Erreur modification véhicule :', err);
+    res.status(400).json({ message: 'Erreur modification', error: err });
   }
 };
 
-// ✅ Supprimer un véhicule
-export const deleteVehicule: RequestHandler = async (req, res) => {
+export const deleteVehicule = async (req: Request, res: Response) => {
   try {
     await Vehicule.findByIdAndDelete(req.params.id);
-    res.status(200).json({
-      success: true,
-      message: 'Véhicule supprimé avec succès.'
-    });
+    res.status(200).json({ message: 'Véhicule supprimé' });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la suppression du véhicule.',
-      error: err
-    });
-  }
-};
-
-// ✅ Télécharger tous les fichiers ZIP
-export const downloadVehiculeDocs: RequestHandler = async (req, res) => {
-  try {
-    const { vehiculeId } = req.params;
-    const { nom, ...docs } = req.query;
-    const nomNettoye = (nom as string || vehiculeId).replace(/[^a-zA-Z0-9_-]/g, '_');
-
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename=vehicule-${nomNettoye}.zip`);
-
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    archive.on('error', (err) => {
-      console.error('Erreur archive ZIP :', err);
-      res.status(500).end();
-    });
-
-    archive.pipe(res);
-
-    for (const [key, filename] of Object.entries(docs)) {
-      const filepath = path.join('/mnt/data/uploads/vehicules', filename as string);
-      if (fs.existsSync(filepath)) {
-        archive.file(filepath, { name: `${key}${path.extname(filename as string)}` });
-      }
-    }
-
-    await archive.finalize();
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la création de l\'archive ZIP.',
-      error: err
-    });
+    res.status(400).json({ message: 'Erreur suppression', error: err });
   }
 };

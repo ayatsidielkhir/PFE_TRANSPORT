@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Typography, InputAdornment, Paper, useMediaQuery,
-  Select, MenuItem, FormControl, InputLabel
+  Box, Button, TextField, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
+  Drawer, InputAdornment, Avatar, Typography, Dialog, MenuItem, Select,
+  FormControl, InputLabel, Pagination
 } from '@mui/material';
-import { Delete, Edit, Search as SearchIcon, PictureAsPdf, DriveEta, Add } from '@mui/icons-material';
-import axios from 'axios';
+import { Add, Delete, Edit, Search, Download } from '@mui/icons-material';
+import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
-import { useTheme } from '@mui/material/styles';
 
 interface Vehicule {
   _id?: string;
@@ -17,13 +16,12 @@ interface Vehicule {
   type: string;
   kilometrage: number;
   controle_technique: string;
-  assurance?: string;
-  carteGrise?: string;
+  assurance: string;
+  carteGrise: string;
   vignette?: string;
   agrement?: string;
   carteVerte?: string;
   extincteur?: string;
-  photoVehicule?: string;
   chauffeur?: string;
 }
 
@@ -36,282 +34,196 @@ interface Chauffeur {
 const VehiculesPage: React.FC = () => {
   const [vehicules, setVehicules] = useState<Vehicule[]>([]);
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
-  const [form, setForm] = useState<Record<string, any>>({});
-  const [selectedVehicule, setSelectedVehicule] = useState<Vehicule | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState<Vehicule>({
+    nom: '', matricule: '', type: '', kilometrage: 0,
+    controle_technique: '', chauffeur: '', assurance: '', carteGrise: ''
+  });
+
+  const [assuranceFile, setAssuranceFile] = useState<File | null>(null);
+  const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null);
+  const [vignetteFile, setVignetteFile] = useState<File | null>(null);
+  const [agrementFile, setAgrementFile] = useState<File | null>(null);
+  const [carteVerteFile, setCarteVerteFile] = useState<File | null>(null);
+  const [extincteurFile, setExtincteurFile] = useState<File | null>(null);
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const perPage = 5;
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const fetchVehicules = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/vehicules');
-    setVehicules(res.data);
-  };
-
-  const fetchChauffeurs = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
-    setChauffeurs(res.data);
-  };
 
   useEffect(() => {
     fetchVehicules();
     fetchChauffeurs();
   }, []);
 
+  const fetchVehicules = async () => {
+    const res = await axios.get('/api/vehicules');
+    setVehicules(res.data);
+  };
+
+  const fetchChauffeurs = async () => {
+    const res = await axios.get('/api/chauffeurs');
+    setChauffeurs(res.data);
+  };
+
   const handleChange = (field: keyof Vehicule, value: any) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm({ ...form, [field]: value });
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setPage(1);
-  };
-
-  const handleEdit = (vehicule: Vehicule) => {
-    setSelectedVehicule(vehicule);
-    setForm(vehicule);
-    setPreviewPhoto(null);
+  const handleAdd = () => {
+    setForm({ nom: '', matricule: '', type: '', kilometrage: 0,
+      controle_technique: '', chauffeur: '', assurance: '', carteGrise: '' });
+    setAssuranceFile(null);
+    setCarteGriseFile(null);
+    setVignetteFile(null);
+    setAgrementFile(null);
+    setCarteVerteFile(null);
+    setExtincteurFile(null);
+    setIsEditing(false);
     setDrawerOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Supprimer ce véhicule ?')) return;
-    await axios.delete(`https://mme-backend.onrender.com/api/vehicules/${id}`);
-    fetchVehicules();
+  const handleEdit = (vehicule: Vehicule) => {
+    setForm({ ...vehicule });
+    setAssuranceFile(null);
+    setCarteGriseFile(null);
+    setVignetteFile(null);
+    setAgrementFile(null);
+    setCarteVerteFile(null);
+    setExtincteurFile(null);
+    setIsEditing(true);
+    setDrawerOpen(true);
+    if (isEditing) {
+      const confirmUpdate = window.confirm("Voulez-vous vraiment modifier ce véhicule ?");
+      if (!confirmUpdate) return;
+    }
   };
 
-  const handleSubmit = async () => {
+  const handleSave = async () => {
+    if (!form.nom || !form.matricule || !form.type || !form.kilometrage || !form.controle_technique) {
+      alert("Merci de remplir tous les champs obligatoires.");
+      return;
+    }
     const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value) formData.append(key, value);
-    });
-
-    const url = selectedVehicule
-      ? `https://mme-backend.onrender.com/api/vehicules/${selectedVehicule._id}`
-      : `https://mme-backend.onrender.com/api/vehicules`;
-    const method = selectedVehicule ? axios.put : axios.post;
-
+    Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
+    if (assuranceFile) formData.append('assurance', assuranceFile);
+    if (carteGriseFile) formData.append('carteGrise', carteGriseFile);
+    if (vignetteFile) formData.append('vignette', vignetteFile);
+    if (agrementFile) formData.append('agrement', agrementFile);
+    if (carteVerteFile) formData.append('carteVerte', carteVerteFile);
+    if (extincteurFile) formData.append('extincteur', extincteurFile);
     try {
-      await method(url, formData);
-      fetchVehicules();
-      setDrawerOpen(false);
-      setForm({});
-      setSelectedVehicule(null);
-      setPreviewPhoto(null);
+      const res = isEditing && form._id
+        ? await axios.put(`/api/vehicules/${form._id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        : await axios.post('/api/vehicules', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      if ([200, 201].includes(res.status)) {
+        fetchVehicules();
+        setDrawerOpen(false);
+      }
     } catch (err) {
-      alert('Erreur lors de la sauvegarde.');
+      console.error('❌ Erreur lors de l\'enregistrement :', err);
+      alert("Erreur lors de l'enregistrement du véhicule.");
     }
   };
 
-  const renderDocumentAvatar = (file: string | undefined) => {
-    if (!file || typeof file !== 'string') return '—';
-    const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
-    if (/\.(jpg|jpeg|png|gif|webp)$/i.test(file)) {
-      return <Avatar variant="rounded" src={url} sx={{ width: 35, height: 45 }} />;
-    } else if (/\.pdf$/i.test(file)) {
-      return (
-        <Tooltip title="Voir le PDF">
-          <IconButton onClick={() => window.open(url)} sx={{ color: '#d32f2f' }}>
-            <PictureAsPdf />
-          </IconButton>
-        </Tooltip>
-      );
+  const handleDelete = async (id?: string) => {
+    if (!id) return;
+    if (window.confirm('Supprimer ce véhicule ?')) {
+      try {
+        await axios.delete(`/api/vehicules/${id}`);
+        fetchVehicules();
+        alert('Véhicule supprimé avec succès.');
+      } catch (err) {
+        alert("Erreur lors de la suppression.");
+      }
     }
-    return '—';
+  };
+
+  const renderFileAvatar = (file?: string) => {
+    if (!file) return 'N/A';
+    const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
+    const isPdf = /\.pdf$/i.test(file);
+    return (
+      <Avatar
+        src={isPdf ? '/pdf-icon.png' : url}
+        sx={{ width: 40, height: 40, cursor: 'pointer' }}
+        onClick={() => setPreviewFileUrl(url)}
+      />
+    );
   };
 
   const filtered = vehicules.filter(v =>
-    v.nom?.toLowerCase().includes(search.toLowerCase()) ||
-    v.matricule?.toLowerCase().includes(search.toLowerCase())
+    (v.nom?.toLowerCase() || '').includes(search.toLowerCase()) ||
+    (v.matricule?.toLowerCase() || '').includes(search.toLowerCase())
   );
+
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
     <AdminLayout>
-      <Box p={isMobile ? 1 : 2}>
-        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
-          <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
-            <DriveEta sx={{ width: 35, height: 32 }} />
-            Gestion des Véhicules
-          </Typography>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
+          Gestion des Véhicules
+        </Typography>
 
-          <Box display={isMobile ? 'block' : 'flex'} justifyContent="space-between" alignItems="center" mb={2}>
-            <TextField
-              size="small"
-              placeholder="Rechercher un véhicule..."
-              value={search}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                )
-              }}
-              sx={{ width: isMobile ? '100%' : '35%', backgroundColor: 'white', borderRadius: 1, mb: isMobile ? 2 : 0 }}
-            />
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <TextField
+            placeholder="Rechercher..."
+            size="small"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
+          />
+          <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: 'primary.main', borderRadius: 3, fontWeight: 'bold', textTransform: 'none', px: 3 }} onClick={handleAdd}>
+            Ajouter Véhicule
+          </Button>
+        </Box>
 
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              sx={{
-                backgroundColor: '#001e61',
-                borderRadius: 3,
-                textTransform: 'none',
-                fontWeight: 'bold',
-                px: 3,
-                boxShadow: 2,
-                '&:hover': { backgroundColor: '#001447' },
-                width: isMobile ? '100%' : 'auto'
-              }}
-              onClick={() => { setDrawerOpen(true); setForm({}); setSelectedVehicule(null); setPreviewPhoto(null); }}
-            >
-              Ajouter un véhicule
-            </Button>
-          </Box>
-
-          <TableContainer>
-            <Table size={isMobile ? 'small' : 'medium'}>
-              <TableHead>
-                <TableRow>
-                  {['Photo', 'Nom', 'Matricule', 'Type', 'KM', 'Contrôle', 'Assurance', 'Carte Grise', 'Autres', 'Actions'].map(h => (
-                    <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginated.map((v, i) => (
-                  <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
-                    <TableCell><Avatar src={`https://mme-backend.onrender.com/uploads/vehicules/${v.photoVehicule}`} sx={{ width: 45, height: 45, borderRadius: '12px' }} /></TableCell>
-                    <TableCell>{v.nom}</TableCell>
-                    <TableCell>{v.matricule}</TableCell>
-                    <TableCell>{v.type}</TableCell>
-                    <TableCell>{v.kilometrage}</TableCell>
-                    <TableCell>{v.controle_technique}</TableCell>
-                    <TableCell>{renderDocumentAvatar(v.assurance)}</TableCell>
-                    <TableCell>{renderDocumentAvatar(v.carteGrise)}</TableCell>
-                      <TableCell>
-                        {Array.isArray([v.vignette, v.agrement, v.carteVerte, v.extincteur])
-                          ? [v.vignette, v.agrement, v.carteVerte, v.extincteur]
-                              .filter(f => typeof f === 'string' && !!f)
-                              .map((f, idx) => (
-                                <Box key={idx} display="inline-block" mr={0.5}>
-                                  {renderDocumentAvatar(f)}
-                                </Box>
-                              ))
-                          : '—'}
-                      </TableCell>
-
-                    <TableCell>
-                      <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
-                      <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(v._id!)}><Delete /></IconButton></Tooltip>
-                    </TableCell>
-                  </TableRow>
+        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
+                {['Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Vignette', 'Agrément', 'Carte Verte', 'Extincteur', 'Actions'].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Box display="flex" justifyContent="center" mt={2}>
-            <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} />
-          </Box>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {paginated.map((v, i) => (
+                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{v.nom}</TableCell>
+                  <TableCell>{v.chauffeur}</TableCell>
+                  <TableCell>{v.matricule}</TableCell>
+                  <TableCell>{v.type}</TableCell>
+                  <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
+                  <TableCell>{v.controle_technique}</TableCell>
+                  <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.vignette)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.agrement)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.carteVerte)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.extincteur)}</TableCell>
+                  <TableCell>
+                    <Tooltip title="Modifier"><IconButton color="primary" onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton color="error" onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </Paper>
 
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={isMobile ? '100vw' : 450}>
-            <Box display="flex" justifyContent="center" mb={3}>
-              <label htmlFor="photoVehicule-input">
-                <Avatar
-                  src={previewPhoto || ''}
-                  sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '12px', boxShadow: 2, backgroundColor: '#f0f0f0', mt: 1 }}
-                />
-              </label>
-              <input
-                id="photoVehicule-input"
-                name="photoVehicule"
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setPreviewPhoto(URL.createObjectURL(file));
-                    handleChange('photoVehicule', file);
-                  }
-                }}
-              />
-            </Box>
-
-            <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-              {['nom', 'matricule', 'type', 'kilometrage', 'controle_technique'].map(field => (
-                <Box key={field} flex="1 1 45%">
-                  <TextField
-                    fullWidth
-                    label={field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')}
-                    name={field}
-                    value={form[field] || ''}
-                    onChange={(e) => handleChange(field as keyof Vehicule, e.target.value)}
-                    type={field === 'kilometrage' ? 'number' : 'text'}
-                    sx={{ '& .MuiInputBase-root': { borderRadius: '12px', backgroundColor: '#f9fafb' } }}
-                  />
-                </Box>
-              ))}
-            </Box>
-
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Chauffeur</InputLabel>
-              <Select
-                value={form.chauffeur || ''}
-                onChange={e => setForm({ ...form, chauffeur: e.target.value })}
-                label="Chauffeur"
-                sx={{ borderRadius: '12px', backgroundColor: '#f9fafb' }}
-              >
-                {chauffeurs.map(c => (
-                  <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Box display="flex" flexWrap="wrap" gap={2}>
-              {['assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur'].map(field => (
-                <Box key={field} flex="1 1 45%">
-                  <Typography fontWeight={500} mb={0.5}>{field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</Typography>
-                  <Button
-                    component="label"
-                    variant="outlined"
-                    fullWidth
-                    sx={{ borderRadius: '12px', backgroundColor: '#ffffff', textTransform: 'none', fontSize: '14px', py: 1 }}
-                  >
-                    {form[field] instanceof File ? form[field].name : 'Choisir un fichier'}
-                    <input
-                      type="file"
-                      name={field}
-                      hidden
-                      accept="application/pdf"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleChange(field as keyof Vehicule, file);
-                      }}
-                    />
-                  </Button>
-                </Box>
-              ))}
-            </Box>
-
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleSubmit}
-              sx={{ mt: 4, backgroundColor: '#001e61', borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', py: 1.5, fontSize: '16px', '&:hover': { backgroundColor: '#001447' } }}
-            >
-              {selectedVehicule ? 'Mettre à jour' : 'Ajouter'}
-            </Button>
-          </Box>
-        </Drawer>
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} color="primary" />
+        </Box>
       </Box>
     </AdminLayout>
   );
