@@ -59,6 +59,9 @@ const VehiculesPage: React.FC = () => {
   const perPage = 5;
   const isMobile = useMediaQuery('(max-width:600px)');
   const [modalUrl, setModalUrl] = useState<string | null>(null);
+  const [photoVehiculeFile, setPhotoVehiculeFile] = useState<File | null>(null);
+  const [previewPhotoVehicule, setPreviewPhotoVehicule] = useState<string | null>(null);
+
 
 
 
@@ -91,6 +94,9 @@ const VehiculesPage: React.FC = () => {
     setExtincteurFile(null);
     setIsEditing(false);
     setDrawerOpen(true);
+    setPhotoVehiculeFile(null);
+    setPreviewPhotoVehicule(null);
+
   };
 
   const handleEdit = (vehicule: Vehicule) => {
@@ -103,6 +109,9 @@ const VehiculesPage: React.FC = () => {
     setExtincteurFile(null);
     setIsEditing(true);
     setDrawerOpen(true);
+    setPhotoVehiculeFile(null);
+    setPreviewPhotoVehicule(null);
+
   };
 
   const handleSave = async () => {
@@ -122,6 +131,8 @@ const VehiculesPage: React.FC = () => {
     if (agrementFile) formData.append('agrement', agrementFile);
     if (carteVerteFile) formData.append('carteVerte', carteVerteFile);
     if (extincteurFile) formData.append('extincteur', extincteurFile);
+    if (photoVehiculeFile) formData.append('photoVehicule', photoVehiculeFile);
+
 
     try {
       const res = isEditing && form._id
@@ -251,33 +262,38 @@ const VehiculesPage: React.FC = () => {
     <Box display="flex" justifyContent="center" mb={3}>
       <label htmlFor="photoVehicule-input">
         <Avatar
-          src={
-            form.photoVehicule
-              ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}`
-              : ''
-          }
-          sx={{
-            width: 110,
-            height: 110,
-            cursor: 'pointer',
-            borderRadius: '12px',
-            boxShadow: 2,
-            backgroundColor: '#f0f0f0',
-            mt: 1,
-            marginTop:'10px'
-          }}
-        />
+            src={
+              previewPhotoVehicule
+                || (form.photoVehicule
+                    ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}`
+                    : '')
+            }
+            sx={{
+              width: 110,
+              height: 110,
+              cursor: 'pointer',
+              borderRadius: '12px',
+              boxShadow: 2,
+              backgroundColor: '#f0f0f0',
+              mt: 1
+            }}
+          />
+
       </label>
-      <input
-        id="photoVehicule-input"
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={(e) => {
-          const file = e.target.files?.[0] || null;
-          setForm({ ...form, photoVehicule: file?.name || '' });
-        }}
-      />
+          <input
+            id="photoVehicule-input"
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null;
+              if (file) {
+                setPhotoVehiculeFile(file);
+                setPreviewPhotoVehicule(URL.createObjectURL(file));
+              }
+            }}
+          />
+
     </Box>
 
     <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
