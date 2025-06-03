@@ -3,6 +3,7 @@ import Vehicule from '../models/Vehicule';
 import path from 'path';
 import fs from 'fs';
 import archiver from 'archiver';
+import { RequestHandler } from 'express';
 
 export const getVehicules = async (_req: Request, res: Response) => {
   try {
@@ -13,7 +14,7 @@ export const getVehicules = async (_req: Request, res: Response) => {
   }
 };
 
-export const addVehicule = async (req: Request, res: Response) => {
+export const addVehicule: RequestHandler = async (req, res)=> {
   try {
     const {
       nom,
@@ -52,7 +53,7 @@ export const addVehicule = async (req: Request, res: Response) => {
   }
 };
 
-export const updateVehicule = async (req: Request, res: Response) => {
+export const updateVehicule: RequestHandler = async (req, res) => {
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
@@ -64,7 +65,10 @@ export const updateVehicule = async (req: Request, res: Response) => {
     const fileFields = ['carteGrise', 'assurance', 'vignette', 'agrement', 'carteVerte', 'extincteur', 'photoVehicule'];
 
     const vehicule = await Vehicule.findById(req.params.id);
-    if (!vehicule) return res.status(404).json({ message: 'Véhicule introuvable' });
+    if (!vehicule) {
+      res.status(404).json({ message: 'Véhicule introuvable' });
+      return;
+    }
 
     fileFields.forEach((field) => {
       if (files?.[field]?.[0]) {
@@ -84,6 +88,7 @@ export const updateVehicule = async (req: Request, res: Response) => {
     res.status(400).json({ message: 'Erreur modification', error: err });
   }
 };
+
 
 
 export const deleteVehicule = async (req: Request, res: Response) => {

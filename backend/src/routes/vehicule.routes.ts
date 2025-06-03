@@ -10,9 +10,9 @@ import {
   downloadVehiculeDocs
 } from '../controllers/vehicule.controller';
 
+
 const router = Router();
 
-// === Multer config ===
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const dir = path.join('/mnt/data/uploads', 'vehicules');
@@ -24,7 +24,6 @@ const storage = multer.diskStorage({
   }
 });
 
-// ✅ Filter for image/pdf types
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const isPhoto = file.fieldname === 'photoVehicule';
   if (isPhoto) {
@@ -54,15 +53,12 @@ const fields = [
   { name: 'photoVehicule', maxCount: 1 }
 ];
 
-// === Routes ===
-
 router.get('/', getVehicules);
 
-// ✅ POST avec gestion des erreurs d'upload
 router.post(
   '/',
-  (req, res, next) => {
-    upload.fields(fields)(req, res, (err) => {
+  (req: Request, res: Response, next: NextFunction) => {
+    upload.fields(fields)(req, res, (err: any) => {
       if (err) return res.status(400).json({ success: false, message: err.message });
       next();
     });
@@ -70,11 +66,10 @@ router.post(
   addVehicule
 );
 
-// ✅ PUT avec gestion des erreurs d'upload
 router.put(
   '/:id',
-  (req, res, next) => {
-    upload.fields(fields)(req, res, (err) => {
+  (req: Request, res: Response, next: NextFunction) => {
+    upload.fields(fields)(req, res, (err: any) => {
       if (err) return res.status(400).json({ success: false, message: err.message });
       next();
     });
