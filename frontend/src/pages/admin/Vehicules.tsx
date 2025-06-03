@@ -8,6 +8,8 @@ import {
 import { Add, Delete, Edit, Search } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
+import { useMediaQuery } from '@mui/material';
+
 
 interface Vehicule {
   _id?: string;
@@ -52,6 +54,8 @@ const VehiculesPage: React.FC = () => {
   const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const perPage = 5;
+  const isMobile = useMediaQuery('(max-width:600px)');
+
 
   useEffect(() => {
     fetchVehicules();
@@ -227,30 +231,95 @@ const VehiculesPage: React.FC = () => {
         </Box>
 
         {/* Drawer */}
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={450}>
-            <Typography variant="h6" mb={2}>{isEditing ? 'Modifier Véhicule' : 'Ajouter Véhicule'}</Typography>
+              <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Box p={3} width={isMobile ? '100vw' : 450}>
+    <Box display="flex" justifyContent="center" mb={3}>
+      <label htmlFor="photoVehicule-input">
+        <Avatar
+          src={form.photoVehicule ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}` : ''}
+          sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '12px', boxShadow: 2, backgroundColor: '#f0f0f0', mt: 1 }}
+        />
+      </label>
+      <input
+        id="photoVehicule-input"
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0] || null;
+          setForm({ ...form, photoVehicule: file?.name || '' });
+        }}
+      />
+    </Box>
 
-            <TextField label="Nom" fullWidth value={form.nom} onChange={(e) => handleChange('nom', e.target.value)} sx={{ mb: 2 }} />
-            <TextField label="Matricule" fullWidth value={form.matricule} onChange={(e) => handleChange('matricule', e.target.value)} sx={{ mb: 2 }} />
-            <TextField label="Type" fullWidth value={form.type} onChange={(e) => handleChange('type', e.target.value)} sx={{ mb: 2 }} />
-            <TextField label="Kilométrage" type="number" fullWidth value={form.kilometrage} onChange={(e) => handleChange('kilometrage', parseInt(e.target.value))} sx={{ mb: 2 }} />
-            <TextField label="Contrôle Technique" fullWidth value={form.controle_technique} onChange={(e) => handleChange('controle_technique', e.target.value)} sx={{ mb: 2 }} />
+    <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+      {[
+        { name: 'nom', label: 'Nom' },
+        { name: 'matricule', label: 'Matricule' },
+        { name: 'type', label: 'Type' },
+        { name: 'kilometrage', label: 'Kilométrage', type: 'number' },
+        { name: 'controle_technique', label: 'Contrôle Technique' }
+      ].map(({ name, label, type }) => (
+        <Box key={name} flex="1 1 45%">
+          <TextField
+            fullWidth
+            label={label}
+            type={type || 'text'}
+            name={name}
+            value={form[name as keyof Vehicule] as string | number}
+            onChange={(e) => handleChange(name as keyof Vehicule, e.target.value)}
+            sx={{ '& .MuiInputBase-root': { borderRadius: '12px', backgroundColor: '#f9fafb' } }}
+          />
+        </Box>
+      ))}
+    </Box>
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Chauffeur</InputLabel>
-              <Select value={form.chauffeur || ''} onChange={(e) => handleChange('chauffeur', e.target.value)} label="Chauffeur">
-                {chauffeurs.map(c => (
-                  <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+    <FormControl fullWidth sx={{ mb: 2 }}>
+      <InputLabel>Chauffeur</InputLabel>
+      <Select
+        value={form.chauffeur || ''}
+        onChange={(e) => handleChange('chauffeur', e.target.value)}
+        label="Chauffeur"
+        sx={{ borderRadius: '12px', backgroundColor: '#f9fafb' }}
+      >
+        {chauffeurs.map(c => (
+          <MenuItem key={c._id} value={c._id}>
+            {c.nom} {c.prenom}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
 
-            <Button fullWidth variant="contained" sx={{ mt: 2 }} onClick={handleSave}>
-              {isEditing ? 'Enregistrer' : 'Ajouter'}
-            </Button>
-          </Box>
-        </Drawer>
+    <Box display="flex" flexWrap="wrap" gap={2}>
+      {[
+        { name: 'assurance', label: 'Assurance', file: assuranceFile, setter: setAssuranceFile },
+        { name: 'carteGrise', label: 'Carte Grise', file: carteGriseFile, setter: setCarteGriseFile },
+        { name: 'vignette', label: 'Vignette', file: vignetteFile, setter: setVignetteFile },
+        { name: 'agrement', label: 'Agrément', file: agrementFile, setter: setAgrementFile },
+        { name: 'carteVerte', label: 'Carte Verte', file: carteVerteFile, setter: setCarteVerteFile },
+        { name: 'extincteur', label: 'Extincteur', file: extincteurFile, setter: setExtincteurFile }
+      ].map(({ name, label, file, setter }) => (
+        <Box key={name} flex="1 1 45%">
+          <Typography fontWeight={500} mb={0.5}>{label}</Typography>
+          <Button component="label" variant="outlined" fullWidth sx={{ borderRadius: '12px', backgroundColor: '#ffffff', textTransform: 'none', fontSize: '14px', py: 1 }}>
+            {file ? file.name : 'Choisir un fichier'}
+            <input type="file" hidden onChange={(e) => setter(e.target.files?.[0] || null)} />
+          </Button>
+        </Box>
+      ))}
+    </Box>
+
+    <Button
+      fullWidth
+      variant="contained"
+      onClick={handleSave}
+      sx={{ mt: 4, backgroundColor: '#001e61', borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', py: 1.5, fontSize: '16px', '&:hover': { backgroundColor: '#001447' } }}
+    >
+      {isEditing ? 'Enregistrer les modifications' : 'Ajouter Véhicule'}
+    </Button>
+  </Box>
+</Drawer>
+
       </Box>
     </AdminLayout>
   );
