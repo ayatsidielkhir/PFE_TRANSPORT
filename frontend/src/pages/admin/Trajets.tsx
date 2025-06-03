@@ -1,12 +1,15 @@
+// ✅ TrajetsPage.tsx avec style modernisé : titre, Drawer, boutons Import/Export, champs stylisés
+
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
   TableHead, TableRow, Select, MenuItem, SelectChangeEvent, Checkbox,
-  FormControlLabel, Typography, IconButton, Tooltip, Pagination, Avatar
+  Typography, IconButton, Tooltip, Pagination, Avatar, useMediaQuery
 } from '@mui/material';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Add, Edit, Delete, Person } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
+import { useTheme } from '@mui/material/styles';
 
 interface Chauffeur {
   _id: string;
@@ -52,6 +55,8 @@ const TrajetsPage: React.FC = () => {
   const [filters, setFilters] = useState({ mois: '', partenaire: '' });
   const [page, setPage] = useState(1);
   const perPage = 5;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => { fetchData(); }, [filters]);
 
@@ -129,7 +134,10 @@ const TrajetsPage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>Liste des Trajets</Typography>
+        <Typography variant="h5" fontWeight="bold" color="#001e61" mb={3} display="flex" alignItems="center" gap={1}>
+          <Person sx={{ fontSize: 32 }} />
+          Gestion des Trajets
+        </Typography>
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Box display="flex" gap={2}>
@@ -195,10 +203,7 @@ const TrajetsPage: React.FC = () => {
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={1}>
                       {part?.logo && (
-                        <Avatar
-                          src={`https://mme-backend.onrender.com/uploads/partenaires/${part.logo}`}
-                          sx={{ width: 28, height: 28 }}
-                        />
+                        <Avatar src={`https://mme-backend.onrender.com/uploads/partenaires/${part.logo}`} sx={{ width: 28, height: 28 }} />
                       )}
                       <Typography variant="body2">{part?.nom}</Typography>
                     </Box>
@@ -222,45 +227,77 @@ const TrajetsPage: React.FC = () => {
           anchor="right"
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
-          sx={{ '& .MuiDrawer-paper': { width: 400 } }}
+          sx={{ '& .MuiDrawer-paper': { width: isMobile ? '100%' : 420, p: 3, backgroundColor: '#f9f9f9', boxShadow: 6, borderRadius: '12px 0 0 12px' } }}
         >
-          <Box mt={8} p={3}>
-            <Typography variant="h6" mb={2}>{form._id ? 'Modifier Trajet' : 'Ajouter Trajet'}</Typography>
-            <TextField label="Départ" name="depart" fullWidth margin="normal" value={form.depart} onChange={handleInputChange} />
-            <TextField label="Arrivée" name="arrivee" fullWidth margin="normal" value={form.arrivee} onChange={handleInputChange} />
-            <TextField type="date" name="date" fullWidth margin="normal" value={form.date} onChange={handleInputChange} />
+          <Box>
+            <Typography variant="h6" fontWeight="bold" mb={2}>{form._id ? 'Modifier un Trajet' : 'Ajouter un Trajet'}</Typography>
 
-            <Select name="chauffeur" fullWidth value={form.chauffeur} onChange={handleSelectChange} displayEmpty sx={{ mt: 2 }}>
+            <TextField label="Départ" name="depart" fullWidth margin="normal" value={form.depart} onChange={handleInputChange} sx={{ '& .MuiInputBase-root': { borderRadius: 2, backgroundColor: '#fff' } }} />
+            <TextField label="Arrivée" name="arrivee" fullWidth margin="normal" value={form.arrivee} onChange={handleInputChange} sx={{ '& .MuiInputBase-root': { borderRadius: 2, backgroundColor: '#fff' } }} />
+            <TextField type="date" name="date" fullWidth margin="normal" value={form.date} onChange={handleInputChange} sx={{ '& .MuiInputBase-root': { borderRadius: 2, backgroundColor: '#fff' } }} />
+
+            <Select name="chauffeur" fullWidth value={form.chauffeur} onChange={handleSelectChange} displayEmpty sx={{ mt: 2, backgroundColor: '#fff', borderRadius: 2 }}>
               <MenuItem value="">Sélectionner chauffeur</MenuItem>
               {chauffeurs.map(c => (
                 <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
               ))}
             </Select>
 
-            <Select name="vehicule" fullWidth value={form.vehicule} onChange={handleSelectChange} displayEmpty sx={{ mt: 2 }}>
+            <Select name="vehicule" fullWidth value={form.vehicule} onChange={handleSelectChange} displayEmpty sx={{ mt: 2, backgroundColor: '#fff', borderRadius: 2 }}>
               <MenuItem value="">Sélectionner véhicule</MenuItem>
               {vehicules.map(v => (
                 <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
               ))}
             </Select>
 
-            <TextField label="Distance (km)" type="number" name="distanceKm" fullWidth margin="normal" value={form.distanceKm} onChange={handleInputChange} />
-            <TextField label="Consommation (L)" type="number" name="consommationL" fullWidth margin="normal" value={form.consommationL} onChange={handleInputChange} />
-            <TextField label="Consommation (MAD)" type="number" name="consommationMAD" fullWidth margin="normal" value={form.consommationMAD} onChange={handleInputChange} />
+            <TextField label="Distance (km)" type="number" name="distanceKm" fullWidth margin="normal" value={form.distanceKm} onChange={handleInputChange} sx={{ '& .MuiInputBase-root': { borderRadius: 2, backgroundColor: '#fff' } }} />
+            <TextField label="Consommation (L)" type="number" name="consommationL" fullWidth margin="normal" value={form.consommationL} onChange={handleInputChange} sx={{ '& .MuiInputBase-root': { borderRadius: 2, backgroundColor: '#fff' } }} />
+            <TextField label="Consommation (MAD)" type="number" name="consommationMAD" fullWidth margin="normal" value={form.consommationMAD} onChange={handleInputChange} sx={{ '& .MuiInputBase-root': { borderRadius: 2, backgroundColor: '#fff' } }} />
 
-            <Select name="partenaire" fullWidth value={form.partenaire || ''} onChange={handleSelectChange} displayEmpty sx={{ mt: 2 }}>
+            <Select name="partenaire" fullWidth value={form.partenaire || ''} onChange={handleSelectChange} displayEmpty sx={{ mt: 2, backgroundColor: '#fff', borderRadius: 2 }}>
               <MenuItem value="">Sélectionner partenaire</MenuItem>
               {partenaires.map(p => (
                 <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>
               ))}
             </Select>
 
-            <Box mt={2} display="flex" flexDirection="column">
-              <FormControlLabel control={<Checkbox checked={form.importExport === 'import'} onChange={() => setForm({ ...form, importExport: 'import' })} />} label="Import" />
-              <FormControlLabel control={<Checkbox checked={form.importExport === 'export'} onChange={() => setForm({ ...form, importExport: 'export' })} />} label="Export" />
+            <Box mt={3} display="flex" justifyContent="center" gap={2}>
+              {['import', 'export'].map(type => (
+                <Button
+                  key={type}
+                  variant={form.importExport === type ? 'contained' : 'outlined'}
+                  onClick={() => setForm({ ...form, importExport: type as 'import' | 'export' })}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    backgroundColor: form.importExport === type ? '#001e61' : '#fff',
+                    color: form.importExport === type ? '#fff' : '#001e61',
+                    fontWeight: 'bold',
+                    borderColor: '#001e61',
+                    '&:hover': {
+                      backgroundColor: form.importExport === type ? '#001447' : '#f0f0f0'
+                    }
+                  }}
+                >
+                  {type === 'import' ? 'Import' : 'Export'}
+                </Button>
+              ))}
             </Box>
 
-            <Button variant="contained" fullWidth onClick={handleSubmit} sx={{ mt: 3, backgroundColor: '#001e61', '&:hover': { backgroundColor: '#001447' } }}>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleSubmit}
+              sx={{
+                mt: 4,
+                py: 1.5,
+                borderRadius: 2,
+                backgroundColor: '#001e61',
+                fontWeight: 'bold',
+                fontSize: 16,
+                '&:hover': { backgroundColor: '#001447' }
+              }}
+            >
               Enregistrer
             </Button>
           </Box>
