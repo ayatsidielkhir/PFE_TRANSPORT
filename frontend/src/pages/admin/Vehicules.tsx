@@ -11,7 +11,7 @@
   import { useMediaQuery } from '@mui/material';
   import { Dialog, DialogContent, DialogTitle } from '@mui/material';
   import { PictureAsPdf } from '@mui/icons-material';
-  import { DriveEta } from '@mui/icons-material';
+  import { LocalShipping} from '@mui/icons-material';
   import { FolderOpen } from '@mui/icons-material';
 
 
@@ -184,7 +184,7 @@
     return (
       <Tooltip title="Voir le PDF">
         <IconButton onClick={() => setModalUrl(url)}>
-          <PictureAsPdf sx={{ fontSize: 28, color: 'red' }} />
+          <PictureAsPdf sx={{ fontSize: 25, color: 'red' }} />
         </IconButton>
       </Tooltip>
     );
@@ -203,9 +203,10 @@
       <AdminLayout>
         <Box p={3} maxWidth="1400px" mx="auto">
             <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
-              <DriveEta sx={{ width: 35, height: 32 }} />
-              Gestion des Véhicules
-            </Typography>
+            <LocalShipping sx={{ width: 35, height: 32 }} />
+            Gestion des Véhicules
+          </Typography>
+
 
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -317,7 +318,7 @@
                       boxShadow: 2,
                       backgroundColor: '#f0f0f0',
                       mt: 1,
-                      marginTop:20
+                      marginTop:10
                     }}
                   />
 
@@ -456,10 +457,6 @@
               )}
             </DialogContent>
           </Dialog>
-
-
-
-
         </Box>
       </AdminLayout>
     );
