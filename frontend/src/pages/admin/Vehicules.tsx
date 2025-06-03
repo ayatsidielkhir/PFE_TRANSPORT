@@ -1,16 +1,13 @@
-// ✅ Page Véhicules avec style moderne, drawer amélioré, responsive, gestion des documents, docs modal, chauffeur affiché, filtre par chauffeur
-
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, IconButton, Pagination, Avatar, Tooltip,
-  Dialog, DialogTitle, DialogContent, Typography, InputAdornment, Paper, useMediaQuery,
-  Select, MenuItem, FormControl, InputLabel
+  Box, Button, TextField, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
+  Drawer, InputAdornment, Avatar, Typography, Dialog, MenuItem, Select,
+  FormControl, InputLabel, Pagination
 } from '@mui/material';
-import { Delete, Edit, Search as SearchIcon, PictureAsPdf, Add, DriveEta, FolderOpen } from '@mui/icons-material';
+import { Add, Delete, Edit, Search, Download } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
-import { useTheme } from '@mui/material/styles';
 
 interface Vehicule {
   _id?: string;
@@ -19,13 +16,12 @@ interface Vehicule {
   type: string;
   kilometrage: number;
   controle_technique: string;
-  assurance?: string;
-  carteGrise?: string;
+  assurance: string;
+  carteGrise: string;
   vignette?: string;
   agrement?: string;
   carteVerte?: string;
   extincteur?: string;
-  photoVehicule?: string;
   chauffeur?: string;
 }
 
@@ -39,200 +35,198 @@ const VehiculesPage: React.FC = () => {
   const [vehicules, setVehicules] = useState<Vehicule[]>([]);
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
   const [search, setSearch] = useState('');
-  const [chauffeurFilter, setChauffeurFilter] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedVehicule, setSelectedVehicule] = useState<Vehicule | null>(null);
-  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
-  const [dialogImageSrc, setDialogImageSrc] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
-  const [openDocsDialog, setOpenDocsDialog] = useState(false);
-  const [docsVehicule, setDocsVehicule] = useState<Vehicule | null>(null);
-  const [page, setPage] = useState(1);
-  const perPage = 5;
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const [form, setForm] = useState<Record<string, string | File | null>>({
-    nom: '', matricule: '', type: '', kilometrage: '', controle_technique: '',
-    photoVehicule: null, assurance: null, carteGrise: null, vignette: null,
-    agrement: null, carteVerte: null, extincteur: null, chauffeur: ''
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState<Vehicule>({
+    nom: '', matricule: '', type: '', kilometrage: 0,
+    controle_technique: '', chauffeur: '', assurance: '', carteGrise: ''
   });
 
-  const fetchVehicules = async () => {
-    const res = await axios.get('/vehicules');
-    setVehicules(res.data);
-  };
-
-  const fetchChauffeurs = async () => {
-    const res = await axios.get('/chauffeurs');
-    setChauffeurs(res.data);
-  };
+  const [assuranceFile, setAssuranceFile] = useState<File | null>(null);
+  const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null);
+  const [vignetteFile, setVignetteFile] = useState<File | null>(null);
+  const [agrementFile, setAgrementFile] = useState<File | null>(null);
+  const [carteVerteFile, setCarteVerteFile] = useState<File | null>(null);
+  const [extincteurFile, setExtincteurFile] = useState<File | null>(null);
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const perPage = 5;
 
   useEffect(() => {
     fetchVehicules();
     fetchChauffeurs();
   }, []);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setPage(1);
+  const fetchVehicules = async () => {
+    const res = await axios.get('/api/vehicules');
+    setVehicules(res.data);
   };
 
-  const handleEdit = (vehicule: Vehicule) => {
-    setSelectedVehicule(vehicule);
-    setForm({
-      nom: vehicule.nom,
-      matricule: vehicule.matricule,
-      type: vehicule.type,
-      kilometrage: vehicule.kilometrage.toString(),
-      controle_technique: vehicule.controle_technique,
-      photoVehicule: null,
-      assurance: null,
-      carteGrise: null,
-      vignette: null,
-      agrement: null,
-      carteVerte: null,
-      extincteur: null,
-      chauffeur: vehicule.chauffeur || ''
-    });
-    setPreviewPhoto(null);
+  const fetchChauffeurs = async () => {
+    const res = await axios.get('/api/chauffeurs');
+    setChauffeurs(res.data);
+  };
+
+  const handleChange = (field: keyof Vehicule, value: any) => {
+    setForm({ ...form, [field]: value });
+  };
+
+  const handleAdd = () => {
+    setForm({ nom: '', matricule: '', type: '', kilometrage: 0,
+      controle_technique: '', chauffeur: '', assurance: '', carteGrise: '' });
+    setAssuranceFile(null);
+    setCarteGriseFile(null);
+    setVignetteFile(null);
+    setAgrementFile(null);
+    setCarteVerteFile(null);
+    setExtincteurFile(null);
+    setIsEditing(false);
     setDrawerOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Supprimer ce véhicule ?")) {
-      await axios.delete(`/vehicules/${id}`);
-      fetchVehicules();
+  const handleEdit = (vehicule: Vehicule) => {
+    setForm({ ...vehicule });
+    setAssuranceFile(null);
+    setCarteGriseFile(null);
+    setVignetteFile(null);
+    setAgrementFile(null);
+    setCarteVerteFile(null);
+    setExtincteurFile(null);
+    setIsEditing(true);
+    setDrawerOpen(true);
+    if (isEditing) {
+      const confirmUpdate = window.confirm("Voulez-vous vraiment modifier ce véhicule ?");
+      if (!confirmUpdate) return;
     }
   };
 
-  const filtered = vehicules.filter(v => {
-    const chauffeurMatch = chauffeurFilter ? v.chauffeur === chauffeurFilter : true;
-    const textMatch =
-      v.nom.toLowerCase().includes(search.toLowerCase()) ||
-      v.matricule.toLowerCase().includes(search.toLowerCase());
-    return chauffeurMatch && textMatch;
-  });
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-
-  const getChauffeurName = (id?: string) => {
-    const ch = chauffeurs.find(c => c._id === id);
-    return ch ? `${ch.nom} ${ch.prenom}` : '—';
+  const handleSave = async () => {
+    if (!form.nom || !form.matricule || !form.type || !form.kilometrage || !form.controle_technique) {
+      alert("Merci de remplir tous les champs obligatoires.");
+      return;
+    }
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
+    if (assuranceFile) formData.append('assurance', assuranceFile);
+    if (carteGriseFile) formData.append('carteGrise', carteGriseFile);
+    if (vignetteFile) formData.append('vignette', vignetteFile);
+    if (agrementFile) formData.append('agrement', agrementFile);
+    if (carteVerteFile) formData.append('carteVerte', carteVerteFile);
+    if (extincteurFile) formData.append('extincteur', extincteurFile);
+    try {
+      const res = isEditing && form._id
+        ? await axios.put(`/api/vehicules/${form._id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        : await axios.post('/api/vehicules', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      if ([200, 201].includes(res.status)) {
+        fetchVehicules();
+        setDrawerOpen(false);
+      }
+    } catch (err) {
+      console.error('❌ Erreur lors de l\'enregistrement :', err);
+      alert("Erreur lors de l'enregistrement du véhicule.");
+    }
   };
 
-  const renderDocumentAvatar = (file?: string) => {
-    if (!file) return '—';
+  const handleDelete = async (id?: string) => {
+    if (!id) return;
+    if (window.confirm('Supprimer ce véhicule ?')) {
+      try {
+        await axios.delete(`/api/vehicules/${id}`);
+        fetchVehicules();
+        alert('Véhicule supprimé avec succès.');
+      } catch (err) {
+        alert("Erreur lors de la suppression.");
+      }
+    }
+  };
+
+  const renderFileAvatar = (file?: string) => {
+    if (!file) return 'N/A';
     const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
-    if (/\.pdf$/i.test(file)) {
-      return (
-        <Tooltip title="Voir le PDF">
-          <IconButton onClick={() => window.open(url)} sx={{ color: '#d32f2f' }}>
-            <PictureAsPdf />
-          </IconButton>
-        </Tooltip>
-      );
-    }
+    const isPdf = /\.pdf$/i.test(file);
     return (
       <Avatar
-        variant="rounded"
-        src={url}
-        sx={{ width: 35, height: 45, cursor: 'pointer', border: '1px solid #ccc' }}
-        onClick={() => { setDialogImageSrc(url); setOpenDialog(true); }}
+        src={isPdf ? '/pdf-icon.png' : url}
+        sx={{ width: 40, height: 40, cursor: 'pointer' }}
+        onClick={() => setPreviewFileUrl(url)}
       />
     );
   };
 
-  const handleDocsClick = (vehicule: Vehicule) => {
-    setDocsVehicule(vehicule);
-    setOpenDocsDialog(true);
-  };
+  const filtered = vehicules.filter(v =>
+    (v.nom?.toLowerCase() || '').includes(search.toLowerCase()) ||
+    (v.matricule?.toLowerCase() || '').includes(search.toLowerCase())
+  );
+
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
     <AdminLayout>
-      <Box p={isMobile ? 1 : 2}>
-         <AdminLayout>
-      <Box p={isMobile ? 1 : 2}>
-        <Box mb={2} display={isMobile ? 'block' : 'flex'} gap={2}>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
+          Gestion des Véhicules
+        </Typography>
+
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <TextField
-            size="small"
             placeholder="Rechercher..."
+            size="small"
             value={search}
-            onChange={handleSearchChange}
+            onChange={(e) => setSearch(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon />
+                  <Search />
                 </InputAdornment>
-              )
+              ),
             }}
-            sx={{ width: isMobile ? '100%' : '50%' }}
+            sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
           />
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Filtrer par chauffeur</InputLabel>
-            <Select
-              value={chauffeurFilter}
-              onChange={(e) => setChauffeurFilter(e.target.value)}
-              label="Filtrer par chauffeur"
-            >
-              <MenuItem value="">Tous</MenuItem>
-              {chauffeurs.map(c => (
-                <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: 'primary.main', borderRadius: 3, fontWeight: 'bold', textTransform: 'none', px: 3 }} onClick={handleAdd}>
+            Ajouter Véhicule
+          </Button>
         </Box>
 
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nom</TableCell>
-              <TableCell>Matricule</TableCell>
-              <TableCell>Chauffeur</TableCell>
-              <TableCell>Carte Grise</TableCell>
-              <TableCell>Assurance</TableCell>
-              <TableCell>Docs</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginated.map(v => (
-              <TableRow key={v._id}>
-                <TableCell>{v.nom}</TableCell>
-                <TableCell>{v.matricule}</TableCell>
-                <TableCell>{getChauffeurName(v.chauffeur)}</TableCell>
-                <TableCell>{renderDocumentAvatar(v.carteGrise)}</TableCell>
-                <TableCell>{renderDocumentAvatar(v.assurance)}</TableCell>
-                <TableCell>
-                  <Tooltip title="Autres documents">
-                    <IconButton onClick={() => handleDocsClick(v)}><FolderOpen /></IconButton>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEdit(v)}><Edit /></IconButton>
-                  <IconButton onClick={() => handleDelete(v._id!)}><Delete /></IconButton>
-                </TableCell>
+        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
+                {['Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Vignette', 'Agrément', 'Carte Verte', 'Extincteur', 'Actions'].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {paginated.map((v, i) => (
+                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{v.nom}</TableCell>
+                  <TableCell>{v.chauffeur}</TableCell>
+                  <TableCell>{v.matricule}</TableCell>
+                  <TableCell>{v.type}</TableCell>
+                  <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
+                  <TableCell>{v.controle_technique}</TableCell>
+                  <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.vignette)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.agrement)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.carteVerte)}</TableCell>
+                  <TableCell>{renderFileAvatar(v.extincteur)}</TableCell>
+                  <TableCell>
+                    <Tooltip title="Modifier"><IconButton color="primary" onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton color="error" onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
 
-        <Dialog open={openDocsDialog} onClose={() => setOpenDocsDialog(false)}>
-          <DialogTitle>Autres documents</DialogTitle>
-          <DialogContent>
-            {docsVehicule && ["vignette", "agrement", "carteVerte", "extincteur"].map(field => (
-              <Box key={field} mb={1}>
-                <Typography variant="body2" fontWeight={600}>{field}</Typography>
-                {renderDocumentAvatar(docsVehicule[field as keyof Vehicule] as string)}
-              </Box>
-            ))}
-          </DialogContent>
-        </Dialog>
-      </Box>
-    </AdminLayout>
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} color="primary" />
+        </Box>
       </Box>
     </AdminLayout>
   );
 };
 
 export default VehiculesPage;
-
