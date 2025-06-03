@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, IconButton, Tooltip,
-  Drawer, InputAdornment, Avatar, Typography, Dialog, MenuItem, Select,
+  Drawer, InputAdornment, Avatar, Typography, Select, MenuItem,
   FormControl, InputLabel, Pagination
 } from '@mui/material';
-import { Add, Delete, Edit, Search, Download } from '@mui/icons-material';
+import { Add, Delete, Edit, Search } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 
@@ -16,13 +16,14 @@ interface Vehicule {
   type: string;
   kilometrage: number;
   controle_technique: string;
-  assurance: string;
-  carteGrise: string;
+  assurance?: string;
+  carteGrise?: string;
   vignette?: string;
   agrement?: string;
   carteVerte?: string;
   extincteur?: string;
   chauffeur?: string;
+  photoVehicule?: string;
 }
 
 interface Chauffeur {
@@ -39,7 +40,7 @@ const VehiculesPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Vehicule>({
     nom: '', matricule: '', type: '', kilometrage: 0,
-    controle_technique: '', chauffeur: '', assurance: '', carteGrise: ''
+    controle_technique: '', chauffeur: ''
   });
 
   const [assuranceFile, setAssuranceFile] = useState<File | null>(null);
@@ -72,8 +73,7 @@ const VehiculesPage: React.FC = () => {
   };
 
   const handleAdd = () => {
-    setForm({ nom: '', matricule: '', type: '', kilometrage: 0,
-      controle_technique: '', chauffeur: '', assurance: '', carteGrise: '' });
+    setForm({ nom: '', matricule: '', type: '', kilometrage: 0, controle_technique: '', chauffeur: '' });
     setAssuranceFile(null);
     setCarteGriseFile(null);
     setVignetteFile(null);
@@ -94,10 +94,6 @@ const VehiculesPage: React.FC = () => {
     setExtincteurFile(null);
     setIsEditing(true);
     setDrawerOpen(true);
-    if (isEditing) {
-      const confirmUpdate = window.confirm("Voulez-vous vraiment modifier ce véhicule ?");
-      if (!confirmUpdate) return;
-    }
   };
 
   const handleSave = async () => {
@@ -106,24 +102,30 @@ const VehiculesPage: React.FC = () => {
       return;
     }
     const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => formData.append(key, String(value)));
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value.toString());
+      }
+    });
     if (assuranceFile) formData.append('assurance', assuranceFile);
     if (carteGriseFile) formData.append('carteGrise', carteGriseFile);
     if (vignetteFile) formData.append('vignette', vignetteFile);
     if (agrementFile) formData.append('agrement', agrementFile);
     if (carteVerteFile) formData.append('carteVerte', carteVerteFile);
     if (extincteurFile) formData.append('extincteur', extincteurFile);
+
     try {
       const res = isEditing && form._id
         ? await axios.put(`/api/vehicules/${form._id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
         : await axios.post('/api/vehicules', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+
       if ([200, 201].includes(res.status)) {
         fetchVehicules();
         setDrawerOpen(false);
       }
     } catch (err) {
-      console.error('❌ Erreur lors de l\'enregistrement :', err);
-      alert("Erreur lors de l'enregistrement du véhicule.");
+      alert("Erreur lors de l'enregistrement.");
+      console.error(err);
     }
   };
 
@@ -133,7 +135,6 @@ const VehiculesPage: React.FC = () => {
       try {
         await axios.delete(`/api/vehicules/${id}`);
         fetchVehicules();
-        alert('Véhicule supprimé avec succès.');
       } catch (err) {
         alert("Erreur lors de la suppression.");
       }
@@ -154,8 +155,8 @@ const VehiculesPage: React.FC = () => {
   };
 
   const filtered = vehicules.filter(v =>
-    (v.nom?.toLowerCase() || '').includes(search.toLowerCase()) ||
-    (v.matricule?.toLowerCase() || '').includes(search.toLowerCase())
+    v.nom?.toLowerCase().includes(search.toLowerCase()) ||
+    v.matricule?.toLowerCase().includes(search.toLowerCase())
   );
 
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
@@ -182,12 +183,12 @@ const VehiculesPage: React.FC = () => {
             }}
             sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
           />
-          <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: 'primary.main', borderRadius: 3, fontWeight: 'bold', textTransform: 'none', px: 3 }} onClick={handleAdd}>
+          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>
             Ajouter Véhicule
           </Button>
         </Box>
 
-        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Paper elevation={2} sx={{ borderRadius: 2 }}>
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
@@ -198,12 +199,12 @@ const VehiculesPage: React.FC = () => {
             </TableHead>
             <TableBody>
               {paginated.map((v, i) => (
-                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{v.nom}</TableCell>
-                  <TableCell>{v.chauffeur}</TableCell>
+                <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
+                  <TableCell>{v.nom}</TableCell>
+                  <TableCell>{chauffeurs.find(c => c._id === v.chauffeur)?.nom || '—'}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
                   <TableCell>{v.type}</TableCell>
-                  <TableCell>{v.kilometrage.toLocaleString()}</TableCell>
+                  <TableCell>{v.kilometrage}</TableCell>
                   <TableCell>{v.controle_technique}</TableCell>
                   <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
                   <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
@@ -222,8 +223,34 @@ const VehiculesPage: React.FC = () => {
         </Paper>
 
         <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} color="primary" />
+          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} />
         </Box>
+
+        {/* Drawer */}
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={450}>
+            <Typography variant="h6" mb={2}>{isEditing ? 'Modifier Véhicule' : 'Ajouter Véhicule'}</Typography>
+
+            <TextField label="Nom" fullWidth value={form.nom} onChange={(e) => handleChange('nom', e.target.value)} sx={{ mb: 2 }} />
+            <TextField label="Matricule" fullWidth value={form.matricule} onChange={(e) => handleChange('matricule', e.target.value)} sx={{ mb: 2 }} />
+            <TextField label="Type" fullWidth value={form.type} onChange={(e) => handleChange('type', e.target.value)} sx={{ mb: 2 }} />
+            <TextField label="Kilométrage" type="number" fullWidth value={form.kilometrage} onChange={(e) => handleChange('kilometrage', parseInt(e.target.value))} sx={{ mb: 2 }} />
+            <TextField label="Contrôle Technique" fullWidth value={form.controle_technique} onChange={(e) => handleChange('controle_technique', e.target.value)} sx={{ mb: 2 }} />
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Chauffeur</InputLabel>
+              <Select value={form.chauffeur || ''} onChange={(e) => handleChange('chauffeur', e.target.value)} label="Chauffeur">
+                {chauffeurs.map(c => (
+                  <MenuItem key={c._id} value={c._id}>{c.nom} {c.prenom}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Button fullWidth variant="contained" sx={{ mt: 2 }} onClick={handleSave}>
+              {isEditing ? 'Enregistrer' : 'Ajouter'}
+            </Button>
+          </Box>
+        </Drawer>
       </Box>
     </AdminLayout>
   );
