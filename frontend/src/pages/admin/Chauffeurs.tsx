@@ -255,19 +255,22 @@ const ChauffeursPage: React.FC = () => {
         </Paper>
       </Box>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
-        <DialogTitle sx={{ mt: 2 }}>Visualiser le document</DialogTitle>
-          <DialogContent sx={{ mt: 1, minHeight: '80vh' }}>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Visualiser le document
+          <Button onClick={() => setOpenDialog(false)} variant="outlined" color="error">Fermer</Button>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
           <iframe
             src={dialogImageSrc}
             title="Document PDF"
             width="100%"
             height="100%"
-            style={{ border: 'none' }}
+            style={{ border: 'none', minHeight: '100vh' }}
           />
         </DialogContent>
-
       </Dialog>
+
 
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Box p={3} width={isMobile ? '100vw' : 450}>
