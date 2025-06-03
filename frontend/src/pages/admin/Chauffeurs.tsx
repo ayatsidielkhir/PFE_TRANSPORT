@@ -178,9 +178,6 @@ const ChauffeursPage: React.FC = () => {
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
           <Person sx={{ width: 35, height: 32 }} />
           Gestion des Chauffeurs
-          <IconButton onClick={() => setSortAsc(!sortAsc)}><SortByAlpha /></IconButton>
-          <IconButton onClick={exportExcel}><FileDownload /></IconButton>
-          <IconButton onClick={exportPDF}><PictureAsPdf /></IconButton>
         </Typography>
 
         <Box display={isMobile ? 'block' : 'flex'} justifyContent="space-between" alignItems="center" mb={2}>
