@@ -11,6 +11,10 @@
   import { useMediaQuery } from '@mui/material';
   import { Dialog, DialogContent, DialogTitle } from '@mui/material';
   import { PictureAsPdf } from '@mui/icons-material';
+  import { DriveEta } from '@mui/icons-material';
+  import { FolderOpen } from '@mui/icons-material';
+
+
 
 
 
@@ -61,6 +65,8 @@
     const [modalUrl, setModalUrl] = useState<string | null>(null);
     const [photoVehiculeFile, setPhotoVehiculeFile] = useState<File | null>(null);
     const [previewPhotoVehicule, setPreviewPhotoVehicule] = useState<string | null>(null);
+    const [selectedVehicule, setSelectedVehicule] = useState<Vehicule | null>(null);
+    const [openDocsModal, setOpenDocsModal] = useState(false);
 
 
 
@@ -167,6 +173,10 @@
         }
       }
     };
+    const handleVoirPlus = (vehicule: Vehicule) => {
+      setSelectedVehicule(vehicule);
+      setOpenDocsModal(true);
+    };
 
     const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';
@@ -174,7 +184,7 @@
     return (
       <Tooltip title="Voir le PDF">
         <IconButton onClick={() => setModalUrl(url)}>
-          <PictureAsPdf sx={{ fontSize: 32, color: 'red' }} />
+          <PictureAsPdf sx={{ fontSize: 28, color: 'red' }} />
         </IconButton>
       </Tooltip>
     );
@@ -192,9 +202,11 @@
     return (
       <AdminLayout>
         <Box p={3} maxWidth="1400px" mx="auto">
-          <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>
-            Gestion des Véhicules
-          </Typography>
+            <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
+              <DriveEta sx={{ width: 35, height: 32 }} />
+              Gestion des Véhicules
+            </Typography>
+
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <TextField
@@ -211,12 +223,27 @@
               }}
               sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
             />
-            <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>
-              Ajouter Véhicule
-            </Button>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleAdd}
+                sx={{
+                  backgroundColor: '#001e61',
+                  borderRadius: 3,
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  px: 3,
+                  boxShadow: 2,
+                  '&:hover': { backgroundColor: '#001447' },
+                  width: isMobile ? '100%' : 'auto'
+                }}
+              >
+                Ajouter Véhicule
+              </Button>
+
           </Box>
 
-          <Paper elevation={2} sx={{ borderRadius: 2 }}>
+      <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
@@ -246,9 +273,19 @@
                     <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
                     <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
                     <TableCell>{renderFileAvatar(v.vignette)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.agrement)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.carteVerte)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.extincteur)}</TableCell>
+                    <TableCell>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      {renderFileAvatar(v.assurance)}
+                      {renderFileAvatar(v.carteGrise)}
+                      {renderFileAvatar(v.vignette)}
+                      <Tooltip title="Voir tous les documents">
+                        <IconButton onClick={() => handleVoirPlus(v)}>
+                          <FolderOpen />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+
                     <TableCell>
                       <Tooltip title="Modifier"><IconButton color="primary" onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
                       <Tooltip title="Supprimer"><IconButton color="error" onClick={() => handleDelete(v._id)}><Delete /></IconButton></Tooltip>
@@ -264,148 +301,165 @@
           </Box>
 
           {/* Drawer */}
-    <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-    <Box p={3} width={isMobile ? '100vw' : 450}>
-      <Box display="flex" justifyContent="center" mb={3}>
-        <label htmlFor="photoVehicule-input">
-          <Avatar
-                src={
-                  previewPhotoVehicule
-                    || (form.photoVehicule
-                        ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}`
-                        : '')
-                }
-              sx={{
-                width: 110,
-                height: 110,
-                cursor: 'pointer',
-                borderRadius: '12px',
-                boxShadow: 2,
-                backgroundColor: '#f0f0f0',
-                mt: 1
-              }}
-            />
+          <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={isMobile ? '100vw' : 450}>
+            <Box display="flex" justifyContent="center" mb={3}>
+              <label htmlFor="photoVehicule-input">
+                <Avatar
+                      src={
+                        previewPhotoVehicule
+                          || (form.photoVehicule
+                              ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}`
+                              : '')
+                      }
+                    sx={{
+                      width: 110,
+                      height: 110,
+                      cursor: 'pointer',
+                      borderRadius: '12px',
+                      boxShadow: 2,
+                      backgroundColor: '#f0f0f0',
+                      mt: 1,
+                      marginTop:20
+                    }}
+                  />
 
-        </label>
-            <input
-              id="photoVehicule-input"
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                if (file) {
-                  setPhotoVehiculeFile(file);
-                  setPreviewPhotoVehicule(URL.createObjectURL(file));
-                }
-              }}
-            />
+              </label>
+                  <input
+                    id="photoVehicule-input"
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      if (file) {
+                        setPhotoVehiculeFile(file);
+                        setPreviewPhotoVehicule(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
 
-      </Box>
-
-      <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-        {[{ name: 'nom', label: 'Nom' }, { name: 'matricule', label: 'Matricule' }, { name: 'type', label: 'Type' }, { name: 'kilometrage', label: 'Kilométrage', type: 'number' }, { name: 'controle_technique', label: 'Contrôle Technique' }].map(
-          ({ name, label, type }) => (
-            <Box key={name} flex="1 1 45%">
-              <TextField
-                fullWidth
-                label={label}
-                type={type || 'text'}
-                name={name}
-                value={form[name as keyof Vehicule] as string | number}
-                onChange={(e) => handleChange(name as keyof Vehicule, e.target.value)}
-                sx={{
-                  '& .MuiInputBase-root': {
-                    borderRadius: '12px',
-                    backgroundColor: '#f9fafb'
-                  }
-                }}
-              />
             </Box>
-          )
-        )}
-      </Box>
 
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Chauffeur</InputLabel>
-        <Select
-          value={form.chauffeur || ''}
-          onChange={(e) => handleChange('chauffeur', e.target.value)}
-          label="Chauffeur"
-          sx={{ borderRadius: '12px', backgroundColor: '#f9fafb' }}
-        >
-          {chauffeurs.map((c) => (
-            <MenuItem key={c._id} value={c._id}>
-              {c.nom} {c.prenom}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+            <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+              {[{ name: 'nom', label: 'Nom' }, { name: 'matricule', label: 'Matricule' }, { name: 'type', label: 'Type' }, { name: 'kilometrage', label: 'Kilométrage', type: 'number' }, { name: 'controle_technique', label: 'Contrôle Technique' }].map(
+                ({ name, label, type }) => (
+                  <Box key={name} flex="1 1 45%">
+                    <TextField
+                      fullWidth
+                      label={label}
+                      type={type || 'text'}
+                      name={name}
+                      value={form[name as keyof Vehicule] as string | number}
+                      onChange={(e) => handleChange(name as keyof Vehicule, e.target.value)}
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          borderRadius: '12px',
+                          backgroundColor: '#f9fafb'
+                        }
+                      }}
+                    />
+                  </Box>
+                )
+              )}
+            </Box>
 
-      <Box display="flex" flexWrap="wrap" gap={2}>
-        {[
-          { name: 'assurance', label: 'Assurance', file: assuranceFile, setter: setAssuranceFile },
-          { name: 'carteGrise', label: 'Carte Grise', file: carteGriseFile, setter: setCarteGriseFile },
-          { name: 'vignette', label: 'Vignette', file: vignetteFile, setter: setVignetteFile },
-          { name: 'agrement', label: 'Agrément', file: agrementFile, setter: setAgrementFile },
-          { name: 'carteVerte', label: 'Carte Verte', file: carteVerteFile, setter: setCarteVerteFile },
-          { name: 'extincteur', label: 'Extincteur', file: extincteurFile, setter: setExtincteurFile }
-        ].map(({ name, label, file, setter }) => (
-          <Box key={name} flex="1 1 45%">
-            <Typography fontWeight={500} mb={0.5}>{label}</Typography>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Chauffeur</InputLabel>
+              <Select
+                value={form.chauffeur || ''}
+                onChange={(e) => handleChange('chauffeur', e.target.value)}
+                label="Chauffeur"
+                sx={{ borderRadius: '12px', backgroundColor: '#f9fafb' }}
+              >
+                {chauffeurs.map((c) => (
+                  <MenuItem key={c._id} value={c._id}>
+                    {c.nom} {c.prenom}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Box display="flex" flexWrap="wrap" gap={2}>
+              {[
+                { name: 'assurance', label: 'Assurance', file: assuranceFile, setter: setAssuranceFile },
+                { name: 'carteGrise', label: 'Carte Grise', file: carteGriseFile, setter: setCarteGriseFile },
+                { name: 'vignette', label: 'Vignette', file: vignetteFile, setter: setVignetteFile },
+                { name: 'agrement', label: 'Agrément', file: agrementFile, setter: setAgrementFile },
+                { name: 'carteVerte', label: 'Carte Verte', file: carteVerteFile, setter: setCarteVerteFile },
+                { name: 'extincteur', label: 'Extincteur', file: extincteurFile, setter: setExtincteurFile }
+              ].map(({ name, label, file, setter }) => (
+                <Box key={name} flex="1 1 45%">
+                  <Typography fontWeight={500} mb={0.5}>{label}</Typography>
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    fullWidth
+                    sx={{
+                      borderRadius: '12px',
+                      backgroundColor: '#ffffff',
+                      textTransform: 'none',
+                      fontSize: '14px',
+                      py: 1
+                    }}
+                  >
+                    {file ? file.name : 'Choisir un fichier PDF'}
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      hidden
+                      onChange={(e) => setter(e.target.files?.[0] || null)}
+                    />
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+
             <Button
-              component="label"
-              variant="outlined"
               fullWidth
+              variant="contained"
+              onClick={handleSave}
               sx={{
+                mt: 4,
+                backgroundColor: '#001e61',
                 borderRadius: '12px',
-                backgroundColor: '#ffffff',
                 textTransform: 'none',
-                fontSize: '14px',
-                py: 1
+                fontWeight: 'bold',
+                py: 1.5,
+                fontSize: '16px',
+                '&:hover': { backgroundColor: '#001447' }
               }}
             >
-              {file ? file.name : 'Choisir un fichier PDF'}
-              <input
-                type="file"
-                accept="application/pdf"
-                hidden
-                onChange={(e) => setter(e.target.files?.[0] || null)}
-              />
+              {isEditing ? 'Enregistrer les modifications' : 'Ajouter Véhicule'}
             </Button>
           </Box>
-        ))}
-      </Box>
+        </Drawer>
 
-      <Button
-        fullWidth
-        variant="contained"
-        onClick={handleSave}
-        sx={{
-          mt: 4,
-          backgroundColor: '#001e61',
-          borderRadius: '12px',
-          textTransform: 'none',
-          fontWeight: 'bold',
-          py: 1.5,
-          fontSize: '16px',
-          '&:hover': { backgroundColor: '#001447' }
-        }}
-      >
-        {isEditing ? 'Enregistrer les modifications' : 'Ajouter Véhicule'}
-      </Button>
-    </Box>
-  </Drawer>
+          <Dialog open={!!modalUrl} onClose={() => setModalUrl(null)} maxWidth="lg" fullWidth>
+            <DialogTitle>Visualisation PDF</DialogTitle>
+            <DialogContent>
+              <iframe src={modalUrl || ''} width="100%" height="600px" style={{ border: 'none' }} />
+              <Box mt={2} textAlign="right">
+                <Button onClick={() => window.open(modalUrl || '', '_blank')} variant="outlined">Télécharger</Button>
+              </Box>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={openDocsModal} onClose={() => setOpenDocsModal(false)} maxWidth="sm" fullWidth>
+            <DialogTitle>Documents du véhicule</DialogTitle>
+            <DialogContent>
+              {selectedVehicule && (
+                <Box display="flex" flexWrap="wrap" gap={2}>
+                  {['assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur'].map(key => (
+                    <Box key={key} textAlign="center">
+                      <Typography fontSize={14} fontWeight={500}>{key}</Typography>
+                      {renderFileAvatar((selectedVehicule as any)[key])}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </DialogContent>
+          </Dialog>
 
-  <Dialog open={!!modalUrl} onClose={() => setModalUrl(null)} maxWidth="lg" fullWidth>
-    <DialogTitle>Visualisation PDF</DialogTitle>
-    <DialogContent>
-      <iframe src={modalUrl || ''} width="100%" height="600px" style={{ border: 'none' }} />
-      <Box mt={2} textAlign="right">
-        <Button onClick={() => window.open(modalUrl || '', '_blank')} variant="outlined">Télécharger</Button>
-      </Box>
-    </DialogContent>
-  </Dialog>
 
 
 
