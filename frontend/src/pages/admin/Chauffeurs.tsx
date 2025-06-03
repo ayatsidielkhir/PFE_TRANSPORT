@@ -257,9 +257,16 @@ const ChauffeursPage: React.FC = () => {
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
         <DialogTitle sx={{ mt: 2 }}>Visualiser le document</DialogTitle>
-        <DialogContent sx={{ mt: 1 }}>
-          <Box component="img" src={dialogImageSrc} alt="document" width="100%" />
+          <DialogContent sx={{ mt: 1, minHeight: '80vh' }}>
+          <iframe
+            src={dialogImageSrc}
+            title="Document PDF"
+            width="100%"
+            height="100%"
+            style={{ border: 'none' }}
+          />
         </DialogContent>
+
       </Dialog>
 
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
