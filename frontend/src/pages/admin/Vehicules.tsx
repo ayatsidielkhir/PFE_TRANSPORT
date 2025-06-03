@@ -247,9 +247,10 @@
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
-                  {['Photo','Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Vignette', 'Agrément', 'Carte Verte', 'Extincteur', 'Actions'].map(h => (
+                  {['Photo', 'Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Documents', 'Actions'].map(h => (
                     <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
                   ))}
+
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -272,19 +273,15 @@
                     <TableCell>{v.controle_technique}</TableCell>
                     <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
                     <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.vignette)}</TableCell>
                     <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {renderFileAvatar(v.assurance)}
-                      {renderFileAvatar(v.carteGrise)}
-                      {renderFileAvatar(v.vignette)}
                       <Tooltip title="Voir tous les documents">
                         <IconButton onClick={() => handleVoirPlus(v)}>
                           <FolderOpen />
                         </IconButton>
                       </Tooltip>
-                    </Box>
-                  </TableCell>
+                    </TableCell>
+
+                    
 
                     <TableCell>
                       <Tooltip title="Modifier"><IconButton color="primary" onClick={() => handleEdit(v)}><Edit /></IconButton></Tooltip>
@@ -449,7 +446,7 @@
             <DialogContent>
               {selectedVehicule && (
                 <Box display="flex" flexWrap="wrap" gap={2}>
-                  {['assurance', 'carteGrise', 'vignette', 'agrement', 'carteVerte', 'extincteur'].map(key => (
+                  {['vignette', 'agrement', 'carteVerte', 'extincteur'].map(key => (
                     <Box key={key} textAlign="center">
                       <Typography fontSize={14} fontWeight={500}>{key}</Typography>
                       {renderFileAvatar((selectedVehicule as any)[key])}
