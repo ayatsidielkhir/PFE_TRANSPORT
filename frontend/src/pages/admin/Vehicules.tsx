@@ -9,6 +9,9 @@ import { Add, Delete, Edit, Search } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import AdminLayout from '../../components/Layout';
 import { useMediaQuery } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
+import { PictureAsPdf } from '@mui/icons-material';
+
 
 
 interface Vehicule {
@@ -55,6 +58,8 @@ const VehiculesPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const perPage = 5;
   const isMobile = useMediaQuery('(max-width:600px)');
+  const [modalUrl, setModalUrl] = useState<string | null>(null);
+
 
 
   useEffect(() => {
@@ -146,17 +151,18 @@ const VehiculesPage: React.FC = () => {
   };
 
   const renderFileAvatar = (file?: string) => {
-    if (!file) return 'N/A';
-    const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
-    const isPdf = /\.pdf$/i.test(file);
-    return (
-      <Avatar
-        src={isPdf ? '/pdf-icon.png' : url}
-        sx={{ width: 40, height: 40, cursor: 'pointer' }}
-        onClick={() => setPreviewFileUrl(url)}
-      />
-    );
-  };
+  if (!file) return 'N/A';
+  const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
+  return (
+    <Tooltip title="Voir le PDF">
+      <IconButton onClick={() => setModalUrl(url)}>
+        <PictureAsPdf sx={{ fontSize: 32, color: 'red' }} />
+      </IconButton>
+    </Tooltip>
+  );
+};
+
+
 
   const filtered = vehicules.filter(v =>
     v.nom?.toLowerCase().includes(search.toLowerCase()) ||
@@ -196,7 +202,7 @@ const VehiculesPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
-                {['Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Vignette', 'Agrément', 'Carte Verte', 'Extincteur', 'Actions'].map(h => (
+                {['Photo','Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Vignette', 'Agrément', 'Carte Verte', 'Extincteur', 'Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -204,6 +210,15 @@ const VehiculesPage: React.FC = () => {
             <TableBody>
               {paginated.map((v, i) => (
                 <TableRow key={v._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
+                  <TableCell>
+                    {v.photoVehicule ? (
+                      <Avatar
+                        src={`https://mme-backend.onrender.com/uploads/vehicules/${v.photoVehicule}`}
+                        variant="rounded"
+                        sx={{ width: 40, height: 40 }}
+                      />
+                    ) : 'N/A'}
+                  </TableCell>
                   <TableCell>{v.nom}</TableCell>
                   <TableCell>{chauffeurs.find(c => c._id === v.chauffeur)?.nom || '—'}</TableCell>
                   <TableCell>{v.matricule}</TableCell>
@@ -231,13 +246,26 @@ const VehiculesPage: React.FC = () => {
         </Box>
 
         {/* Drawer */}
-              <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
   <Box p={3} width={isMobile ? '100vw' : 450}>
     <Box display="flex" justifyContent="center" mb={3}>
       <label htmlFor="photoVehicule-input">
         <Avatar
-          src={form.photoVehicule ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}` : ''}
-          sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '12px', boxShadow: 2, backgroundColor: '#f0f0f0', mt: 1 }}
+          src={
+            form.photoVehicule
+              ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}`
+              : ''
+          }
+          sx={{
+            width: 110,
+            height: 110,
+            cursor: 'pointer',
+            borderRadius: '12px',
+            boxShadow: 2,
+            backgroundColor: '#f0f0f0',
+            mt: 1,
+            marginTop:'10px'
+          }}
         />
       </label>
       <input
@@ -253,25 +281,26 @@ const VehiculesPage: React.FC = () => {
     </Box>
 
     <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-      {[
-        { name: 'nom', label: 'Nom' },
-        { name: 'matricule', label: 'Matricule' },
-        { name: 'type', label: 'Type' },
-        { name: 'kilometrage', label: 'Kilométrage', type: 'number' },
-        { name: 'controle_technique', label: 'Contrôle Technique' }
-      ].map(({ name, label, type }) => (
-        <Box key={name} flex="1 1 45%">
-          <TextField
-            fullWidth
-            label={label}
-            type={type || 'text'}
-            name={name}
-            value={form[name as keyof Vehicule] as string | number}
-            onChange={(e) => handleChange(name as keyof Vehicule, e.target.value)}
-            sx={{ '& .MuiInputBase-root': { borderRadius: '12px', backgroundColor: '#f9fafb' } }}
-          />
-        </Box>
-      ))}
+      {[{ name: 'nom', label: 'Nom' }, { name: 'matricule', label: 'Matricule' }, { name: 'type', label: 'Type' }, { name: 'kilometrage', label: 'Kilométrage', type: 'number' }, { name: 'controle_technique', label: 'Contrôle Technique' }].map(
+        ({ name, label, type }) => (
+          <Box key={name} flex="1 1 45%">
+            <TextField
+              fullWidth
+              label={label}
+              type={type || 'text'}
+              name={name}
+              value={form[name as keyof Vehicule] as string | number}
+              onChange={(e) => handleChange(name as keyof Vehicule, e.target.value)}
+              sx={{
+                '& .MuiInputBase-root': {
+                  borderRadius: '12px',
+                  backgroundColor: '#f9fafb'
+                }
+              }}
+            />
+          </Box>
+        )
+      )}
     </Box>
 
     <FormControl fullWidth sx={{ mb: 2 }}>
@@ -282,7 +311,7 @@ const VehiculesPage: React.FC = () => {
         label="Chauffeur"
         sx={{ borderRadius: '12px', backgroundColor: '#f9fafb' }}
       >
-        {chauffeurs.map(c => (
+        {chauffeurs.map((c) => (
           <MenuItem key={c._id} value={c._id}>
             {c.nom} {c.prenom}
           </MenuItem>
@@ -301,9 +330,25 @@ const VehiculesPage: React.FC = () => {
       ].map(({ name, label, file, setter }) => (
         <Box key={name} flex="1 1 45%">
           <Typography fontWeight={500} mb={0.5}>{label}</Typography>
-          <Button component="label" variant="outlined" fullWidth sx={{ borderRadius: '12px', backgroundColor: '#ffffff', textTransform: 'none', fontSize: '14px', py: 1 }}>
-            {file ? file.name : 'Choisir un fichier'}
-            <input type="file" hidden onChange={(e) => setter(e.target.files?.[0] || null)} />
+          <Button
+            component="label"
+            variant="outlined"
+            fullWidth
+            sx={{
+              borderRadius: '12px',
+              backgroundColor: '#ffffff',
+              textTransform: 'none',
+              fontSize: '14px',
+              py: 1
+            }}
+          >
+            {file ? file.name : 'Choisir un fichier PDF'}
+            <input
+              type="file"
+              accept="application/pdf"
+              hidden
+              onChange={(e) => setter(e.target.files?.[0] || null)}
+            />
           </Button>
         </Box>
       ))}
@@ -313,12 +358,33 @@ const VehiculesPage: React.FC = () => {
       fullWidth
       variant="contained"
       onClick={handleSave}
-      sx={{ mt: 4, backgroundColor: '#001e61', borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', py: 1.5, fontSize: '16px', '&:hover': { backgroundColor: '#001447' } }}
+      sx={{
+        mt: 4,
+        backgroundColor: '#001e61',
+        borderRadius: '12px',
+        textTransform: 'none',
+        fontWeight: 'bold',
+        py: 1.5,
+        fontSize: '16px',
+        '&:hover': { backgroundColor: '#001447' }
+      }}
     >
       {isEditing ? 'Enregistrer les modifications' : 'Ajouter Véhicule'}
     </Button>
   </Box>
 </Drawer>
+
+<Dialog open={!!modalUrl} onClose={() => setModalUrl(null)} maxWidth="lg" fullWidth>
+  <DialogTitle>Visualisation PDF</DialogTitle>
+  <DialogContent>
+    <iframe src={modalUrl || ''} width="100%" height="600px" style={{ border: 'none' }} />
+    <Box mt={2} textAlign="right">
+      <Button onClick={() => window.open(modalUrl || '', '_blank')} variant="outlined">Télécharger</Button>
+    </Box>
+  </DialogContent>
+</Dialog>
+
+
 
       </Box>
     </AdminLayout>
