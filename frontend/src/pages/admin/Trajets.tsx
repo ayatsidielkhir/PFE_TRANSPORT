@@ -348,36 +348,48 @@ const TrajetsPage: React.FC = () => {
             </Select>
 
             {/* Boutons dynamiques pour Import / Export */}
-              <Box display="flex" gap={2} width="100%">
-                <Button
-                  onClick={() => setForm(prev => ({ ...prev, importExport: 'import' }))}
-                  variant={form.importExport === 'import' ? 'contained' : 'outlined'}
-                  startIcon={<span>⬆️</span>}
-                  sx={{
-                    flex: 1,
-                    backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
-                    color: form.importExport === 'import' ? 'white' : undefined,
-                    borderRadius: 2,
-                    textTransform: 'none'
-                  }}
-                >
-                  Import
-                </Button>
-                <Button
-                  onClick={() => setForm(prev => ({ ...prev, importExport: 'export' }))}
-                  variant={form.importExport === 'export' ? 'contained' : 'outlined'}
-                  startIcon={<span>⬇️</span>}
-                  sx={{
-                    flex: 1,
-                    backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
-                    color: form.importExport === 'export' ? 'white' : undefined,
-                    borderRadius: 2,
-                    textTransform: 'none'
-                  }}
-                >
-                  Export
-                </Button>
-              </Box>
+                <Box display="flex" gap={2} width="100%">
+                  <Button
+                    onClick={() =>
+                      setForm(prev => ({
+                        ...prev,
+                        importExport: prev.importExport === 'import' ? undefined : 'import'
+                      }))
+                    }
+                    variant={form.importExport === 'import' ? 'contained' : 'outlined'}
+                    startIcon={<span>⬆️</span>}
+                    sx={{
+                      flex: 1,
+                      backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
+                      color: form.importExport === 'import' ? 'white' : undefined,
+                      borderRadius: 2,
+                      textTransform: 'none'
+                    }}
+                  >
+                    Import
+                  </Button>
+
+                  <Button
+                    onClick={() =>
+                      setForm(prev => ({
+                        ...prev,
+                        importExport: prev.importExport === 'export' ? undefined : 'export'
+                      }))
+                    }
+                    variant={form.importExport === 'export' ? 'contained' : 'outlined'}
+                    startIcon={<span>⬇️</span>}
+                    sx={{
+                      flex: 1,
+                      backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
+                      color: form.importExport === 'export' ? 'white' : undefined,
+                      borderRadius: 2,
+                      textTransform: 'none'
+                    }}
+                  >
+                    Export
+                  </Button>
+                </Box>
+
 
 
             <Button
