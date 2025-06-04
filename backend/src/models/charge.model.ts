@@ -26,11 +26,11 @@ const chargeSchema = new mongoose.Schema(
     },
     chauffeur: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Chauffeur' // ⚠️ Assure-toi que ton modèle chauffeur s'appelle bien "Chauffeur"
+      ref: 'Chauffeur',
     },
     notes: {
-      type: String
-    }
+      type: String,
+    },
   },
   { timestamps: true }
 );

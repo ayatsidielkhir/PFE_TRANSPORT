@@ -1,10 +1,11 @@
-import { Request, Response } from 'express';
+import { RequestHandler } from 'express';
 import Charge from '../models/charge.model';
 
-export const getCharges = async (_req: Request, res: Response) => {
+// GET all charges
+export const getCharges: RequestHandler = async (_req, res) => {
   try {
     const charges = await Charge.find()
-      .populate('chauffeur', 'nom prenom') // ne récupère que le nom et prénom
+      .populate('chauffeur', 'nom prenom')
       .sort({ date: -1 });
 
     res.json(charges);
@@ -13,7 +14,8 @@ export const getCharges = async (_req: Request, res: Response) => {
   }
 };
 
-export const addCharge = async (req: Request, res: Response) => {
+// POST create new charge
+export const addCharge: RequestHandler = async (req, res) => {
   try {
     const charge = new Charge(req.body);
     await charge.save();
@@ -23,16 +25,20 @@ export const addCharge = async (req: Request, res: Response) => {
   }
 };
 
-export const updateCharge = async (req: Request, res: Response) => {
+// PUT update existing charge
+export const updateCharge: RequestHandler = async (req, res) => {
   try {
-    const updated = await Charge.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updated = await Charge.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
     res.status(200).json(updated);
   } catch (err) {
     res.status(400).json({ message: 'Erreur modification', error: err });
   }
 };
 
-export const deleteCharge = async (req: Request, res: Response) => {
+// DELETE remove charge
+export const deleteCharge: RequestHandler = async (req, res) => {
   try {
     await Charge.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: 'Charge supprimée' });

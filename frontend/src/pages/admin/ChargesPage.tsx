@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Drawer, Typography, MenuItem, Select,
-  FormControl, InputLabel, Chip, Tooltip
+  FormControl, InputLabel, Chip
 } from '@mui/material';
 import { Add, Edit, Delete, PictureAsPdf, GridOn } from '@mui/icons-material';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -18,6 +18,7 @@ interface Charge {
   montant: number;
   date: string;
   statut: 'Payé' | 'Non payé';
+  autreType?: string;
 }
 
 interface Chauffeur {
@@ -89,10 +90,15 @@ const ChargesPage: React.FC = () => {
   };
 
   const handleSave = async () => {
+    const finalForm = {
+      ...form,
+      type: form.type === 'Autre' ? form.autreType || 'Autre' : form.type,
+    };
+
     try {
       const res = isEditing && form._id
-        ? await axios.put(`/api/charges/${form._id}`, form)
-        : await axios.post('/api/charges', form);
+        ? await axios.put(`/api/charges/${form._id}`, finalForm)
+        : await axios.post('/api/charges', finalForm);
       if ([200, 201].includes(res.status)) {
         fetchCharges();
         setDrawerOpen(false);
@@ -124,8 +130,8 @@ const ChargesPage: React.FC = () => {
       ]),
     });
     const total = filteredCharges.reduce((sum, c) => sum + c.montant, 0);
-    if (doc.lastAutoTable?.finalY) {
-      doc.text(`Total : ${total.toFixed(2)} MAD`, 14, doc.lastAutoTable.finalY + 10);
+    if ((doc as any).lastAutoTable?.finalY) {
+      doc.text(`Total : ${total.toFixed(2)} MAD`, 14, (doc as any).lastAutoTable.finalY + 10);
     }
     doc.save('charges.pdf');
   };
@@ -226,49 +232,61 @@ const ChargesPage: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+           <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <Box p={3} width={400}>
+          <Typography variant="h6" mb={2}>{isEditing ? 'Modifier' : 'Ajouter'} une Charge</Typography>
 
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400}>
-            <Typography variant="h6" mb={2}>{isEditing ? 'Modifier' : 'Ajouter'} une Charge</Typography>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Type</InputLabel>
+            <Select value={form.type} onChange={e => handleChange('type', e.target.value)} label="Type">
+              {['Salaire', 'CNSS', 'Entretien', 'Carburant', 'Vignette', 'Autre'].map(opt => (
+                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Type</InputLabel>
-              <Select value={form.type} onChange={e => handleChange('type', e.target.value)} label="Type">
-                {['Salaire', 'CNSS', 'Entretien', 'Carburant', 'Vignette', 'Autre'].map(opt => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          {form.type === 'Autre' && (
+            <TextField
+              label="Nom personnalisé"
+              fullWidth
+              margin="normal"
+              value={form.autreType || ''}
+              onChange={e => setForm({ ...form, autreType: e.target.value })}
+            />
+          )}
 
-            {['Salaire', 'CNSS'].includes(form.type) && (
-              <Autocomplete
-                options={chauffeurs}
-                getOptionLabel={(option) => `${option.nom} ${option.prenom}`}
-                value={chauffeurSelectionne}
-                onChange={(_, newValue) => setChauffeurSelectionne(newValue)}
-                renderInput={(params) => <TextField {...params} label="Chauffeur" margin="normal" />}
-              />
-            )}
+          {['Salaire', 'CNSS'].includes(form.type) && (
+            <Autocomplete
+              options={chauffeurs}
+              getOptionLabel={(option) => `${option.nom} ${option.prenom}`}
+              value={chauffeurSelectionne}
+              onChange={(_, newValue) => setChauffeurSelectionne(newValue)}
+              renderInput={(params) => <TextField {...params} label="Chauffeur" margin="normal" />}
+            />
+          )}
 
-            <TextField label="Montant (MAD)" type="number" fullWidth margin="normal" value={form.montant} onChange={e => handleChange('montant', parseFloat(e.target.value))} />
-            <TextField type="date" label="Date" fullWidth margin="normal" InputLabelProps={{ shrink: true }} value={form.date} onChange={e => handleChange('date', e.target.value)} />
+          <TextField label="Montant (MAD)" type="number" fullWidth margin="normal" value={form.montant} onChange={e => handleChange('montant', parseFloat(e.target.value))} />
+          <TextField type="date" label="Date" fullWidth margin="normal" InputLabelProps={{ shrink: true }} value={form.date} onChange={e => handleChange('date', e.target.value)} />
 
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Statut</InputLabel>
-              <Select value={form.statut} onChange={e => handleChange('statut', e.target.value)} label="Statut">
-                <MenuItem value="Payé">Payé</MenuItem>
-                <MenuItem value="Non payé">Non payé</MenuItem>
-              </Select>
-            </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Statut</InputLabel>
+            <Select value={form.statut} onChange={e => handleChange('statut', e.target.value)} label="Statut">
+              <MenuItem value="Payé">Payé</MenuItem>
+              <MenuItem value="Non payé">Non payé</MenuItem>
+            </Select>
+          </FormControl>
 
-            <Button variant="contained" fullWidth sx={{ mt: 2, borderRadius: 3 }} onClick={handleSave}>
-              Enregistrer
-            </Button>
-          </Box>
-        </Drawer>
+          <Button variant="contained" fullWidth sx={{ mt: 2, borderRadius: 3 }} onClick={handleSave}>
+            Enregistrer
+          </Button>
+        </Box>
+      </Drawer>
       </Box>
+   
     </AdminLayout>
   );
 };
 
 export default ChargesPage;
+
+
