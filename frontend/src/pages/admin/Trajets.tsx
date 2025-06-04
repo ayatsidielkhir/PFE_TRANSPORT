@@ -187,6 +187,156 @@ const TrajetsPage: React.FC = () => {
           </Box>
         </Paper>
       </Box>
+      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Box p={3} width={isMobile ? '100vw' : 500}>
+    <Typography variant="h6" fontWeight="bold" color="#001e61" mb={3}>
+      {form._id ? 'Modifier le trajet' : 'Ajouter un trajet'}
+    </Typography>
+
+    <Box display="flex" flexWrap="wrap" gap={2}>
+      <TextField
+        name="depart"
+        label="Ville de départ"
+        value={form.depart}
+        onChange={handleInputChange}
+        fullWidth
+        sx={{ flex: '1 1 45%' }}
+      />
+      <TextField
+        name="arrivee"
+        label="Ville d'arrivée"
+        value={form.arrivee}
+        onChange={handleInputChange}
+        fullWidth
+        sx={{ flex: '1 1 45%' }}
+      />
+      <TextField
+        name="date"
+        label="Date"
+        type="date"
+        value={form.date}
+        onChange={handleInputChange}
+        InputLabelProps={{ shrink: true }}
+        fullWidth
+        sx={{ flex: '1 1 45%' }}
+      />
+      <Select
+        name="chauffeur"
+        value={form.chauffeur}
+        onChange={handleSelectChange}
+        displayEmpty
+        fullWidth
+        sx={{ flex: '1 1 45%' }}
+      >
+        <MenuItem value="">Chauffeur</MenuItem>
+        {chauffeurs.map(c => (
+          <MenuItem key={c._id} value={c._id}>{`${c.nom} ${c.prenom}`}</MenuItem>
+        ))}
+      </Select>
+      <Select
+        name="vehicule"
+        value={form.vehicule}
+        onChange={handleSelectChange}
+        displayEmpty
+        fullWidth
+        sx={{ flex: '1 1 45%' }}
+      >
+        <MenuItem value="">Véhicule</MenuItem>
+        {vehicules.map(v => (
+          <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
+        ))}
+      </Select>
+      <TextField
+        name="distanceKm"
+        label="Distance (km)"
+        type="number"
+        value={form.distanceKm}
+        onChange={handleInputChange}
+        fullWidth
+        sx={{ flex: '1 1 45%' }}
+      />
+      <TextField
+        name="consommationL"
+        label="Consommation (L)"
+        type="number"
+        value={form.consommationL}
+        onChange={handleInputChange}
+        fullWidth
+        sx={{ flex: '1 1 45%' }}
+      />
+      <TextField
+        name="consommationMAD"
+        label="Consommation (MAD)"
+        type="number"
+        value={form.consommationMAD}
+        onChange={handleInputChange}
+        fullWidth
+        sx={{ flex: '1 1 100%' }}
+      />
+      <Select
+        name="partenaire"
+        value={form.partenaire || ''}
+        onChange={handleSelectChange}
+        displayEmpty
+        fullWidth
+        sx={{ flex: '1 1 100%' }}
+      >
+        <MenuItem value="">Sélectionner un partenaire</MenuItem>
+        {partenaires.map(p => (
+          <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>
+        ))}
+      </Select>
+
+      {/* Boutons dynamiques pour Import / Export */}
+      <Box display="flex" gap={2} width="100%">
+        <Button
+          onClick={() => setForm(prev => ({ ...prev, importExport: 'import' }))}
+          variant={form.importExport === 'import' ? 'contained' : 'outlined'}
+          startIcon={<span style={{ transform: 'rotate(-90deg)' }}>⬆️</span>}
+          sx={{
+            flex: 1,
+            backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
+            color: form.importExport === 'import' ? 'white' : undefined,
+            borderRadius: 2,
+            textTransform: 'none'
+          }}
+        >
+          Import
+        </Button>
+        <Button
+          onClick={() => setForm(prev => ({ ...prev, importExport: 'export' }))}
+          variant={form.importExport === 'export' ? 'contained' : 'outlined'}
+          startIcon={<span style={{ transform: 'rotate(90deg)' }}>⬇️</span>}
+          sx={{
+            flex: 1,
+            backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
+            color: form.importExport === 'export' ? 'white' : undefined,
+            borderRadius: 2,
+            textTransform: 'none'
+          }}
+        >
+          Export
+        </Button>
+      </Box>
+
+      <Button
+        variant="contained"
+        onClick={handleSubmit}
+        fullWidth
+        sx={{
+          mt: 2,
+          backgroundColor: '#001e61',
+          '&:hover': { backgroundColor: '#001447' },
+          fontWeight: 'bold',
+          borderRadius: 2
+        }}
+      >
+        {form._id ? 'Mettre à jour' : 'Ajouter'}
+      </Button>
+    </Box>
+  </Box>
+</Drawer>
+
     </AdminLayout>
   );
 };
