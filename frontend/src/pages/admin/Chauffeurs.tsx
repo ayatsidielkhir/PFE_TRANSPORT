@@ -240,7 +240,7 @@ const ChauffeursPage: React.FC = () => {
           <Table size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow>
-                {['Photo', 'Nom', 'Prénom', 'Téléphone', 'CIN', 'Adresse', 'CIN', 'Permis', 'Visa', 'Certificat', 'Actions'].map(h => (
+                {['Photo', 'Nom', 'Prénom', 'Téléphone', 'CIN', 'Adresse', 'CIN', 'Permis', 'Visa', 'Casier Judiciaire', 'Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -301,50 +301,107 @@ const ChauffeursPage: React.FC = () => {
 
 
 
-      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box p={3} width={isMobile ? '100vw' : 450}>
-          <Box display="flex" justifyContent="center" mb={3}>
-            <label htmlFor="photo-input">
-              <Avatar
-                src={previewPhoto || ''}
-                sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0', mt: 3,marginTop:'20px' }}
-              />
-            </label>
-            <input id="photo-input" name="photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleInputChange} />
-          </Box>
+<Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Box p={3} width={isMobile ? '100vw' : 450}>
+    <Box display="flex" justifyContent="center" mb={3}>
+      <label htmlFor="photo-input">
+        <Avatar
+          src={previewPhoto || ''}
+          sx={{
+            width: 110,
+            height: 110,
+            cursor: 'pointer',
+            borderRadius: '50%',
+            boxShadow: 2,
+            backgroundColor: '#f0f0f0',
+            mt: 3,
+            marginTop: '20px'
+          }}
+        />
+      </label>
+      <input
+        id="photo-input"
+        name="photo"
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleInputChange}
+      />
+    </Box>
 
-          <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-            {['nom', 'prenom', 'telephone', 'cin', 'adresse'].map(field => (
-              <Box key={field} flex="1 1 45%">
-                <TextField
-                  fullWidth
-                  label={field.charAt(0).toUpperCase() + field.slice(1)}
-                  name={field}
-                  value={form[field] as string || ''}
-                  onChange={handleInputChange}
-                  sx={{ '& .MuiInputBase-root': { borderRadius: '12px', backgroundColor: '#f9fafb' } }}
-                />
-              </Box>
-            ))}
-          </Box>
+    <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+      {['nom', 'prenom', 'telephone', 'cin', 'adresse'].map(field => (
+        <Box key={field} flex="1 1 45%">
+          <TextField
+            fullWidth
+            label={field.charAt(0).toUpperCase() + field.slice(1)}
+            name={field}
+            value={form[field] as string || ''}
+            onChange={handleInputChange}
+            sx={{
+              '& .MuiInputBase-root': {
+                borderRadius: '12px',
+                backgroundColor: '#f9fafb'
+              }
+            }}
+          />
+        </Box>
+      ))}
+    </Box>
 
-          <Box display="flex" flexWrap="wrap" gap={2}>
-            {['scanCIN', 'scanPermis', 'scanVisa', 'certificatBonneConduite'].map(field => (
-              <Box key={field} flex="1 1 45%">
-                <Typography fontWeight={500} mb={0.5}>{field}</Typography>
-                <Button component="label" variant="outlined" fullWidth sx={{ borderRadius: '12px', backgroundColor: '#ffffff', textTransform: 'none', fontSize: '14px', py: 1 }}>
-                  {form[field] instanceof File ? (form[field] as File).name : 'Choisir un fichier'}
-                  <input type="file" name={field} hidden onChange={handleInputChange} />
-                </Button>
-              </Box>
-            ))}
-          </Box>
-
-          <Button fullWidth variant="contained" onClick={handleSubmit} sx={{ mt: 4, backgroundColor: '#001e61', borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', py: 1.5, fontSize: '16px', '&:hover': { backgroundColor: '#001447' } }}>
-            {selectedChauffeur ? 'Mettre à jour' : 'Ajouter'}
+    <Box display="flex" flexWrap="wrap" gap={2}>
+      {[
+        { name: 'scanCIN', label: 'Scan CIN' },
+        { name: 'scanPermis', label: 'Scan Permis' },
+        { name: 'scanVisa', label: 'Scan Visa' },
+        { name: 'certificatBonneConduite', label: 'Extrait de Casier Judiciaire' }
+      ].map(({ name, label }) => (
+        <Box key={name} flex="1 1 45%">
+          <Typography fontWeight={500} mb={0.5}>{label}</Typography>
+          <Button
+            component="label"
+            variant="outlined"
+            fullWidth
+            sx={{
+              borderRadius: '12px',
+              backgroundColor: '#ffffff',
+              textTransform: 'none',
+              fontSize: '14px',
+              py: 1
+            }}
+          >
+            {form[name] instanceof File ? (form[name] as File).name : 'Choisir un fichier'}
+            <input
+              type="file"
+              name={name}
+              hidden
+              onChange={handleInputChange}
+            />
           </Button>
         </Box>
-      </Drawer>
+      ))}
+    </Box>
+
+    <Button
+      fullWidth
+      variant="contained"
+      onClick={handleSubmit}
+      sx={{
+        mt: 4,
+        backgroundColor: '#001e61',
+        borderRadius: '12px',
+        textTransform: 'none',
+        fontWeight: 'bold',
+        py: 1.5,
+        fontSize: '16px',
+        '&:hover': { backgroundColor: '#001447' }
+      }}
+    >
+      {selectedChauffeur ? 'Mettre à jour' : 'Ajouter'}
+    </Button>
+  </Box>
+</Drawer>
+
     </AdminLayout>
   );
 };
