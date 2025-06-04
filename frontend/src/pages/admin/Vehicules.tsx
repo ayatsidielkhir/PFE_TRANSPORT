@@ -208,67 +208,67 @@
           </Typography>
 
 
-        <Paper
-  elevation={2}
-  sx={{
-    p: 2,
-    mb: 3,
-    backgroundColor: '#e3f2fd',
-    borderRadius: 2
-  }}
->
-  <Box
-    display="flex"
-    flexDirection={isMobile ? 'column' : 'row'}
-    justifyContent="space-between"
-    alignItems={isMobile ? 'stretch' : 'center'}
-    gap={isMobile ? 2 : 0}
-  >
-    <TextField
-      placeholder="Rechercher..."
-      size="small"
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <Search />
-          </InputAdornment>
-        ),
-      }}
-      sx={{
-        width: isMobile ? '100%' : '35%',
-        backgroundColor: 'white',
-        borderRadius: 1
-      }}
-    />
+                  <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              mb: 3,
+              backgroundColor: '#e3f2fd',
+              borderRadius: 2
+            }}
+          >
+            <Box
+              display="flex"
+              flexDirection={isMobile ? 'column' : 'row'}
+              justifyContent="space-between"
+              alignItems={isMobile ? 'stretch' : 'center'}
+              gap={isMobile ? 2 : 0}
+            >
+              <TextField
+                placeholder="Rechercher..."
+                size="small"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  width: isMobile ? '100%' : '35%',
+                  backgroundColor: 'white',
+                  borderRadius: 1
+                }}
+              />
 
-    <Button
-      variant="contained"
-      startIcon={<Add />}
-      onClick={handleAdd}
-      sx={{
-        backgroundColor: '#001e61',
-        borderRadius: 3,
-        textTransform: 'none',
-        fontWeight: 'bold',
-        px: 3,
-        boxShadow: 2,
-        '&:hover': { backgroundColor: '#001447' },
-        width: isMobile ? '100%' : 'auto'
-      }}
-    >
-      Ajouter Véhicule
-    </Button>
-  </Box>
-</Paper>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleAdd}
+                sx={{
+                  backgroundColor: '#001e61',
+                  borderRadius: 3,
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  px: 3,
+                  boxShadow: 2,
+                  '&:hover': { backgroundColor: '#001447' },
+                  width: isMobile ? '100%' : 'auto'
+                }}
+              >
+                Ajouter Véhicule
+              </Button>
+            </Box>
+          </Paper>
 
 
       <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
-                  {['Photo', 'Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT', 'Assurance', 'Carte Grise', 'Documents', 'Actions'].map(h => (
+                  {['Photo', 'Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT','Documents', 'Actions'].map(h => (
                     <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
                   ))}
 
@@ -292,8 +292,6 @@
                     <TableCell>{v.type}</TableCell>
                     <TableCell>{v.kilometrage}</TableCell>
                     <TableCell>{v.controle_technique}</TableCell>
-                    <TableCell>{renderFileAvatar(v.assurance)}</TableCell>
-                    <TableCell>{renderFileAvatar(v.carteGrise)}</TableCell>
                     <TableCell>
                       <Tooltip title="Voir tous les documents">
                         <IconButton onClick={() => handleVoirPlus(v)}>
@@ -467,12 +465,19 @@
             <DialogContent>
               {selectedVehicule && (
                 <Box display="flex" flexWrap="wrap" gap={2}>
-                  {['vignette', 'agrement', 'carteVerte', 'extincteur'].map(key => (
-                    <Box key={key} textAlign="center">
-                      <Typography fontSize={14} fontWeight={500}>{key}</Typography>
-                      {renderFileAvatar((selectedVehicule as any)[key])}
-                    </Box>
-                  ))}
+               {[
+                { key: 'carteGrise', label: 'Carte Grise' },
+                { key: 'assurance', label: 'Assurance' },
+                { key: 'vignette', label: 'Vignette' },
+                { key: 'agrement', label: 'Agrément' },
+                { key: 'carteVerte', label: 'Carte Verte' },
+                { key: 'extincteur', label: 'Extincteur' }
+              ].map(({ key, label }) => (
+                <Box key={key} textAlign="center">
+                  <Typography fontSize={14} fontWeight={500}>{label}</Typography>
+                  {renderFileAvatar((selectedVehicule as any)[key])}
+                </Box>
+              ))}
                 </Box>
               )}
             </DialogContent>
