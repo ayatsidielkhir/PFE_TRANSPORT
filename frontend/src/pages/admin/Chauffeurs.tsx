@@ -303,7 +303,7 @@ const ChauffeursPage: React.FC = () => {
 
 <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
   <Box p={3} width={isMobile ? '100vw' : 450}>
-    <Box display="flex" justifyContent="center" mb={3}>
+    <Box display="flex" justifyContent="center" mb={3} mt={5}>
       <label htmlFor="photo-input">
         <Avatar
           src={previewPhoto || ''}

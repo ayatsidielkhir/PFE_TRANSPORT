@@ -1,7 +1,10 @@
-import 'jspdf';
+// types/jspdf-autotable.d.ts
+import 'jspdf-autotable';
 
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: any) => jsPDF;
+    lastAutoTable?: {
+      finalY?: number;
+    };
   }
 }

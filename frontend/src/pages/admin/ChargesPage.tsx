@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Drawer, Typography, MenuItem, Select,
-  FormControl, InputLabel, Chip
+  FormControl, InputLabel, Chip, Tooltip
 } from '@mui/material';
 import { Add, Edit, Delete, PictureAsPdf, GridOn } from '@mui/icons-material';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -123,6 +123,10 @@ const ChargesPage: React.FC = () => {
         c.statut,
       ]),
     });
+    const total = filteredCharges.reduce((sum, c) => sum + c.montant, 0);
+    if (doc.lastAutoTable?.finalY) {
+      doc.text(`Total : ${total.toFixed(2)} MAD`, 14, doc.lastAutoTable.finalY + 10);
+    }
     doc.save('charges.pdf');
   };
 

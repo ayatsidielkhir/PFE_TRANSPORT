@@ -105,7 +105,7 @@ useEffect(() => {
               setForm({ name: '', file: null });
             }}
             sx={{
-              backgroundColor: '#1976d2',
+              backgroundColor: '#001e61',
               '&:hover': { backgroundColor: '#1565c0' },
               borderRadius: 2,
               fontWeight: 'bold',
@@ -147,12 +147,12 @@ useEffect(() => {
                         setEditKey(key);
                         setForm({ name: key.replace('custom_', ''), file: null });
                         setDrawerOpen(true);
-                      }}>
+                      }} sx={{ color: '#001e61' }}>
                         <Edit fontSize="small" />
                       </IconButton>
                     </Tooltip>
                       <Tooltip title="Supprimer">
-                          <IconButton onClick={() => handleDelete(key)}>
+                          <IconButton onClick={() => handleDelete(key)}  sx={{ color: '#d32f2f' }}>
                             <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
