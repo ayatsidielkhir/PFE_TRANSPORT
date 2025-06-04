@@ -143,7 +143,7 @@ const TrajetsPage: React.FC = () => {
       <Box p={3} maxWidth="1400px" mx="auto">
         <Typography variant="h5" fontWeight="bold" color="#001e61" mb={3} display="flex" alignItems="center" gap={1}>
           <Person sx={{ fontSize: 32 }} />
-          Gestion des Trajets
+           test Gestion des Trajets
         </Typography>
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
