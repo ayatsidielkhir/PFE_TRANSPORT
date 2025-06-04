@@ -176,7 +176,7 @@ const ChauffeursPage: React.FC = () => {
     <AdminLayout>
       <Box p={isMobile ? 1 : 2}>
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
-          <Person sx={{ width: 35, height: 32 }} />
+          <Person sx={{ width: 45, height: 32 }} />
           Gestion des Chauffeurs
         </Typography>
 
@@ -225,7 +225,7 @@ const ChauffeursPage: React.FC = () => {
             <TableBody>
               {paginated.map((c, i) => (
                 <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell><Avatar src={`https://mme-backend.onrender.com/uploads/chauffeurs/${c.photo}`} sx={{ width: 45, height: 45 }} /></TableCell>
+                  <TableCell><Avatar src={`https://mme-backend.onrender.com/uploads/chauffeurs/${c.photo}`} sx={{ width: 55, height: 45 }} /></TableCell>
                   <TableCell>{c.nom}</TableCell>
                   <TableCell>{c.prenom}</TableCell>
                   <TableCell>{c.telephone}</TableCell>
@@ -284,7 +284,7 @@ const ChauffeursPage: React.FC = () => {
             <label htmlFor="photo-input">
               <Avatar
                 src={previewPhoto || ''}
-                sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0', mt: 2 }}
+                sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0', mt: 2,marginTop:'10px' }}
               />
             </label>
             <input id="photo-input" name="photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleInputChange} />
