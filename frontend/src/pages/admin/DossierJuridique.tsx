@@ -7,6 +7,8 @@ import {
 import { Description, Add, InsertDriveFile, Search as SearchIcon, Edit, Delete } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import Layout from '../../components/Layout';
+import { Visibility } from '@mui/icons-material';
+
 
 interface Dossier {
   [key: string]: string;
@@ -43,12 +45,24 @@ const DossierJuridique: React.FC = () => {
   };
 
   const handlePreview = (fileName: string) => {
-    setPreviewFile(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
-  };
+  setPreviewFile(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
+};
 
   const filtered = Object.entries(dossier).filter(([key]) =>
     key.toLowerCase().includes(search.toLowerCase())
   );
+  const handleDelete = async (key: string) => {
+  const confirmDelete = window.confirm(`Voulez-vous vraiment supprimer le document "${key}" ?`);
+  if (!confirmDelete) return;
+
+  try {
+    await axios.delete(`/api/dossier-juridique/${key}`);
+    fetchDossier(); // 🔁 recharge la liste
+  } catch (err) {
+    console.error('Erreur lors de la suppression', err);
+  }
+};
+
 
   return (
     <Layout>
@@ -110,26 +124,17 @@ const DossierJuridique: React.FC = () => {
               {filtered.map(([key, value], i) => (
                 <TableRow key={key} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
                   <TableCell>{key.replace('custom_', '').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}</TableCell>
-                  <TableCell>
-                    {typeof value === 'string' && value.endsWith('.pdf') ? (
-                      <Button
-                        onClick={() => handlePreview(value)}
-                        sx={{
-                          textTransform: 'none',
-                          color: '#1976d2',
-                          fontWeight: 'bold',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 1,
-                          border: '1px solid #1976d2'
-                        }}
-                      >
-                        Voir le PDF
-                      </Button>
-                    ) : (
-                      <img src={`https://mme-backend.onrender.com/uploads/juridique/${value}`} alt={key} width={40} />
-                    )}
-                  </TableCell>
+                    <TableCell>
+                      <Tooltip title="Prévisualiser le document">
+                        <IconButton
+                          onClick={() => handlePreview(value)}
+                          sx={{ color: '#1976d2' }}
+                        >
+                          <Visibility />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+
                   <TableCell>
                     <Tooltip title="Modifier">
                       <IconButton onClick={() => {
@@ -140,9 +145,12 @@ const DossierJuridique: React.FC = () => {
                         <Edit fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer">
-                      <IconButton><Delete fontSize="small" /></IconButton>
-                    </Tooltip>
+                      <Tooltip title="Supprimer">
+                          <IconButton onClick={() => handleDelete(key)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
                   </TableCell>
                 </TableRow>
               ))}
@@ -184,10 +192,12 @@ const DossierJuridique: React.FC = () => {
         </Drawer>
 
         {/* Aperçu PDF */}
-        <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
+          <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
           <DialogTitle>Prévisualisation</DialogTitle>
           <DialogContent>
-            {previewFile && <Box component="iframe" src={previewFile} width="100%" height="600px" />}
+            {previewFile && (
+              <Box component="iframe" src={previewFile} width="100%" height="600px" />
+            )}
           </DialogContent>
         </Dialog>
       </Box>
