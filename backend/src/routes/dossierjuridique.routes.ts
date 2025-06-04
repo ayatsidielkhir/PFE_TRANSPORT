@@ -1,16 +1,20 @@
 import express from 'express';
-import { getDossier, uploadDossier } from '../controllers/dossierjuridique.controller';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import {
+  getDossier,
+  uploadDossier,
+  deleteFileFromDossier
+} from '../controllers/dossierjuridique.controller';
 
 const router = express.Router();
 
-// Configuration de stockage
+// 📁 Configuration du dossier de stockage
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const dir = path.resolve('/mnt/data/uploads/juridique');
-    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (_req, file, cb) => {
@@ -18,10 +22,11 @@ const storage = multer.diskStorage({
   }
 });
 
-// Accepte tous les fichiers, quel que soit leur champ
 const upload = multer({ storage });
 
+// 🔹 Routes
 router.get('/', getDossier);
-router.post('/', upload.any(), uploadDossier); // ✅ utilise any()
+router.post('/', upload.any(), uploadDossier);
+router.delete('/:field', deleteFileFromDossier);
 
 export default router;

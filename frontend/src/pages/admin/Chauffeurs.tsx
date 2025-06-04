@@ -314,7 +314,7 @@ const ChauffeursPage: React.FC = () => {
             borderRadius: '50%',
             boxShadow: 2,
             backgroundColor: '#f0f0f0',
-            mt: 3,
+            mt: 6,
             marginTop: '28px'
           }}
         />

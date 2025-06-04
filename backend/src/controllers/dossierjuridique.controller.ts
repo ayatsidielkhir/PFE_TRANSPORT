@@ -1,35 +1,54 @@
- import { Request, Response } from 'express';
+import { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import DossierJuridique from '../models/DossierJuridique';
-import Dossier from '../models/DossierJuridique'; // Assure-toi d’avoir ce fichier mongoose
 
-
-export const getDossier = async (_: Request, res: Response) => {
-  const data = await DossierJuridique.findOne();
-  res.json(data);
-};
-export const uploadDossier = async (req: Request, res: Response) => {
-  try {
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-
-    const dataToSave: Record<string, string> = {};
-
-    Object.entries(files).forEach(([fieldname, fileArray]) => {
-      if (fileArray && fileArray.length > 0) {
-        dataToSave[fieldname] = fileArray[0].filename;
-      }
-    });
-
-    const existing = await Dossier.findOne();
-
-    if (existing) {
-      await Dossier.updateOne({}, { $set: dataToSave });
-    } else {
-      await Dossier.create(dataToSave);
-    }
-
-    res.status(201).json({ message: 'Documents enregistrés avec succès ✅', data: dataToSave });
-  } catch (error) {
-    console.error('Erreur upload dossier juridique:', error);
-    res.status(500).json({ message: "Erreur lors de l'enregistrement des documents", error });
+export const getDossier = async (_req: Request, res: Response) => {
+  const doc = await DossierJuridique.findOne().lean();
+  if (!doc) {
+    res.json({});
+    return;
   }
+  res.json(doc);
+};
+
+export const uploadDossier = async (req: Request, res: Response) => {
+  const uploaded = req.files;
+  const updateData: Record<string, string> = {};
+
+  if (Array.isArray(uploaded)) {
+    for (const file of uploaded) {
+      updateData[file.fieldname] = file.filename;
+    }
+  } else {
+    res.status(400).json({ message: 'Fichiers non valides' });
+    return;
+  }
+
+  const existing = await DossierJuridique.findOne();
+  if (existing) {
+    await DossierJuridique.updateOne({}, { $set: updateData });
+  } else {
+    await DossierJuridique.create(updateData);
+  }
+
+  res.status(201).json({ message: 'Documents enregistrés' });
+};
+
+export const deleteFileFromDossier = async (req: Request, res: Response) => {
+  const { field } = req.params;
+  const dossier = await DossierJuridique.findOne();
+
+  if (!dossier || !(dossier as any)[field]) {
+    res.status(404).json({ message: 'Document non trouvé' });
+    return;
+  }
+
+  const filename = (dossier as any)[field];
+  const filePath = path.resolve('/mnt/data/uploads/juridique', filename);
+
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+  await DossierJuridique.updateOne({}, { $unset: { [field]: '' } });
+  res.json({ message: 'Document supprimé' });
 };

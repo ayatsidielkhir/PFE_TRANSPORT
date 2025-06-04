@@ -1,31 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent,
-  IconButton, Drawer, Snackbar, Alert, Tooltip, TextField
+  Box, Typography, Table, TableBody, TableCell, TableHead, TableRow,
+  Paper, Button, IconButton, Drawer, TextField, InputAdornment, Tooltip, Dialog, DialogContent,
+  DialogTitle
 } from '@mui/material';
-import { InsertDriveFile, AddCircleOutline } from '@mui/icons-material';
+import { Description, Add, InsertDriveFile, Search as SearchIcon, Edit, Delete } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import Layout from '../../components/Layout';
 
 interface Dossier {
-  modelJ?: string;
-  statut?: string;
-  rc?: string;
-  identifiantFiscale?: string;
-  cinGerant?: string;
-  doc1007?: string;
-  [key: string]: string | undefined;
+  [key: string]: string;
 }
 
 const DossierJuridique: React.FC = () => {
-  const [dossier, setDossier] = useState<Dossier | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
+  const [dossier, setDossier] = useState<Dossier>({});
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [files, setFiles] = useState<{ [key: string]: File | null }>({});
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [customDocs, setCustomDocs] = useState<{ name: string, file: File | null }[]>([]);
+  const [form, setForm] = useState({ name: '', file: null as File | null });
+  const [search, setSearch] = useState('');
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDossier();
@@ -33,172 +25,152 @@ const DossierJuridique: React.FC = () => {
 
   const fetchDossier = async () => {
     const res = await axios.get('/api/dossier-juridique');
-    setDossier(res.data?.data || res.data); // ✅ corrige selon ton API
-  };
-
-  const handleView = (fileName: string | undefined) => {
-    if (!fileName) return;
-    setSelectedDoc(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
-    setOpenDialog(true);
-  };
-
-  const handleFileChange = (name: string, file: File | null) => {
-    setFiles(prev => ({ ...prev, [name]: file }));
+    setDossier(res.data);
   };
 
   const handleUpload = async () => {
     const formData = new FormData();
-    Object.entries(files).forEach(([key, file]) => {
-      if (file) formData.append(key, file);
-    });
-    customDocs.forEach((doc, i) => {
-      if (doc.file) formData.append(`custom_${doc.name || 'doc' + i}`, doc.file);
-    });
-
-    try {
-      const res = await axios.post('/api/dossier-juridique', formData);
-      console.log('Upload response:', res.data);
-      if (res.status === 201) {
-        setFiles({});
-        setCustomDocs([]);
-        fetchDossier(); // 🔁 recharge les données
-        setDrawerOpen(false);
-        setSnackbarOpen(true);
-      }
-    } catch (err) {
-      console.error("Erreur d'upload", err);
+    if (form.name && form.file) {
+      formData.append(`custom_${form.name}`, form.file);
     }
+    await axios.post('/api/dossier-juridique', formData);
+    setDrawerOpen(false);
+    setForm({ name: '', file: null });
+    fetchDossier();
   };
 
-  const rows = [
-    { label: 'Model J', field: dossier?.modelJ },
-    { label: 'Statut', field: dossier?.statut },
-    { label: 'RC', field: dossier?.rc },
-    { label: 'Identifiant Fiscale', field: dossier?.identifiantFiscale },
-    { label: 'CIN Gérant', field: dossier?.cinGerant },
-    { label: '1007', field: dossier?.doc1007 }
-  ];
+  const handlePreview = (fileName: string) => {
+    setPreviewFile(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
+  };
+
+  const filtered = Object.entries(dossier).filter(([key]) =>
+    key.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <Layout>
-      <Box p={4}>
-        <Box display="flex" justifyContent="space-between" mb={2}>
-          <Typography variant="h5" fontWeight={600}>Dossier Juridique</Typography>
-          <Button variant="contained" onClick={() => setDrawerOpen(true)}>Ajouter / Modifier</Button>
-        </Box>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h5" fontWeight="bold" color="#001e61" mb={3} display="flex" alignItems="center" gap={1}>
+          <Description sx={{ fontSize: 32 }} />
+          Dossier Juridique de l'Entreprise
+        </Typography>
 
-        <TableContainer component={Paper}>
+        <Paper elevation={2} sx={{
+          p: 2, mb: 3, backgroundColor: '#e3f2fd',
+          borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap'
+        }}>
+          <TextField
+            size="small"
+            placeholder="Rechercher un document..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ backgroundColor: 'white', borderRadius: 1, minWidth: 250 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+          />
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setDrawerOpen(true)}
+            sx={{
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+              borderRadius: 2,
+              fontWeight: 'bold',
+              height: 40,
+              textTransform: 'none'
+            }}
+          >
+            Ajouter un document
+          </Button>
+        </Paper>
+
+        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Action</strong></TableCell>
+              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Type de document</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Fichier</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell>{row.label}</TableCell>
+              {filtered.map(([key, value], i) => (
+                <TableRow key={key} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
+                  <TableCell>{key.replace('custom_', '').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}</TableCell>
                   <TableCell>
-                    {row.field ? (
-                      <Tooltip title="Voir le document">
-                        <IconButton onClick={() => handleView(row.field)} sx={{ color: '#0288d1' }}>
-                          <InsertDriveFile />
-                        </IconButton>
-                      </Tooltip>
-                    ) : 'Non disponible'}
+                    {value.endsWith('.pdf') ? (
+                      <Button
+                        onClick={() => handlePreview(value)}
+                        sx={{
+                          textTransform: 'none',
+                          color: '#1976d2',
+                          fontWeight: 'bold',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: 1,
+                          border: '1px solid #1976d2'
+                        }}
+                      >
+                        Voir le PDF
+                      </Button>
+                    ) : (
+                      <img src={`https://mme-backend.onrender.com/uploads/juridique/${value}`} alt={key} width={40} />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title="Modifier"><IconButton><Edit fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton><Delete fontSize="small" /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </Paper>
 
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Visualiser le document</DialogTitle>
-          <DialogContent>
-            {selectedDoc && (
-              <>
-                <Box component="iframe" src={selectedDoc} width="100%" height="600px" />
-                <Button href={selectedDoc} target="_blank" download fullWidth variant="outlined" sx={{ mt: 2 }}>
-                  Télécharger
-                </Button>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-
+        {/* Drawer pour ajout */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={400}>
-            <Typography variant="h6" fontWeight={600} mb={3}>Documents à importer</Typography>
-            <Box display="flex" flexDirection="column" gap={2}>
-              {['modelJ', 'statut', 'rc', 'identifiantFiscale', 'cinGerant', 'doc1007'].map(name => (
-                <Box key={name}>
-                  <Typography fontWeight={500}>{name}</Typography>
-                  <input
-                    type="file"
-                    onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
-                    style={{ width: '100%' }}
-                  />
-                </Box>
-              ))}
-
-              <Typography variant="subtitle1" fontWeight={600} mt={2}>Ajouter d'autres documents :</Typography>
-              {customDocs.map((doc, i) => (
-                <Box key={i}>
-                  <TextField
-                    label="Nom du document"
-                    value={doc.name}
-                    onChange={(e) => {
-                      const updated = [...customDocs];
-                      updated[i].name = e.target.value;
-                      setCustomDocs(updated);
-                    }}
-                    fullWidth
-                    margin="dense"
-                  />
-                  <input
-                    type="file"
-                    onChange={e => {
-                      const updated = [...customDocs];
-                      updated[i].file = e.target.files?.[0] || null;
-                      setCustomDocs(updated);
-                    }}
-                    style={{ width: '100%' }}
-                  />
-                </Box>
-              ))}
-
-              <Button startIcon={<AddCircleOutline />} onClick={() => setCustomDocs([...customDocs, { name: '', file: null }])}>
-                Ajouter un champ
-              </Button>
-
-              <Button
-                variant="contained"
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={handleUpload}
-                disabled={Object.values(files).every(f => f === null) && customDocs.length === 0}
-              >
-                ENREGISTRER
-              </Button>
-            </Box>
+          <Box p={3} mt={8} width={{ xs: '100vw', sm: 400 }}>
+            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2}>
+              Ajouter un document
+            </Typography>
+            <TextField
+              label="Nom du document"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              fullWidth
+              sx={{ mb: 2 }}
+            />
+            <Button variant="outlined" component="label" fullWidth>
+              Télécharger le fichier
+              <input type="file" hidden onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })} />
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleUpload}
+              fullWidth
+              sx={{ mt: 2, backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#1565c0' }, fontWeight: 'bold' }}
+            >
+              Enregistrer
+            </Button>
           </Box>
         </Drawer>
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={4000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
-            Documents juridiques enregistrés avec succès ✅
-          </Alert>
-        </Snackbar>
+        {/* Aperçu PDF */}
+        <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
+          <DialogTitle>Prévisualisation</DialogTitle>
+          <DialogContent>
+            {previewFile && <Box component="iframe" src={previewFile} width="100%" height="600px" />}
+          </DialogContent>
+        </Dialog>
       </Box>
     </Layout>
   );
 };
 
-export default DossierJuridique;  
+export default DossierJuridique;
