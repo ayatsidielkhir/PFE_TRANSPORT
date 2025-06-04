@@ -11,15 +11,17 @@ interface Partenaire {
   _id: string;
   nom: string;
   ice: string;
-  logo?: string;
   adresse: string;
+  email?: string;
+  telephone?: string;
+  logo?: string;
 }
 
 const PartenairesPage: React.FC = () => {
   const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editData, setEditData] = useState<Partenaire | null>(null);
-  const [form, setForm] = useState({ nom: '', ice: '', adresse: '', logo: null as File | null });
+  const [form, setForm] = useState({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null as File | null });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const perPage = 5;
@@ -47,6 +49,8 @@ const PartenairesPage: React.FC = () => {
     formData.append('nom', form.nom);
     formData.append('ice', form.ice);
     formData.append('adresse', form.adresse);
+    formData.append('email', form.email);
+    formData.append('telephone', form.telephone);
     if (form.logo) formData.append('logo', form.logo);
 
     if (editData) {
@@ -57,7 +61,7 @@ const PartenairesPage: React.FC = () => {
 
     setDrawerOpen(false);
     setEditData(null);
-    setForm({ nom: '', ice: '', adresse: '', logo: null });
+    setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null });
     fetchPartenaires();
   };
 
@@ -75,7 +79,7 @@ const PartenairesPage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>Liste des Partenaires</Typography>
+        <Typography variant="h4" fontWeight="bold" color="#001447" mb={3}>Liste des Partenaires</Typography>
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <TextField
@@ -97,7 +101,7 @@ const PartenairesPage: React.FC = () => {
             startIcon={<Add />}
             onClick={() => {
               setEditData(null);
-              setForm({ nom: '', ice: '', adresse: '', logo: null });
+              setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null });
               setDrawerOpen(true);
             }}
             sx={{
@@ -116,7 +120,7 @@ const PartenairesPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                {['Logo', 'Nom', 'ICE', 'Adresse', 'Actions'].map(h => (
+                {['Logo', 'Nom', 'ICE', 'Adresse', 'Email', 'Téléphone', 'Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -130,17 +134,19 @@ const PartenairesPage: React.FC = () => {
                         component="img"
                         src={`https://mme-backend.onrender.com/uploads/partenaires/${p.logo}`}
                         alt="logo partenaire"
-                        sx={{ width: 100, height: 100, objectFit: 'contain', borderRadius: 2, boxShadow: 1 }}
+                        sx={{ width: 70, height: 70, objectFit: 'contain', borderRadius: 2, boxShadow: 1 }}
                       />
                     ) : 'N/A'}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>{p.nom}</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{p.ice}</TableCell>
+                  <TableCell>{p.ice}</TableCell>
                   <TableCell>{p.adresse}</TableCell>
+                  <TableCell>{p.email || '—'}</TableCell>
+                  <TableCell>{p.telephone || '—'}</TableCell>
                   <TableCell>
                     <IconButton onClick={() => {
                       setEditData(p);
-                      setForm({ nom: p.nom, ice: p.ice, adresse: p.adresse, logo: null });
+                      setForm({ nom: p.nom, ice: p.ice, adresse: p.adresse, email: p.email || '', telephone: p.telephone || '', logo: null });
                       setDrawerOpen(true);
                     }} sx={{ color: '#001e61' }}><Edit /></IconButton>
                     <IconButton onClick={() => handleDelete(p._id)} sx={{ color: '#d32f2f' }}><Delete /></IconButton>
@@ -152,12 +158,7 @@ const PartenairesPage: React.FC = () => {
         </Paper>
 
         <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination
-            count={Math.ceil(filtered.length / perPage)}
-            page={page}
-            onChange={(_, val) => setPage(val)}
-            color="primary"
-          />
+          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
         </Box>
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
@@ -168,6 +169,8 @@ const PartenairesPage: React.FC = () => {
             <TextField label="Nom" name="nom" fullWidth margin="normal" value={form.nom} onChange={handleInputChange} />
             <TextField label="ICE" name="ice" fullWidth margin="normal" value={form.ice} onChange={handleInputChange} />
             <TextField label="Adresse" name="adresse" fullWidth margin="normal" value={form.adresse} onChange={handleInputChange} />
+            <TextField label="Email" name="email" fullWidth margin="normal" value={form.email} onChange={handleInputChange} />
+            <TextField label="Téléphone" name="telephone" fullWidth margin="normal" value={form.telephone} onChange={handleInputChange} />
             <TextField type="file" name="logo" fullWidth margin="normal" inputProps={{ accept: 'image/*' }} onChange={handleInputChange} />
             <Button
               variant="contained"
