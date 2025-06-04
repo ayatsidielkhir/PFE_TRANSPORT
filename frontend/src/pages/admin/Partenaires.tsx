@@ -5,7 +5,11 @@ import {
 } from '@mui/material';
 import { Delete, Edit, Add, Search as SearchIcon } from '@mui/icons-material';
 import axios from 'axios';
+import { BusinessCenter } from '@mui/icons-material'; 
+
 import AdminLayout from '../../components/Layout';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 interface Partenaire {
   _id: string;
@@ -75,46 +79,76 @@ const PartenairesPage: React.FC = () => {
   );
 
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  
+const theme = useTheme();
+const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" color="#001447" mb={3}>Liste des Partenaires</Typography>
+        <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
+        <BusinessCenter sx={{ width: 35, height: 32 }} />
+        Gestion des Partenaires
+      </Typography>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <TextField
-            size="small"
-            placeholder="Rechercher par nom"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ width: '30%', backgroundColor: 'white', borderRadius: 1 }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => {
-              setEditData(null);
-              setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null });
-              setDrawerOpen(true);
-            }}
-            sx={{
-              backgroundColor: '#001e61',
-              fontWeight: 'bold',
-              '&:hover': { backgroundColor: '#001447' },
-              borderRadius: 3,
-              px: 3
-            }}
-          >
-            Ajouter
-          </Button>
-        </Box>
+        <Paper
+  elevation={2}
+  sx={{
+    p: 2,
+    mb: 3,
+    backgroundColor: '#e3f2fd',
+    borderRadius: 2,
+  }}
+>
+  <Box
+    display="flex"
+    flexDirection={isMobile ? 'column' : 'row'}
+    justifyContent="space-between"
+    alignItems={isMobile ? 'stretch' : 'center'}
+    gap={isMobile ? 2 : 0}
+  >
+    <TextField
+      size="small"
+      placeholder="Rechercher un partenaire..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon />
+          </InputAdornment>
+        ),
+      }}
+      sx={{
+        width: isMobile ? '100%' : '35%',
+        backgroundColor: 'white',
+        borderRadius: 1,
+      }}
+    />
+
+    <Button
+      variant="contained"
+      startIcon={<Add />}
+      onClick={() => {
+        setEditData(null);
+        setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null });
+        setDrawerOpen(true);
+      }}
+      sx={{
+        backgroundColor: '#001e61',
+        borderRadius: 3,
+        textTransform: 'none',
+        fontWeight: 'bold',
+        px: 3,
+        boxShadow: 2,
+        '&:hover': { backgroundColor: '#001447' },
+        width: isMobile ? '100%' : 'auto'
+      }}
+    >
+      Ajouter un partenaire
+    </Button>
+  </Box>
+</Paper>
 
         <Paper elevation={2} sx={{ borderRadius: 2 }}>
           <Table>
