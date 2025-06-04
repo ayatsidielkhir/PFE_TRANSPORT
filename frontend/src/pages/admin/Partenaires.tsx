@@ -10,6 +10,8 @@ import { BusinessCenter } from '@mui/icons-material';
 import AdminLayout from '../../components/Layout';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { Avatar } from '@mui/material';
+
 
 interface Partenaire {
   _id: string;
@@ -195,27 +197,94 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
           <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
         </Box>
 
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box mt={8} p={3} width={400}>
-            <Typography variant="h6" fontWeight={600} mb={2}>
-              {editData ? 'Modifier Partenaire' : 'Ajouter un Partenaire'}
-            </Typography>
-            <TextField label="Nom" name="nom" fullWidth margin="normal" value={form.nom} onChange={handleInputChange} />
-            <TextField label="ICE" name="ice" fullWidth margin="normal" value={form.ice} onChange={handleInputChange} />
-            <TextField label="Adresse" name="adresse" fullWidth margin="normal" value={form.adresse} onChange={handleInputChange} />
-            <TextField label="Email" name="email" fullWidth margin="normal" value={form.email} onChange={handleInputChange} />
-            <TextField label="Téléphone" name="telephone" fullWidth margin="normal" value={form.telephone} onChange={handleInputChange} />
-            <TextField type="file" name="logo" fullWidth margin="normal" inputProps={{ accept: 'image/*' }} onChange={handleInputChange} />
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ mt: 2, backgroundColor: '#001e61', fontWeight: 'bold', '&:hover': { backgroundColor: '#001447' } }}
-              onClick={handleSubmit}
-            >
-              Enregistrer
-            </Button>
-          </Box>
-        </Drawer>
+              <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Box p={3} width={isMobile ? '100vw' : 450}>
+    {/* Avatar / Logo centré */}
+    <Box display="flex" justifyContent="center" mb={3}>
+      <label htmlFor="logo-input">
+        <Avatar
+          src={
+            form.logo instanceof File
+              ? URL.createObjectURL(form.logo)
+              : editData?.logo
+              ? `https://mme-backend.onrender.com/uploads/partenaires/${editData.logo}`
+              : undefined
+          }
+          sx={{
+            width: 110,
+            height: 110,
+            borderRadius: '12px',
+            objectFit: 'contain',
+            backgroundColor: '#f0f0f0',
+            cursor: 'pointer',
+            boxShadow: 2,
+            mt: 2,
+            fontSize: 16,
+            color: '#666'
+          }}
+        >
+          {!form.logo && !editData?.logo && 'Logo'}
+        </Avatar>
+      </label>
+      <input
+        id="logo-input"
+        name="logo"
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleInputChange}
+      />
+    </Box>
+
+    {/* Inputs alignés en 2 colonnes */}
+    <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+      {[
+        { name: 'nom', label: 'Nom' },
+        { name: 'ice', label: 'ICE' },
+        { name: 'adresse', label: 'Adresse' },
+        { name: 'email', label: 'Email' },
+        { name: 'telephone', label: 'Téléphone' }
+      ].map(({ name, label }) => (
+        <Box key={name} flex="1 1 45%">
+          <TextField
+            fullWidth
+            label={label}
+            name={name}
+            value={form[name as keyof typeof form] || ''}
+            onChange={handleInputChange}
+            sx={{
+              '& .MuiInputBase-root': {
+                borderRadius: '12px',
+                backgroundColor: '#f9fafb'
+              }
+            }}
+          />
+        </Box>
+      ))}
+    </Box>
+
+    {/* Bouton de validation */}
+    <Button
+      fullWidth
+      variant="contained"
+      onClick={handleSubmit}
+      sx={{
+        mt: 4,
+        backgroundColor: '#001e61',
+        borderRadius: '12px',
+        textTransform: 'none',
+        fontWeight: 'bold',
+        py: 1.5,
+        fontSize: '16px',
+        '&:hover': { backgroundColor: '#001447' }
+      }}
+    >
+      {editData ? 'Mettre à jour' : 'Ajouter'}
+    </Button>
+  </Box>
+</Drawer>
+
+
       </Box>
     </AdminLayout>
   );
