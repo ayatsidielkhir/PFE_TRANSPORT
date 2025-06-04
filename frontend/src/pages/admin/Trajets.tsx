@@ -10,6 +10,10 @@ import { Add, Edit, Delete, Person } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 import { useTheme } from '@mui/material/styles';
+import { Route } from '@mui/icons-material';
+
+
+
 
 interface Chauffeur {
   _id: string;
@@ -126,12 +130,12 @@ const TrajetsPage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h5" fontWeight="bold" color="#001e61" mb={3} display="flex" alignItems="center" gap={1}>
-          <Person sx={{ fontSize: 32 }} />
-          Gestion des Trajets
-        </Typography>
+          <Typography variant="h5" fontWeight="bold" color="#001e61" mb={3} display="flex" alignItems="center" gap={1}>
+            <Route sx={{ fontSize: 32 }} />
+            Gestion des Trajets
+          </Typography>
 
-        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#f5f8fa', borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
           <Box display="flex" gap={2} flexWrap="wrap">
             <TextField type="month" size="small" label="Filtrer par mois" value={filters.mois} onChange={(e) => setFilters({ ...filters, mois: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ minWidth: 200, backgroundColor: 'white', borderRadius: 1 }} />
             <Select size="small" value={filters.partenaire} onChange={(e) => setFilters({ ...filters, partenaire: e.target.value })} displayEmpty sx={{ minWidth: 200, backgroundColor: 'white', borderRadius: 1 }}>
@@ -155,9 +159,12 @@ const TrajetsPage: React.FC = () => {
             <TableBody>
               {paginated.map((t, i) => {
                 const part = getPartenaire(t.partenaire);
+                const isExport = t.importExport === 'export';
                 return (
                   <TableRow key={t._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                    <TableCell>{t.depart} – {t.arrivee}</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>
+                      {t.depart} – {t.arrivee}
+                    </TableCell>
                     <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
                     <TableCell>{getChauffeurName(t.chauffeur)}</TableCell>
                     <TableCell>{getVehiculeMatricule(t.vehicule)}</TableCell>
@@ -172,15 +179,49 @@ const TrajetsPage: React.FC = () => {
                         <Typography variant="body2">{part?.nom}</Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>{t.importExport}</TableCell>
                     <TableCell>
-                      <Tooltip title="Modifier"><IconButton onClick={() => { setForm(t); setDrawerOpen(true); }} sx={{ color: '#001e61' }}><Edit /></IconButton></Tooltip>
-                      <Tooltip title="Supprimer"><IconButton onClick={async () => { if (window.confirm('Supprimer ce trajet ?')) { await axios.delete(`https://mme-backend.onrender.com/api/trajets/${t._id}`); fetchData(); } }} sx={{ color: '#d32f2f' }}><Delete /></IconButton></Tooltip>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        sx={{
+                          px: 1.5,
+                          py: 0.5,
+                          backgroundColor: isExport ? '#d0f2d8' : '#e3f2fd',
+                          borderRadius: 20,
+                          fontWeight: 500,
+                          color: isExport ? '#2e7d32' : '#1565c0',
+                          width: 'fit-content'
+                        }}
+                      >
+                        <span style={{ transform: isExport ? 'rotate(90deg)' : 'rotate(-90deg)' }}>
+                          {isExport ? '⬇️' : '⬆️'}
+                        </span>
+                        {isExport ? 'Export' : 'Import'}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title="Modifier">
+                        <IconButton onClick={() => { setForm(t); setDrawerOpen(true); }} sx={{ color: '#001e61' }}>
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton onClick={async () => {
+                          if (window.confirm('Supprimer ce trajet ?')) {
+                            await axios.delete(`https://mme-backend.onrender.com/api/trajets/${t._id}`);
+                            fetchData();
+                          }
+                        }} sx={{ color: '#d32f2f' }}>
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
+
           </Table>
           <Box display="flex" justifyContent="center" mt={2}>
             <Pagination count={Math.ceil(trajets.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
@@ -188,154 +229,154 @@ const TrajetsPage: React.FC = () => {
         </Paper>
       </Box>
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-  <Box p={3} width={isMobile ? '100vw' : 500}>
-    <Typography variant="h6" fontWeight="bold" color="#001e61" mb={3}>
-      {form._id ? 'Modifier le trajet' : 'Ajouter un trajet'}
-    </Typography>
+        <Box p={3} width={isMobile ? '100vw' : 500}>
+          <Typography variant="h6" fontWeight="bold" color="#001e61" mb={3}>
+            {form._id ? 'Modifier le trajet' : 'Ajouter un trajet'}
+          </Typography>
 
-    <Box display="flex" flexWrap="wrap" gap={2}>
-      <TextField
-        name="depart"
-        label="Ville de départ"
-        value={form.depart}
-        onChange={handleInputChange}
-        fullWidth
-        sx={{ flex: '1 1 45%' }}
-      />
-      <TextField
-        name="arrivee"
-        label="Ville d'arrivée"
-        value={form.arrivee}
-        onChange={handleInputChange}
-        fullWidth
-        sx={{ flex: '1 1 45%' }}
-      />
-      <TextField
-        name="date"
-        label="Date"
-        type="date"
-        value={form.date}
-        onChange={handleInputChange}
-        InputLabelProps={{ shrink: true }}
-        fullWidth
-        sx={{ flex: '1 1 45%' }}
-      />
-      <Select
-        name="chauffeur"
-        value={form.chauffeur}
-        onChange={handleSelectChange}
-        displayEmpty
-        fullWidth
-        sx={{ flex: '1 1 45%' }}
-      >
-        <MenuItem value="">Chauffeur</MenuItem>
-        {chauffeurs.map(c => (
-          <MenuItem key={c._id} value={c._id}>{`${c.nom} ${c.prenom}`}</MenuItem>
-        ))}
-      </Select>
-      <Select
-        name="vehicule"
-        value={form.vehicule}
-        onChange={handleSelectChange}
-        displayEmpty
-        fullWidth
-        sx={{ flex: '1 1 45%' }}
-      >
-        <MenuItem value="">Véhicule</MenuItem>
-        {vehicules.map(v => (
-          <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
-        ))}
-      </Select>
-      <TextField
-        name="distanceKm"
-        label="Distance (km)"
-        type="number"
-        value={form.distanceKm}
-        onChange={handleInputChange}
-        fullWidth
-        sx={{ flex: '1 1 45%' }}
-      />
-      <TextField
-        name="consommationL"
-        label="Consommation (L)"
-        type="number"
-        value={form.consommationL}
-        onChange={handleInputChange}
-        fullWidth
-        sx={{ flex: '1 1 45%' }}
-      />
-      <TextField
-        name="consommationMAD"
-        label="Consommation (MAD)"
-        type="number"
-        value={form.consommationMAD}
-        onChange={handleInputChange}
-        fullWidth
-        sx={{ flex: '1 1 100%' }}
-      />
-      <Select
-        name="partenaire"
-        value={form.partenaire || ''}
-        onChange={handleSelectChange}
-        displayEmpty
-        fullWidth
-        sx={{ flex: '1 1 100%' }}
-      >
-        <MenuItem value="">Sélectionner un partenaire</MenuItem>
-        {partenaires.map(p => (
-          <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>
-        ))}
-      </Select>
+          <Box display="flex" flexWrap="wrap" gap={2}>
+            <TextField
+              name="depart"
+              label="Ville de départ"
+              value={form.depart}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              name="arrivee"
+              label="Ville d'arrivée"
+              value={form.arrivee}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              name="date"
+              label="Date"
+              type="date"
+              value={form.date}
+              onChange={handleInputChange}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              sx={{ flex: '1 1 45%' }}
+            />
+            <Select
+              name="chauffeur"
+              value={form.chauffeur}
+              onChange={handleSelectChange}
+              displayEmpty
+              fullWidth
+              sx={{ flex: '1 1 45%' }}
+            >
+              <MenuItem value="">Chauffeur</MenuItem>
+              {chauffeurs.map(c => (
+                <MenuItem key={c._id} value={c._id}>{`${c.nom} ${c.prenom}`}</MenuItem>
+              ))}
+            </Select>
+            <Select
+              name="vehicule"
+              value={form.vehicule}
+              onChange={handleSelectChange}
+              displayEmpty
+              fullWidth
+              sx={{ flex: '1 1 45%' }}
+            >
+              <MenuItem value="">Véhicule</MenuItem>
+              {vehicules.map(v => (
+                <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
+              ))}
+            </Select>
+            <TextField
+              name="distanceKm"
+              label="Distance (km)"
+              type="number"
+              value={form.distanceKm}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              name="consommationL"
+              label="Consommation (L)"
+              type="number"
+              value={form.consommationL}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              name="consommationMAD"
+              label="Consommation (MAD)"
+              type="number"
+              value={form.consommationMAD}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ flex: '1 1 100%' }}
+            />
+            <Select
+              name="partenaire"
+              value={form.partenaire || ''}
+              onChange={handleSelectChange}
+              displayEmpty
+              fullWidth
+              sx={{ flex: '1 1 100%' }}
+            >
+              <MenuItem value="">Sélectionner un partenaire</MenuItem>
+              {partenaires.map(p => (
+                <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>
+              ))}
+            </Select>
 
-      {/* Boutons dynamiques pour Import / Export */}
-      <Box display="flex" gap={2} width="100%">
-        <Button
-          onClick={() => setForm(prev => ({ ...prev, importExport: 'import' }))}
-          variant={form.importExport === 'import' ? 'contained' : 'outlined'}
-          startIcon={<span style={{ transform: 'rotate(-90deg)' }}>⬆️</span>}
-          sx={{
-            flex: 1,
-            backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
-            color: form.importExport === 'import' ? 'white' : undefined,
-            borderRadius: 2,
-            textTransform: 'none'
-          }}
-        >
-          Import
-        </Button>
-        <Button
-          onClick={() => setForm(prev => ({ ...prev, importExport: 'export' }))}
-          variant={form.importExport === 'export' ? 'contained' : 'outlined'}
-          startIcon={<span style={{ transform: 'rotate(90deg)' }}>⬇️</span>}
-          sx={{
-            flex: 1,
-            backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
-            color: form.importExport === 'export' ? 'white' : undefined,
-            borderRadius: 2,
-            textTransform: 'none'
-          }}
-        >
-          Export
-        </Button>
-      </Box>
+            {/* Boutons dynamiques pour Import / Export */}
+            <Box display="flex" gap={2} width="100%">
+              <Button
+                onClick={() => setForm(prev => ({ ...prev, importExport: 'import' }))}
+                variant={form.importExport === 'import' ? 'contained' : 'outlined'}
+                startIcon={<span style={{ transform: 'rotate(-90deg)' }}>⬆️</span>}
+                sx={{
+                  flex: 1,
+                  backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
+                  color: form.importExport === 'import' ? 'white' : undefined,
+                  borderRadius: 2,
+                  textTransform: 'none'
+                }}
+              >
+                Import
+              </Button>
+              <Button
+                onClick={() => setForm(prev => ({ ...prev, importExport: 'export' }))}
+                variant={form.importExport === 'export' ? 'contained' : 'outlined'}
+                startIcon={<span style={{ transform: 'rotate(90deg)' }}>⬇️</span>}
+                sx={{
+                  flex: 1,
+                  backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
+                  color: form.importExport === 'export' ? 'white' : undefined,
+                  borderRadius: 2,
+                  textTransform: 'none'
+                }}
+              >
+                Export
+              </Button>
+            </Box>
 
-      <Button
-        variant="contained"
-        onClick={handleSubmit}
-        fullWidth
-        sx={{
-          mt: 2,
-          backgroundColor: '#001e61',
-          '&:hover': { backgroundColor: '#001447' },
-          fontWeight: 'bold',
-          borderRadius: 2
-        }}
-      >
-        {form._id ? 'Mettre à jour' : 'Ajouter'}
-      </Button>
-    </Box>
-  </Box>
-</Drawer>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              fullWidth
+              sx={{
+                mt: 2,
+                backgroundColor: '#001e61',
+                '&:hover': { backgroundColor: '#001447' },
+                fontWeight: 'bold',
+                borderRadius: 2
+              }}
+            >
+              {form._id ? 'Mettre à jour' : 'Ajouter'}
+            </Button>
+          </Box>
+        </Box>
+      </Drawer>
 
     </AdminLayout>
   );
