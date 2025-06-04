@@ -92,7 +92,7 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
-         <HandshakeIcon sx={{ width: 35, height: 32 }} />
+         <HandshakeIcon sx={{ width: 40, height: 32 }} />
         Gestion des Partenaires
       </Typography>
 
@@ -155,7 +155,7 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   </Box>
 </Paper>
 
-        <Paper elevation={2} sx={{ borderRadius: 2 }}>
+        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
@@ -200,7 +200,7 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
           <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
         </Box>
 
-              <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+<Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
   <Box p={3} width={isMobile ? '100vw' : 450}>
     {/* Avatar / Logo centré */}
     <Box display="flex" justifyContent="center" mb={3}>
@@ -223,7 +223,8 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
             boxShadow: 2,
             mt: 2,
             fontSize: 16,
-            color: '#666'
+            color: '#666',
+            marginTop:'20px'
           }}
         >
           {!form.logo && !editData?.logo && 'Logo'}
