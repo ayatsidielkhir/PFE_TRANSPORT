@@ -1,8 +1,6 @@
-// Layout.tsx
-
 import {
   AppBar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon,
-  ListItemText, Toolbar, Button, useMediaQuery
+  ListItemText, Toolbar, Button, useMediaQuery, Typography
 } from '@mui/material';
 import {
   Menu, Logout, DirectionsBus, Badge, AccountTree, Payment, BusinessCenter,
@@ -30,14 +28,8 @@ const sidebarItems = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(() => {
-    return localStorage.getItem('drawerOpen') === 'true';
-  });
-
-  const [activePath, setActivePath] = useState(() => {
-    return localStorage.getItem('activePath') || '';
-  });
-
+  const [open, setOpen] = useState(() => localStorage.getItem('drawerOpen') === 'true');
+  const [activePath, setActivePath] = useState(() => localStorage.getItem('activePath') || '');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -63,7 +55,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const drawerContent = (
-    <List sx={{ mt: 2 }}>
+    <List>
       {(sidebarItems as any)[role]?.map((item: any) => (
         <ListItemButton
           key={item.label}
@@ -74,51 +66,90 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             if (isMobile) setOpen(false);
           }}
           sx={{
-            mb: 1.8,
+            mb: 1.5,
             px: 2,
             py: 1.5,
             borderRadius: 2,
-            backgroundColor: activePath === item.path ? '#dbefff' : 'transparent',
+            backgroundColor: activePath === item.path ? '#c62828' : 'transparent',
             '&:hover': {
-              backgroundColor: '#e0f0ff',
-              transform: 'scale(1.02)',
-              transition: 'all 0.2s'
+              backgroundColor: '#ef5350',
             }
           }}
         >
-          <ListItemIcon sx={{ color: '#001e61', minWidth: 36 }}>{item.icon}</ListItemIcon>
-          <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 500 }} />
+          <ListItemIcon sx={{ color: 'white', minWidth: 36 }}>{item.icon}</ListItemIcon>
+          <ListItemText
+            primary={item.label}
+            primaryTypographyProps={{ fontWeight: 500, color: 'white' }}
+          />
         </ListItemButton>
-      )) || (
-        <ListItemButton>
-          <ListItemText primary="Aucun accès" />
-        </ListItemButton>
-      )}
+      ))}
     </List>
   );
 
   return (
     <Box sx={{ display: 'flex' }}>
-      {/* TOPBAR */}
-      <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#002b88', boxShadow: 1 }}>
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <Box display="flex" alignItems="center">
-            <IconButton color="inherit" edge="start" onClick={toggleDrawer}>
-              <Menu />
+      {/* ✅ NAVBAR */}
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: 1300,
+          bgcolor: 'white',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+          borderBottom: '1px solid #e0e0e0',
+          height: '90px',
+          justifyContent: 'center'
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'space-between', px: 4 }}>
+          {/* Logo + Menu */}
+          <Box display="flex" alignItems="center" gap={3}>
+            <IconButton edge="start" onClick={toggleDrawer} sx={{ color: '#001e61' }}>
+              <Menu sx={{ fontSize: 30 }} />
             </IconButton>
-            <Box ml={2}>
-              <img src={logo} alt="MME Logo" style={{ height: '50px', objectFit: 'contain' }} />
+
+            <Box sx={{ height: '80px' }}>
+              <img
+                src={logo}
+                alt="MME Express Logo"
+                style={{
+                  height: '100%',
+                  width: 'auto',
+                  maxWidth: '240px',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.2))'
+                }}
+              />
             </Box>
           </Box>
 
+          {/* Titre centré */}
+          <Typography
+            variant="h6"
+            sx={{
+              flexGrow: 1,
+              textAlign: 'center',
+              fontWeight: 600,
+              color: '#001e61',
+              fontSize: '17px',
+              display: { xs: 'none', md: 'block' }
+            }}
+          >
+            MME – Système de Management du Transport
+          </Typography>
+
+          {/* Déconnexion */}
           <Button
             onClick={handleLogout}
             variant="contained"
             sx={{
               backgroundColor: '#d32f2f',
               color: 'white',
-              fontWeight: 600,
+              fontWeight: 'bold',
               textTransform: 'none',
+              borderRadius: 2,
+              px: 3,
+              py: 1.5,
+              fontSize: '15px',
               '&:hover': { backgroundColor: '#b71c1c' }
             }}
             startIcon={<Logout />}
@@ -128,7 +159,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </Toolbar>
       </AppBar>
 
-      {/* SIDEBAR */}
+      {/* ✅ SIDEBAR */}
       <Drawer
         variant={isMobile ? 'temporary' : 'persistent'}
         open={open}
@@ -137,11 +168,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           width: drawerWidth,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
+            marginTop: '90px', // ✅ aligné sous AppBar
             width: drawerWidth,
             boxSizing: 'border-box',
-            bgcolor: '#f8f9fa',
-            borderRight: '1px solid #ddd',
-            pt: 8,
+            bgcolor: '#001e61',
+            color: 'white',
+            borderRight: 'none',
+            pt: 2,
             px: 1
           }
         }}
@@ -149,7 +182,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {drawerContent}
       </Drawer>
 
-      {/* CONTENU */}
+      {/* ✅ CONTENU */}
       <Box
         component="main"
         sx={{
@@ -157,7 +190,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           backgroundColor: '#fcfcfc',
           minHeight: '100vh',
           padding: 3,
-          pt: '100px',
+          pt: '110px', // ✅ décalage sous AppBar
           ml: isMobile ? 0 : 0
         }}
       >
