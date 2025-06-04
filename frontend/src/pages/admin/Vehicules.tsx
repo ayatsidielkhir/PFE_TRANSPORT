@@ -208,7 +208,7 @@
           </Typography>
 
 
-
+        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <TextField
               placeholder="Rechercher..."
@@ -243,6 +243,7 @@
               </Button>
 
           </Box>
+          </Paper>
 
       <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
             <Table>
