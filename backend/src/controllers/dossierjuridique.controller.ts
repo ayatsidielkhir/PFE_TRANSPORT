@@ -7,9 +7,18 @@ import { RequestHandler } from 'express';
 export const getDossier: RequestHandler = async (_req, res) => {
   try {
     const doc = await DossierJuridique.findOne().lean();
-    res.json(doc || {});
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error });
+
+    if (!doc) {
+      res.json({});
+      return;
+    }
+
+    const { _id, __v, createdAt, updatedAt, ...cleaned } = doc;
+    res.json(cleaned);
+    return; // ✅ évite l'erreur de typage
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', error: err });
+    return; // ✅ important ici aussi
   }
 };
 
