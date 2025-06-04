@@ -18,6 +18,7 @@ const DossierJuridique: React.FC = () => {
   const [form, setForm] = useState({ name: '', file: null as File | null });
   const [search, setSearch] = useState('');
   const [previewFile, setPreviewFile] = useState<string | null>(null);
+  const [editKey, setEditKey] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDossier();
@@ -30,12 +31,14 @@ const DossierJuridique: React.FC = () => {
 
   const handleUpload = async () => {
     const formData = new FormData();
-    if (form.name && form.file) {
-      formData.append(`custom_${form.name}`, form.file);
-    }
+    const key = editKey ? editKey : `custom_${form.name}`;
+    if (form.file) formData.append(key, form.file);
+
     await axios.post('/api/dossier-juridique', formData);
     setDrawerOpen(false);
     setForm({ name: '', file: null });
+    setEditKey(null);
+    setSearch('');
     fetchDossier();
   };
 
@@ -76,7 +79,11 @@ const DossierJuridique: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<Add />}
-            onClick={() => setDrawerOpen(true)}
+            onClick={() => {
+              setDrawerOpen(true);
+              setEditKey(null);
+              setForm({ name: '', file: null });
+            }}
             sx={{
               backgroundColor: '#1976d2',
               '&:hover': { backgroundColor: '#1565c0' },
@@ -104,7 +111,7 @@ const DossierJuridique: React.FC = () => {
                 <TableRow key={key} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
                   <TableCell>{key.replace('custom_', '').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}</TableCell>
                   <TableCell>
-                    {value.endsWith('.pdf') ? (
+                    {typeof value === 'string' && value.endsWith('.pdf') ? (
                       <Button
                         onClick={() => handlePreview(value)}
                         sx={{
@@ -124,8 +131,18 @@ const DossierJuridique: React.FC = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton><Edit fontSize="small" /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton><Delete fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Modifier">
+                      <IconButton onClick={() => {
+                        setEditKey(key);
+                        setForm({ name: key.replace('custom_', ''), file: null });
+                        setDrawerOpen(true);
+                      }}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Supprimer">
+                      <IconButton><Delete fontSize="small" /></IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
@@ -133,11 +150,14 @@ const DossierJuridique: React.FC = () => {
           </Table>
         </Paper>
 
-        {/* Drawer pour ajout */}
-        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        {/* Drawer */}
+        <Drawer anchor="right" open={drawerOpen} onClose={() => {
+          setDrawerOpen(false);
+          setEditKey(null);
+        }}>
           <Box p={3} mt={8} width={{ xs: '100vw', sm: 400 }}>
             <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2}>
-              Ajouter un document
+              {editKey ? 'Modifier le document' : 'Ajouter un document'}
             </Typography>
             <TextField
               label="Nom du document"
@@ -145,6 +165,7 @@ const DossierJuridique: React.FC = () => {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               fullWidth
               sx={{ mb: 2 }}
+              disabled={!!editKey}
             />
             <Button variant="outlined" component="label" fullWidth>
               Télécharger le fichier
@@ -155,6 +176,7 @@ const DossierJuridique: React.FC = () => {
               onClick={handleUpload}
               fullWidth
               sx={{ mt: 2, backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#1565c0' }, fontWeight: 'bold' }}
+              disabled={!form.file}
             >
               Enregistrer
             </Button>
