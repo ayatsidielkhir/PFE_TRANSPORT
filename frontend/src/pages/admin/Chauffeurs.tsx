@@ -307,7 +307,7 @@ const ChauffeursPage: React.FC = () => {
             <label htmlFor="photo-input">
               <Avatar
                 src={previewPhoto || ''}
-                sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0', mt: 2,marginTop:'15px' }}
+                sx={{ width: 110, height: 110, cursor: 'pointer', borderRadius: '50%', boxShadow: 2, backgroundColor: '#f0f0f0', mt: 3,marginTop:'20px' }}
               />
             </label>
             <input id="photo-input" name="photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleInputChange} />
