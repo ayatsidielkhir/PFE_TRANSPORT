@@ -1,6 +1,8 @@
+// Layout.tsx
+
 import {
   AppBar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon,
-  ListItemText, Toolbar, Typography, Button, useMediaQuery
+  ListItemText, Toolbar, Button, useMediaQuery
 } from '@mui/material';
 import {
   Menu, Logout, DirectionsBus, Badge, AccountTree, Payment, BusinessCenter,
@@ -104,13 +106,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <IconButton color="inherit" edge="start" onClick={toggleDrawer}>
               <Menu />
             </IconButton>
-            <Box display="flex" alignItems="center" gap={2} ml={2}>
-              <Box sx={{ height: '55px' }}>
-                <img src={logo} alt="MEXPRESS Logo" style={{ height: '55px', objectFit: 'contain' }} />
-              </Box>
-              <Typography variant="h6" noWrap sx={{ fontWeight: 'bold', color: 'white' }}>
-                MME - Système de gestion de Transport
-              </Typography>
+            <Box ml={2}>
+              <img src={logo} alt="MME Logo" style={{ height: '50px', objectFit: 'contain' }} />
             </Box>
           </Box>
 
@@ -161,8 +158,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           minHeight: '100vh',
           padding: 3,
           pt: '100px',
-          // ❌ supprimé : pl dynamique qui ajoutait un espace
-          // ✅ plus propre : le contenu commence dès la fin du Drawer
           ml: isMobile ? 0 : 0
         }}
       >
