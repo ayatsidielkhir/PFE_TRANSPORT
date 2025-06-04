@@ -137,7 +137,25 @@ const TrajetsPage: React.FC = () => {
 
         <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
           <Box display="flex" gap={2} flexWrap="wrap">
-            <TextField type="month" size="small" label="Filtrer par mois" value={filters.mois} onChange={(e) => setFilters({ ...filters, mois: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ minWidth: 200, backgroundColor: 'white', borderRadius: 1 }} />
+            <TextField
+                type="month"
+                size="small"
+                label="Filtrer par mois"
+                value={filters.mois}
+                onChange={(e) => setFilters({ ...filters, mois: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  minWidth: 200,
+                  backgroundColor: 'white',
+                  borderRadius: 1,
+                  '& input': {
+                    fontFamily: 'inherit',
+                    padding: '8.5px 14px',
+                    letterSpacing: '0.03em',
+                  }
+                }}
+              />
+
             <Select size="small" value={filters.partenaire} onChange={(e) => setFilters({ ...filters, partenaire: e.target.value })} displayEmpty sx={{ minWidth: 200, backgroundColor: 'white', borderRadius: 1 }}>
               <MenuItem value="">Tous les partenaires</MenuItem>
               {partenaires.map(p => (<MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>))}
@@ -180,7 +198,7 @@ const TrajetsPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box
+                     <Box
                         display="flex"
                         alignItems="center"
                         gap={1}
@@ -194,11 +212,12 @@ const TrajetsPage: React.FC = () => {
                           width: 'fit-content'
                         }}
                       >
-                        <span style={{ transform: isExport ? 'rotate(90deg)' : 'rotate(-90deg)' }}>
+                        <span>
                           {isExport ? '⬇️' : '⬆️'}
                         </span>
                         {isExport ? 'Export' : 'Import'}
                       </Box>
+
                     </TableCell>
                     <TableCell>
                       <Tooltip title="Modifier">
@@ -329,36 +348,37 @@ const TrajetsPage: React.FC = () => {
             </Select>
 
             {/* Boutons dynamiques pour Import / Export */}
-            <Box display="flex" gap={2} width="100%">
-              <Button
-                onClick={() => setForm(prev => ({ ...prev, importExport: 'import' }))}
-                variant={form.importExport === 'import' ? 'contained' : 'outlined'}
-                startIcon={<span style={{ transform: 'rotate(-90deg)' }}>⬆️</span>}
-                sx={{
-                  flex: 1,
-                  backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
-                  color: form.importExport === 'import' ? 'white' : undefined,
-                  borderRadius: 2,
-                  textTransform: 'none'
-                }}
-              >
-                Import
-              </Button>
-              <Button
-                onClick={() => setForm(prev => ({ ...prev, importExport: 'export' }))}
-                variant={form.importExport === 'export' ? 'contained' : 'outlined'}
-                startIcon={<span style={{ transform: 'rotate(90deg)' }}>⬇️</span>}
-                sx={{
-                  flex: 1,
-                  backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
-                  color: form.importExport === 'export' ? 'white' : undefined,
-                  borderRadius: 2,
-                  textTransform: 'none'
-                }}
-              >
-                Export
-              </Button>
-            </Box>
+              <Box display="flex" gap={2} width="100%">
+                <Button
+                  onClick={() => setForm(prev => ({ ...prev, importExport: 'import' }))}
+                  variant={form.importExport === 'import' ? 'contained' : 'outlined'}
+                  startIcon={<span>⬆️</span>}
+                  sx={{
+                    flex: 1,
+                    backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
+                    color: form.importExport === 'import' ? 'white' : undefined,
+                    borderRadius: 2,
+                    textTransform: 'none'
+                  }}
+                >
+                  Import
+                </Button>
+                <Button
+                  onClick={() => setForm(prev => ({ ...prev, importExport: 'export' }))}
+                  variant={form.importExport === 'export' ? 'contained' : 'outlined'}
+                  startIcon={<span>⬇️</span>}
+                  sx={{
+                    flex: 1,
+                    backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
+                    color: form.importExport === 'export' ? 'white' : undefined,
+                    borderRadius: 2,
+                    textTransform: 'none'
+                  }}
+                >
+                  Export
+                </Button>
+              </Box>
+
 
             <Button
               variant="contained"
