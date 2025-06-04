@@ -1,6 +1,16 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import Partenaire from '../models/partenaire.model'; // adapte si ton chemin est différent
+import Partenaire from '../models/partenaire.model'; 
+
+export const getAllPartenaires = async (req: Request, res: Response) => {
+  try {
+    const partenaires = await Partenaire.find();
+    res.status(200).json(partenaires);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des partenaires:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la récupération' });
+  }
+};
 
 export const createPartenaire = async (req: Request, res: Response) => {
   try {

@@ -11,6 +11,9 @@ import AdminLayout from '../../components/Layout';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Avatar } from '@mui/material';
+import HandshakeIcon from '@mui/icons-material/Handshake';
+
+
 
 
 interface Partenaire {
@@ -89,7 +92,7 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
-        <BusinessCenter sx={{ width: 35, height: 32 }} />
+         <HandshakeIcon sx={{ width: 35, height: 32 }} />
         Gestion des Partenaires
       </Typography>
 
