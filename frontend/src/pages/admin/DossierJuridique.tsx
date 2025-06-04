@@ -22,9 +22,15 @@ const DossierJuridique: React.FC = () => {
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [editKey, setEditKey] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchDossier();
-  }, []);
+useEffect(() => {
+  const fetchDossier = async () => {
+    const res = await axios.get('/api/dossier-juridique');
+    setDossier(res.data);
+    console.log('📁 Données reçues sans les champs système :', res.data);
+  };
+  fetchDossier();
+}, []);
+
 
   const fetchDossier = async () => {
     const res = await axios.get('/api/dossier-juridique');
@@ -163,8 +169,8 @@ const DossierJuridique: React.FC = () => {
           setDrawerOpen(false);
           setEditKey(null);
         }}>
-          <Box p={3} mt={8} width={{ xs: '100vw', sm: 400 }}>
-            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2}>
+          <Box p={3} mt={10} width={{ xs: '100vw', sm: 400 }} >
+            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2} >
               {editKey ? 'Modifier le document' : 'Ajouter un document'}
             </Typography>
             <TextField

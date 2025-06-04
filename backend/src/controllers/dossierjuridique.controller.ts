@@ -2,15 +2,17 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import DossierJuridique from '../models/DossierJuridique';
+import { RequestHandler } from 'express';
 
-export const getDossier = async (_req: Request, res: Response) => {
-  const doc = await DossierJuridique.findOne().lean();
-  if (!doc) {
-    res.json({});
-    return;
+export const getDossier: RequestHandler = async (_req, res) => {
+  try {
+    const doc = await DossierJuridique.findOne().lean();
+    res.json(doc || {});
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error });
   }
-  res.json(doc);
 };
+
 
 export const uploadDossier = async (req: Request, res: Response) => {
   const uploaded = req.files;
