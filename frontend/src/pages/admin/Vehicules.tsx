@@ -208,42 +208,61 @@
           </Typography>
 
 
-        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <TextField
-              placeholder="Rechercher..."
-              size="small"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
-            />
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleAdd}
-                sx={{
-                  backgroundColor: '#001e61',
-                  borderRadius: 3,
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  px: 3,
-                  boxShadow: 2,
-                  '&:hover': { backgroundColor: '#001447' },
-                  width: isMobile ? '100%' : 'auto'
-                }}
-              >
-                Ajouter Véhicule
-              </Button>
+        <Paper
+  elevation={2}
+  sx={{
+    p: 2,
+    mb: 3,
+    backgroundColor: '#e3f2fd',
+    borderRadius: 2
+  }}
+>
+  <Box
+    display="flex"
+    flexDirection={isMobile ? 'column' : 'row'}
+    justifyContent="space-between"
+    alignItems={isMobile ? 'stretch' : 'center'}
+    gap={isMobile ? 2 : 0}
+  >
+    <TextField
+      placeholder="Rechercher..."
+      size="small"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <Search />
+          </InputAdornment>
+        ),
+      }}
+      sx={{
+        width: isMobile ? '100%' : '35%',
+        backgroundColor: 'white',
+        borderRadius: 1
+      }}
+    />
 
-          </Box>
-          </Paper>
+    <Button
+      variant="contained"
+      startIcon={<Add />}
+      onClick={handleAdd}
+      sx={{
+        backgroundColor: '#001e61',
+        borderRadius: 3,
+        textTransform: 'none',
+        fontWeight: 'bold',
+        px: 3,
+        boxShadow: 2,
+        '&:hover': { backgroundColor: '#001447' },
+        width: isMobile ? '100%' : 'auto'
+      }}
+    >
+      Ajouter Véhicule
+    </Button>
+  </Box>
+</Paper>
+
 
       <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
             <Table>

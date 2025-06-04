@@ -180,41 +180,61 @@ const ChauffeursPage: React.FC = () => {
           Gestion des Chauffeurs
         </Typography>
 
-      <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
-        
-        <Box display={isMobile ? 'block' : 'flex'} justifyContent="space-between" alignItems="center" mb={2}>
-          <TextField
-            size="small"
-            placeholder="Rechercher un chauffeur..."
-            value={search}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start"><SearchIcon /></InputAdornment>
-              )
-            }}
-            sx={{ width: isMobile ? '100%' : '35%', backgroundColor: 'white', borderRadius: 1, mb: isMobile ? 2 : 0 }}
-          />
+        <Paper
+  elevation={2}
+  sx={{
+    p: 2,
+    mb: 3,
+    backgroundColor: '#e3f2fd',
+    borderRadius: 2,
+  }}
+>
+  <Box
+    display="flex"
+    flexDirection={isMobile ? 'column' : 'row'}
+    justifyContent="space-between"
+    alignItems={isMobile ? 'stretch' : 'center'}
+    gap={isMobile ? 2 : 0}
+  >
+    <TextField
+      size="small"
+      placeholder="Rechercher un chauffeur..."
+      value={search}
+      onChange={handleSearchChange}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon />
+          </InputAdornment>
+        ),
+      }}
+      sx={{
+        width: isMobile ? '100%' : '35%',
+        backgroundColor: 'white',
+        borderRadius: 1,
+      }}
+    />
 
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            sx={{
-              backgroundColor: '#001e61',
-              borderRadius: 3,
-              textTransform: 'none',
-              fontWeight: 'bold',
-              px: 3,
-              boxShadow: 2,
-              '&:hover': { backgroundColor: '#001447' },
-              width: isMobile ? '100%' : 'auto'
-            }}
-            onClick={() => { setDrawerOpen(true); resetForm(); }}
-          >
-            Ajouter un chauffeur
-          </Button>
-        </Box>
-        </Paper>
+    <Button
+      variant="contained"
+      startIcon={<Add />}
+      onClick={() => { setDrawerOpen(true); resetForm(); }}
+      sx={{
+        backgroundColor: '#001e61',
+        borderRadius: 3,
+        textTransform: 'none',
+        fontWeight: 'bold',
+        px: 3,
+        boxShadow: 2,
+        '&:hover': { backgroundColor: '#001447' },
+        width: isMobile ? '100%' : 'auto'
+      }}
+    >
+      Ajouter un chauffeur
+    </Button>
+  </Box>
+</Paper>
+
 
         <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
           <Table size={isMobile ? 'small' : 'medium'}>
