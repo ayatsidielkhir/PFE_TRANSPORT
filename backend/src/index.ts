@@ -21,7 +21,7 @@ dotenv.config();
 const app = express();
 
 // Définir les origines autorisées
-const allowedOrigins = ['https://mme-express.ma'];
+const allowedOrigins = ['http://localhost:3000'];
 
 const corsOptions: cors.CorsOptions = {
   origin: function (origin, callback) {
@@ -48,7 +48,7 @@ mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
 
-    app.use('/auth', authRoutes);
+    app.use('/api/auth', authRoutes);
     app.use('/api/chauffeurs', chauffeurRoutes);
     app.use('/api/vehicules', vehiculeRoutes);
     app.use('/api/trajets', trajetRoutes);

@@ -36,7 +36,6 @@ const ChauffeursPage: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [sortAsc, setSortAsc] = useState(true);
   const [page, setPage] = useState(1);
-  const [form, setForm] = useState<Record<string, string | File>>({});
 
   const perPage = 5;
 
