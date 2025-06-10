@@ -1,24 +1,65 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import DossierJuridique from '../models/DossierJuridique';
+import { RequestHandler } from 'express';
 
-export const getDossier = async (_: Request, res: Response) => {
-  const data = await DossierJuridique.findOne();
-  res.json(data);
+export const getDossier: RequestHandler = async (_req, res) => {
+  try {
+    const doc = await DossierJuridique.findOne().lean();
+
+    if (!doc) {
+      res.json({});
+      return;
+    }
+
+    const { _id, __v, createdAt, updatedAt, ...cleaned } = doc;
+    res.json(cleaned);
+    return; // ✅ évite l'erreur de typage
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', error: err });
+    return; // ✅ important ici aussi
+  }
 };
 
+
 export const uploadDossier = async (req: Request, res: Response) => {
-  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const uploaded = req.files;
+  const updateData: Record<string, string> = {};
 
-  let dossier = await DossierJuridique.findOne();
-  if (!dossier) dossier = new DossierJuridique();
+  if (Array.isArray(uploaded)) {
+    for (const file of uploaded) {
+      updateData[file.fieldname] = file.filename;
+    }
+  } else {
+    res.status(400).json({ message: 'Fichiers non valides' });
+    return;
+  }
 
-  dossier.modelJ = files['modelJ']?.[0]?.filename || dossier.modelJ;
-  dossier.statut = files['statut']?.[0]?.filename || dossier.statut;
-  dossier.rc = files['rc']?.[0]?.filename || dossier.rc;
-  dossier.identifiantFiscale = files['identifiantFiscale']?.[0]?.filename || dossier.identifiantFiscale;
-  dossier.cinGerant = files['cinGerant']?.[0]?.filename || dossier.cinGerant;
-  dossier.doc1007 = files['doc1007']?.[0]?.filename || dossier.doc1007;
+  const existing = await DossierJuridique.findOne();
+  if (existing) {
+    await DossierJuridique.updateOne({}, { $set: updateData });
+  } else {
+    await DossierJuridique.create(updateData);
+  }
 
-  await dossier.save();
-  res.status(201).json(dossier);
+  res.status(201).json({ message: 'Documents enregistrés' });
+};
+
+export const deleteFileFromDossier = async (req: Request, res: Response) => {
+  const { field } = req.params;
+  const dossier = await DossierJuridique.findOne();
+
+  if (!dossier || !(dossier as any)[field]) {
+    res.status(404).json({ message: 'Document non trouvé' });
+    return;
+  }
+
+  const filename = (dossier as any)[field];
+  const filePath = path.resolve('/mnt/data/uploads/juridique', filename);
+
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+  await DossierJuridique.updateOne({}, { $unset: { [field]: '' } });
+  res.json({ message: 'Document supprimé' });
 };

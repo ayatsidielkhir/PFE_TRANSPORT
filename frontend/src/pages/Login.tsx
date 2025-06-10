@@ -3,6 +3,7 @@ import './login.css';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import logo from '../logoMme-.png'; // 🔁 assurez-vous que ce chemin est correct
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,11 +12,11 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/auth/login', { email, password });
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, { email, password });
       const { token, user } = res.data;
-  
+
       localStorage.setItem('token', token);
-  
+
       if (user.role === 'admin') {
         window.location.href = '/admin/dashboard';
       }
@@ -23,32 +24,30 @@ const Login = () => {
       toast.error('Email ou mot de passe incorrect');
     }
   };
-  
 
   return (
-    <div>
-      <div className="login-wrapper">
-        <form className="login-box" onSubmit={handleSubmit}>
-          <h2>Login</h2>
-          <input
-            type="email"
-            placeholder="Username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit">Login</button>
-        </form>
-      </div>
-      <ToastContainer position="top-center" autoClose={2000} aria-label="toast" />
-      </div>
+    <div className="login-wrapper">
+      <form className="login-box" onSubmit={handleSubmit}>
+        <img src={logo} alt="Logo MEXPRESS" className="login-logo" />
+        <h2>Connexion Admin</h2>
+        <input
+          type="email"
+          placeholder="Adresse email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit">Se connecter</button>
+      </form>
+      <ToastContainer position="top-center" autoClose={2000} />
+    </div>
   );
 };
 

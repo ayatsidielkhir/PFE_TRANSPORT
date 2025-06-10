@@ -29,7 +29,7 @@ function App() {
         <Route path="/admin/chauffeurs" element={<ProtectedRoute><AdminChauffeurs /></ProtectedRoute>} />
         <Route path="/admin/vehicules" element={<ProtectedRoute><AdminVehicules /></ProtectedRoute>} />
         <Route path="/admin/factures" element={<ProtectedRoute><AdminFactures /></ProtectedRoute>} />
-        <Route path="/admin/trajets" element={<ProtectedRoute><Layout><AdminTrajets /></Layout></ProtectedRoute>} />
+        <Route path="/admin/trajets" element={<ProtectedRoute><AdminTrajets /></ProtectedRoute>} />
         <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />
         <Route path="/admin/comptabilite" element={<ProtectedRoute><AdminComptabilite /></ProtectedRoute>} />
         <Route path="/admin/dossier-juridique" element={<ProtectedRoute><DossierJuridique /></ProtectedRoute>} /> 

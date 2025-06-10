@@ -7,6 +7,10 @@ import {
 import { Delete, Edit, Search as SearchIcon, Add } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
+import { useTheme } from '@mui/material/styles';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Chauffeur {
   _id: string;
@@ -30,7 +34,10 @@ const ChauffeursPage: React.FC = () => {
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [dialogImageSrc, setDialogImageSrc] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [sortAsc, setSortAsc] = useState(true);
   const [page, setPage] = useState(1);
+  const [form, setForm] = useState<Record<string, string | File>>({});
+
   const perPage = 5;
 
   const [form, setForm] = useState<Record<string, string | Blob | null>>({
@@ -52,11 +59,9 @@ const ChauffeursPage: React.FC = () => {
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('http://localhost:5000/api/chauffeurs');
+    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
     setChauffeurs(res.data);
   };
-
-  useEffect(() => { fetchChauffeurs(); }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -122,10 +127,7 @@ const ChauffeursPage: React.FC = () => {
   };
 
   const resetForm = () => {
-    setForm({
-      nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-      photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-    });
+    setForm({});
     setSelectedChauffeur(null);
     setPreviewPhoto(null);
   };

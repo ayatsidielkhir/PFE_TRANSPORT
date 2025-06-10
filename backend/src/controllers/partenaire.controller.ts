@@ -1,24 +1,36 @@
 import { Request, Response } from 'express';
-import Partenaire from '../models/partenaire.model';
+import path from 'path';
+import Partenaire from '../models/partenaire.model'; 
 
-export const getAllPartenaires = async (_: Request, res: Response) => {
+export const getAllPartenaires = async (req: Request, res: Response) => {
   try {
-    const partenaires = await Partenaire.find().sort({ createdAt: -1 });
-    res.json(partenaires);
-  } catch (err) {
-    res.status(500).json({ error: 'Erreur serveur' });
+    const partenaires = await Partenaire.find();
+    res.status(200).json(partenaires);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des partenaires:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la récupération' });
   }
 };
 
 export const createPartenaire = async (req: Request, res: Response) => {
   try {
-    const { nom, ice, adresse } = req.body;
+    const { nom, ice, adresse, email, telephone } = req.body;
+
     const logo = req.file ? req.file.filename : '';
 
-    const newPartenaire = new Partenaire({ nom, ice, adresse, logo });
+    const newPartenaire = new Partenaire({
+      nom,
+      ice,
+      adresse,
+      email,
+      telephone,
+      logo,
+    });
+
     await newPartenaire.save();
     res.status(201).json(newPartenaire);
   } catch (err) {
+    console.error('Erreur lors de la création:', err);
     res.status(500).json({ error: 'Erreur lors de la création' });
   }
 };
@@ -34,10 +46,17 @@ export const deletePartenaire = async (req: Request, res: Response) => {
 
 export const updatePartenaire = async (req: Request, res: Response) => {
   try {
-    const { nom, ice, adresse } = req.body;
+    const { nom, ice, adresse, email, telephone } = req.body;
     const logo = req.file ? req.file.filename : undefined;
 
-    const updateData: any = { nom, ice, adresse };
+    const updateData: any = {
+      nom,
+      ice,
+      adresse,
+      email,
+      telephone,
+    };
+
     if (logo) updateData.logo = logo;
 
     const partenaire = await Partenaire.findByIdAndUpdate(req.params.id, updateData, { new: true });

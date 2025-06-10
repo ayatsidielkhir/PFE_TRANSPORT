@@ -5,18 +5,18 @@ const ligneSchema = new mongoose.Schema({
   remorque: { type: String, required: true },
   chargement: { type: String, required: true },
   dechargement: { type: String, required: true },
-  totalHT: { type: Number, required: true },
-  statut: { type: String, enum: ['payée', 'impayée'], default: 'impayée' }
-
-
+  totalHT: { type: Number, required: true }
 });
 
 const factureSchema = new mongoose.Schema(
   {
     numero: { type: String, required: true, unique: true },
     date: { type: String, required: true },
-    mois: { type: String }, // ex: 2024-05
-    partenaire: { type: mongoose.Schema.Types.ObjectId, ref: 'Partenaire', required: true },
+    partenaireId: { type: mongoose.Schema.Types.ObjectId, ref: 'Partenaire' },
+    mois: { type: String }, // ex: 2025-06
+    client: {
+      nom: { type: String, required: true } // ✅ stocke directement le nom dans le document
+    },
     ice: { type: String },
     tracteur: { type: String },
     lignes: [ligneSchema],
@@ -25,8 +25,6 @@ const factureSchema = new mongoose.Schema(
     totalTTC: { type: Number, required: true },
     fileUrl: { type: String, required: true },
     statut: { type: String, enum: ['payée', 'impayée'], default: 'impayée' }
-
-
   },
   { timestamps: true }
 );

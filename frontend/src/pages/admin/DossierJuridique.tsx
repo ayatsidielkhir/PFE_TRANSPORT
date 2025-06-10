@@ -1,184 +1,211 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent,
-  IconButton, Drawer, Snackbar, Alert
+  Box, Typography, Table, TableBody, TableCell, TableHead, TableRow,
+  Paper, Button, IconButton, Drawer, TextField, InputAdornment, Tooltip, Dialog, DialogContent,
+  DialogTitle
 } from '@mui/material';
-import { Visibility } from '@mui/icons-material';
+import { Description, Add, InsertDriveFile, Search as SearchIcon, Edit, Delete } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import Layout from '../../components/Layout';
+import { Visibility } from '@mui/icons-material';
+
 
 interface Dossier {
-  modelJ?: string;
-  statut?: string;
-  rc?: string;
-  identifiantFiscale?: string;
-  cinGerant?: string;
-  doc1007?: string;
+  [key: string]: string;
 }
 
 const DossierJuridique: React.FC = () => {
-  const [dossier, setDossier] = useState<Dossier | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
+  const [dossier, setDossier] = useState<Dossier>({});
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [files, setFiles] = useState<{ [key: string]: File | null }>({});
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [form, setForm] = useState({ name: '', file: null as File | null });
+  const [search, setSearch] = useState('');
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
+  const [editKey, setEditKey] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchDossier();
-  }, []);
+useEffect(() => {
+  const fetchDossier = async () => {
+    const res = await axios.get('/api/dossier-juridique');
+    setDossier(res.data);
+    console.log('📁 Données reçues sans les champs système :', res.data);
+  };
+  fetchDossier();
+}, []);
+
 
   const fetchDossier = async () => {
     const res = await axios.get('/api/dossier-juridique');
     setDossier(res.data);
   };
 
-  const handleView = (fileName: string | undefined) => {
-    if (!fileName) return;
-    setSelectedDoc(`http://localhost:5000/uploads/juridique/${fileName}`);
-    setOpenDialog(true);
-  };
-
-  const handleFileChange = (name: string, file: File | null) => {
-    setFiles(prev => ({ ...prev, [name]: file }));
-  };
-
   const handleUpload = async () => {
     const formData = new FormData();
-    Object.entries(files).forEach(([key, file]) => {
-      if (file) formData.append(key, file);
-    });
+    const key = editKey ? editKey : `custom_${form.name}`;
+    if (form.file) formData.append(key, form.file);
 
-    try {
-      const res = await axios.post('/api/dossier-juridique', formData);
-      if (res.status === 201) {
-        setFiles({});
-        fetchDossier();
-        setDrawerOpen(false);
-        setSnackbarOpen(true);
-      }
-    } catch (err) {
-      console.error("Erreur d'upload", err);
-    }
+    await axios.post('/api/dossier-juridique', formData);
+    setDrawerOpen(false);
+    setForm({ name: '', file: null });
+    setEditKey(null);
+    setSearch('');
+    fetchDossier();
   };
 
-  const rows = [
-    { label: 'Model J', field: dossier?.modelJ },
-    { label: 'Statut', field: dossier?.statut },
-    { label: 'RC', field: dossier?.rc },
-    { label: 'Identifiant Fiscale', field: dossier?.identifiantFiscale },
-    { label: 'CIN Gérant', field: dossier?.cinGerant },
-    { label: '1007', field: dossier?.doc1007 }
-  ];
+  const handlePreview = (fileName: string) => {
+  setPreviewFile(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
+};
+
+  const filtered = Object.entries(dossier).filter(([key]) =>
+    key.toLowerCase().includes(search.toLowerCase())
+  );
+  const handleDelete = async (key: string) => {
+  const confirmDelete = window.confirm(`Voulez-vous vraiment supprimer le document "${key}" ?`);
+  if (!confirmDelete) return;
+
+  try {
+    await axios.delete(`/api/dossier-juridique/${key}`);
+    fetchDossier(); // 🔁 recharge la liste
+  } catch (err) {
+    console.error('Erreur lors de la suppression', err);
+  }
+};
+
 
   return (
     <Layout>
-      <Box p={4}>
-        <Box display="flex" justifyContent="space-between" mb={2}>
-          <Typography variant="h5" fontWeight={600}>Dossier Juridique</Typography>
-          <Button variant="contained" onClick={() => setDrawerOpen(true)}>Ajouter / Modifier</Button>
-        </Box>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h5" fontWeight="bold" color="#001e61" mb={3} display="flex" alignItems="center" gap={1}>
+          <Description sx={{ fontSize: 32 }} />
+          Dossier Juridique de l'Entreprise
+        </Typography>
 
-        <TableContainer component={Paper}>
+        <Paper elevation={2} sx={{
+          p: 2, mb: 3, backgroundColor: '#e3f2fd',
+          borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap'
+        }}>
+          <TextField
+            size="small"
+            placeholder="Rechercher un document..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ backgroundColor: 'white', borderRadius: 1, minWidth: 250 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+          />
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => {
+              setDrawerOpen(true);
+              setEditKey(null);
+              setForm({ name: '', file: null });
+            }}
+            sx={{
+              backgroundColor: '#001e61',
+              '&:hover': { backgroundColor: '#1565c0' },
+              borderRadius: 2,
+              fontWeight: 'bold',
+              height: 40,
+              textTransform: 'none'
+            }}
+          >
+            Ajouter un document
+          </Button>
+        </Paper>
+
+        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#e3f2fd' }}>
-                <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Action</strong></TableCell>
+              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Type de document</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Fichier</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell>{row.label}</TableCell>
+              {filtered.map(([key, value], i) => (
+                <TableRow key={key} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
+                  <TableCell>{key.replace('custom_', '').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}</TableCell>
+                    <TableCell>
+                      <Tooltip title="Prévisualiser le document">
+                        <IconButton
+                          onClick={() => handlePreview(value)}
+                          sx={{ color: '#1976d2' }}
+                        >
+                          <Visibility />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+
                   <TableCell>
-                    {row.field ? (
-                      <IconButton onClick={() => handleView(row.field)}>
-                        <Visibility />
+                    <Tooltip title="Modifier">
+                      <IconButton onClick={() => {
+                        setEditKey(key);
+                        setForm({ name: key.replace('custom_', ''), file: null });
+                        setDrawerOpen(true);
+                      }} sx={{ color: '#001e61' }}>
+                        <Edit fontSize="small" />
                       </IconButton>
-                    ) : 'Non disponible'}
+                    </Tooltip>
+                      <Tooltip title="Supprimer">
+                          <IconButton onClick={() => handleDelete(key)}  sx={{ color: '#d32f2f' }}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </Paper>
 
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Visualiser le document</DialogTitle>
+        {/* Drawer */}
+        <Drawer anchor="right" open={drawerOpen} onClose={() => {
+          setDrawerOpen(false);
+          setEditKey(null);
+        }}>
+          <Box p={3} mt={10} width={{ xs: '100vw', sm: 400 }} >
+            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2} >
+              {editKey ? 'Modifier le document' : 'Ajouter un document'}
+            </Typography>
+            <TextField
+              label="Nom du document"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              fullWidth
+              sx={{ mb: 2 }}
+              disabled={!!editKey}
+            />
+            <Button variant="outlined" component="label" fullWidth>
+              Télécharger le fichier
+              <input type="file" hidden onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })} />
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleUpload}
+              fullWidth
+              sx={{ mt: 2, backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#1565c0' }, fontWeight: 'bold' }}
+              disabled={!form.file}
+            >
+              Enregistrer
+            </Button>
+          </Box>
+        </Drawer>
+
+        {/* Aperçu PDF */}
+          <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
+          <DialogTitle>Prévisualisation</DialogTitle>
           <DialogContent>
-            {selectedDoc && (
-              <>
-                <Box component="iframe" src={selectedDoc} width="100%" height="600px" />
-                <Button href={selectedDoc} target="_blank" download fullWidth variant="outlined" sx={{ mt: 2 }}>
-                  Télécharger
-                </Button>
-              </>
+            {previewFile && (
+              <Box component="iframe" src={previewFile} width="100%" height="600px" />
             )}
           </DialogContent>
         </Dialog>
-
-  <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-  <Box p={3} width={400}>
-    <Typography variant="h6" fontWeight={600} mb={3}>
-      Documents à importer
-    </Typography>
-
-    <Box display="flex" flexDirection="column" gap={3}>
-      {[
-        { label: 'Model J', name: 'modelJ' },
-        { label: 'Statut', name: 'statut' },
-        { label: 'RC', name: 'rc' },
-        { label: 'Identifiant Fiscale', name: 'identifiantFiscale' },
-        { label: 'CIN Gérant', name: 'cinGerant' },
-        { label: '1007', name: 'doc1007' }
-      ].map(({ label, name }) => (
-        <Box key={name}>
-          <Typography fontWeight={500} mb={1}>{label}</Typography>
-          <input
-            type="file"
-            onChange={e => handleFileChange(name, e.target.files?.[0] || null)}
-            style={{
-              border: '1px solid #ccc',
-              padding: '8px',
-              borderRadius: '6px',
-              width: '100%',
-              cursor: 'pointer',
-              boxSizing: 'border-box',
-              appearance: 'none',
-              backgroundColor: 'white'
-            }}
-          />
-        </Box>
-      ))}
-
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{ mt: 2, backgroundColor: '#1976d2' }}
-        onClick={handleUpload}
-        disabled={Object.values(files).every(f => f === null)}
-      >
-        ENREGISTRER
-      </Button>
-    </Box>
-  </Box>
-</Drawer>
-
-
-
-
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={4000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
-            Documents juridiques enregistrés avec succès ✅
-          </Alert>
-        </Snackbar>
       </Box>
     </Layout>
   );

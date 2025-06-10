@@ -1,37 +1,38 @@
-
 import {
   AppBar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon,
-  ListItemText, Toolbar, Typography, Divider
+  ListItemText, Toolbar, Button, useMediaQuery, Typography
 } from '@mui/material';
 import {
-  Menu, Dashboard, People, LocalShipping, Description, Receipt, Map,
-  Business, Logout
+  Menu, Logout, DirectionsBus, Badge, AccountTree, Payment, BusinessCenter,
+  Gavel, Public, Settings, Paid
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MonetizationOn } from '@mui/icons-material';
+import logo from '../logoMme-.png';
+import { useTheme } from '@mui/material/styles';
 
 const drawerWidth = 240;
 
 const sidebarItems = {
   admin: [
-    { label: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
-    { label: 'Chauffeurs', icon: <People />, path: '/admin/chauffeurs' },
-    { label: 'Véhicules', icon: <LocalShipping />, path: '/admin/vehicules' },
-    { label: 'Factures', icon: <Receipt />, path: '/admin/factures' },
-    { label: 'Trajets', icon: <Map />, path: '/admin/trajets' },
-    { label: 'Partenaires', icon: <Business />, path: '/admin/partenaires' },
-    { label: 'Dossier Juridique', icon: <Description />, path: '/admin/dossier-juridique' },
-    { label: 'Plateformes', icon: <Dashboard />, path: '/admin/plateformes' },
-    { label: 'Charges', icon: <MonetizationOn />, path: '/admin/charges' },
-
-  ],
-
+    { label: 'Dashboard', icon: <AccountTree />, path: '/admin/dashboard' },
+    { label: 'Chauffeurs', icon: <Badge />, path: '/admin/chauffeurs' },
+    { label: 'Véhicules', icon: <DirectionsBus />, path: '/admin/vehicules' },
+    { label: 'Trajets', icon: <Public />, path: '/admin/trajets' },
+    { label: 'Partenaires', icon: <BusinessCenter />, path: '/admin/partenaires' },
+    { label: 'Factures', icon: <Payment />, path: '/admin/factures' },
+    { label: 'Dossier Juridique', icon: <Gavel />, path: '/admin/dossier-juridique' },
+    { label: 'Plateformes', icon: <Settings />, path: '/admin/plateformes' },
+    { label: 'Charges', icon: <Paid />, path: '/admin/charges' },
+  ]
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(() => localStorage.getItem('drawerOpen') === 'true');
+  const [activePath, setActivePath] = useState(() => localStorage.getItem('activePath') || '');
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const token = localStorage.getItem('token');
   let role = 'guest';
@@ -41,83 +42,158 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     role = 'guest';
   }
 
+  const toggleDrawer = () => {
+    setOpen(prev => {
+      localStorage.setItem('drawerOpen', String(!prev));
+      return !prev;
+    });
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
 
+  const drawerContent = (
+    <List>
+      {(sidebarItems as any)[role]?.map((item: any) => (
+        <ListItemButton
+          key={item.label}
+          onClick={() => {
+            navigate(item.path);
+            setActivePath(item.path);
+            localStorage.setItem('activePath', item.path);
+            if (isMobile) setOpen(false);
+          }}
+          sx={{
+            mb: 1.5,
+            px: 2,
+            py: 1.5,
+            borderRadius: 2,
+            backgroundColor: activePath === item.path ? '#c62828' : 'transparent',
+            '&:hover': {
+              backgroundColor: '#ef5350',
+            }
+          }}
+        >
+          <ListItemIcon sx={{ color: 'white', minWidth: 36 }}>{item.icon}</ListItemIcon>
+          <ListItemText
+            primary={item.label}
+            primaryTypographyProps={{ fontWeight: 500, color: 'white' }}
+          />
+        </ListItemButton>
+      ))}
+    </List>
+  );
+
   return (
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: 1300, bgcolor: '#0379a8' }}>
-        <Toolbar>
-          <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)}>
-            <Menu />
-          </IconButton>
-          <Typography variant="h6" noWrap sx={{ ml: 2 }}>
-            Transport Management System
+      {/* ✅ NAVBAR */}
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: 1300,
+          bgcolor: 'white',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+          borderBottom: '1px solid #e0e0e0',
+          height: '90px',
+          justifyContent: 'center'
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'space-between', px: 4 }}>
+          {/* Logo + Menu */}
+          <Box display="flex" alignItems="center" gap={3}>
+            <IconButton edge="start" onClick={toggleDrawer} sx={{ color: '#001e61' }}>
+              <Menu sx={{ fontSize: 30 }} />
+            </IconButton>
+
+            <Box sx={{ height: '80px' }}>
+              <img
+                src={logo}
+                alt="MME Express Logo"
+                style={{
+                  height: '100%',
+                  width: 'auto',
+                  maxWidth: '240px',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.2))'
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Titre centré */}
+          <Typography
+            variant="h6"
+            sx={{
+              flexGrow: 1,
+              textAlign: 'center',
+              fontWeight: 600,
+              color: '#001e61',
+              fontSize: '17px',
+              display: { xs: 'none', md: 'block' }
+            }}
+          >
+            MME – Système de Management du Transport
           </Typography>
+
+          {/* Déconnexion */}
+          <Button
+            onClick={handleLogout}
+            variant="contained"
+            sx={{
+              backgroundColor: '#d32f2f',
+              color: 'white',
+              fontWeight: 'bold',
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 3,
+              py: 1.5,
+              fontSize: '15px',
+              '&:hover': { backgroundColor: '#b71c1c' }
+            }}
+            startIcon={<Logout />}
+          >
+            Déconnexion
+          </Button>
         </Toolbar>
       </AppBar>
 
+      {/* ✅ SIDEBAR */}
       <Drawer
+        variant={isMobile ? 'temporary' : 'persistent'}
         open={open}
-        variant="persistent"
+        onClose={() => setOpen(false)}
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          position: 'absolute', // 👈 empêche le décalage du contenu
           '& .MuiDrawer-paper': {
+            marginTop: '90px', // ✅ aligné sous AppBar
             width: drawerWidth,
             boxSizing: 'border-box',
-            bgcolor: '#f8f9fa',
-            borderRight: '1px solid #ddd',
-            position: 'fixed', // 👈 fixe la sidebar indépendamment du main
-            zIndex: 1200
+            bgcolor: '#001e61',
+            color: 'white',
+            borderRight: 'none',
+            pt: 2,
+            px: 1
           }
         }}
       >
-
-        <Toolbar />
-        <List sx={{ mt: 2 }}>
-          {(sidebarItems as any)[role]?.map((item: any) => (
-            <ListItemButton
-              key={item.label}
-              onClick={() => navigate(item.path)}
-              sx={{
-                mx: 1,
-                mb: 1,
-                borderRadius: 2,
-                '&:hover': { bgcolor: '#e3f2fd' }
-              }}
-            >
-              <ListItemIcon sx={{ color: '#0379a8' }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 500 }} />
-            </ListItemButton>
-          )) || (
-            <ListItemButton>
-              <ListItemText primary="Aucun accès" />
-            </ListItemButton>
-          )}
-        </List>
-
-        <Divider sx={{ my: 2 }} />
-
-        <ListItemButton onClick={handleLogout} sx={{ mx: 1, borderRadius: 2 }}>
-          <ListItemIcon sx={{ color: '#d32f2f' }}><Logout /></ListItemIcon>
-          <ListItemText primary="Déconnexion" primaryTypographyProps={{ fontWeight: 500 }} />
-        </ListItemButton>
+        {drawerContent}
       </Drawer>
 
-    <Box
-      component="main"
-      sx={{
-        flexGrow: 1,
-        padding: 3,
-        transition: 'margin-left 0.3s',
-        marginLeft: open ? `${drawerWidth}px` : 0
-      }}
-    >
-        <Toolbar />
+      {/* ✅ CONTENU */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          backgroundColor: '#fcfcfc',
+          minHeight: '100vh',
+          padding: 3,
+          pt: '110px', // ✅ décalage sous AppBar
+          ml: isMobile ? 0 : 0
+        }}
+      >
         {children}
       </Box>
     </Box>

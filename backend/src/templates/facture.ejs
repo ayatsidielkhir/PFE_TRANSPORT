@@ -76,8 +76,6 @@
       text-align: right;
     }
 
-
-
     .signature {
       margin-top: 200px;
       font-weight: 300;
@@ -98,10 +96,9 @@
 <body>
   <div class="wrapper">
     <div class="top">
-      <img src="file://<%= logoPath %>" class="logo" alt="Logo MEXpress" />
       <div class="info">
         <p><span>Facture N° :</span> <%= numero %></p>
-        <p><span>CLIENT :</span> <%= client.nom %></p>
+        <p><span>CLIENT :</span> <%= client %></p> <!-- ✅ corrigé ici -->
         <p><span>Tanger le :</span> <%= date %></p>
         <p><span>ICE N° :</span> <%= ice %></p>
         <p><span>Tracteur :</span> <%= tracteur %></p>
@@ -146,21 +143,12 @@
       </tr>
     </table>
 
-
-
-    <!-- Signature -->
     <div class="signature">
-           <!-- Montant en lettres -->
-    <p class="montant-lettre"> Arrêtée la présente facture à la somme de :<span> <%= totalTTC.toFixed(2) %> Dirhams</span></p>
-
+      <p class="montant-lettre"> Arrêtée la présente facture à la somme de :
+        <span><%= totalTTC.toFixed(2) %> Dirhams</span>
+      </p>
       <p>Signature</p>
     </div>
-  </div>
-
-  <div class="footer">
-    127 AV HAFID IBN ABDEL BAR RES AL ANDALOUSES ANZARANE – 3ÈME ÉTAGE N°15 – TANGER<br/>
-    Tél : +212 607 473 166 – Email : direction@mme-express.com<br/>
-    ICE : 002676324000081 – RC : 110337
   </div>
 </body>
 </html>
