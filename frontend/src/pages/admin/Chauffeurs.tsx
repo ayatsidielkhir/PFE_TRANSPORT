@@ -177,7 +177,7 @@ const ChauffeursPage: React.FC = () => {
       <Box p={isMobile ? 1 : 2}>
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
           <Person sx={{ width: 45, height: 32 }} />
-          Gestion Des Chauffeurs test 2
+          Gestion Des Chauffeurs test 3
         </Typography>
 
         <Paper
