@@ -41,7 +41,7 @@ const ChauffeursPage: React.FC = () => {
   const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
   const renderDocumentAvatar = (file: string | undefined) => {
     if (!file) return '—';
-    const url = `https://mme-backend.onrender.com/uploads/chauffeurs/${file}`;
+    const url = `http://localhost:5000/uploads/chauffeurs/${file}`;
     return (
       <Avatar
         src={isImageFile(file) ? url : '/pdf-icon.png'}
@@ -52,7 +52,7 @@ const ChauffeursPage: React.FC = () => {
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
+    const res = await axios.get('http://localhost:5000/api/chauffeurs');
     setChauffeurs(res.data);
   };
 
@@ -86,8 +86,8 @@ const ChauffeursPage: React.FC = () => {
     });
 
     const url = selectedChauffeur
-      ? `https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`
-      : `https://mme-backend.onrender.com/api/chauffeurs`;
+      ? `http://localhost:5000/api/chauffeurs/${selectedChauffeur._id}`
+      : `http://localhost:5000/api/chauffeurs`;
 
     const method = selectedChauffeur ? axios.put : axios.post;
 
@@ -117,7 +117,7 @@ const ChauffeursPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Supprimer ce chauffeur ?")) return;
-    await axios.delete(`https://mme-backend.onrender.com/api/chauffeurs/${id}`);
+    await axios.delete(`http://localhost:5000/api/chauffeurs/${id}`);
     fetchChauffeurs();
   };
 
