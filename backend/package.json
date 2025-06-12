@@ -22,6 +22,7 @@
     "express": "^5.1.0",
     "express-async-handler": "^1.2.0",
     "file-saver": "^2.0.5",
+    "glob": "^11.0.2",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",

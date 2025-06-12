@@ -75,31 +75,37 @@ const ChauffeursPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.nom || !form.prenom || !form.telephone || !form.cin) {
-      alert('Veuillez remplir les champs obligatoires.');
-      return;
-    }
+  if (!form.nom || !form.prenom || !form.telephone || !form.cin) {
+    alert('Veuillez remplir les champs obligatoires.');
+    return;
+  }
 
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value) formData.append(key, value);
+  const formData = new FormData();
+  Object.entries(form).forEach(([key, value]) => {
+    if (value) formData.append(key, value);
+  });
+
+  const url = selectedChauffeur
+    ? `http://localhost:5000/api/chauffeurs/${selectedChauffeur._id}`
+    : `http://localhost:5000/api/chauffeurs`;
+
+  const method = selectedChauffeur ? axios.put : axios.post;
+
+  try {
+    await method(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     });
+    fetchChauffeurs();
+    resetForm();
+    setDrawerOpen(false);
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de l'enregistrement");
+  }
+};
 
-    const url = selectedChauffeur
-      ? `http://localhost:5000/api/chauffeurs/${selectedChauffeur._id}`
-      : `http://localhost:5000/api/chauffeurs`;
-
-    const method = selectedChauffeur ? axios.put : axios.post;
-
-    try {
-      await method(url, formData);
-      fetchChauffeurs();
-      resetForm();
-      setDrawerOpen(false);
-    } catch (err) {
-      alert("Erreur lors de l'enregistrement");
-    }
-  };
 
   const handleEdit = (chauffeur: Chauffeur) => {
     setSelectedChauffeur(chauffeur);
@@ -181,7 +187,7 @@ const ChauffeursPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
-                {["Photo", "Nom", "Prénom", "Téléphone", "CIN", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
+                {["Photo", "Nom", "Prénom", "Téléphone", "Adresse", "CIN", "Permis", "Visa", "Certificat", "Actions"].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
