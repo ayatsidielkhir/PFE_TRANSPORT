@@ -28,14 +28,14 @@ const PlateformesPage: React.FC = () => {
   const perPage = 5;
 
   useEffect(() => {
-    axios.get('https://mme-backend.onrender.com/api/plateformes').then(res => {
+    axios.get('http://localhost:5000/api/plateformes').then(res => {
       setPlateformes(res.data);
       setFilteredPlateformes(res.data);
     });
   }, []);
 
   const fetchPlateformes = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/plateformes');
+    const res = await axios.get('http://localhost:5000/api/plateformes');
     setPlateformes(res.data);
     setFilteredPlateformes(res.data);
   };
@@ -47,9 +47,9 @@ const PlateformesPage: React.FC = () => {
 
     try {
       if (form._id) {
-        await axios.put(`https://mme-backend.onrender.com/api/plateformes/${form._id}`, formData);
+        await axios.put(`http://localhost:5000/api/plateformes/${form._id}`, formData);
       } else {
-        await axios.post('https://mme-backend.onrender.com/api/plateformes', formData);
+        await axios.post('http://localhost:5000/api/plateformes', formData);
       }
       setDrawerOpen(false);
       setForm({ nom: '', email: '', password: '', lien: '' });
@@ -67,7 +67,7 @@ const PlateformesPage: React.FC = () => {
 
   const handleDelete = async (id?: string) => {
     if (id && window.confirm('Supprimer cette plateforme ?')) {
-      await axios.delete(`https://mme-backend.onrender.com/api/plateformes/${id}`);
+      await axios.delete(`http://localhost:5000/api/plateformes/${id}`);
       fetchPlateformes();
     }
   };
@@ -154,7 +154,7 @@ const PlateformesPage: React.FC = () => {
                   <TableCell>
                     {p.logo ? (
                       <Avatar
-                        src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`}
+                        src={`http://localhost:5000/uploads/platforms/${p.logo}`}
                         alt="logo"
                         variant="rounded"
                         sx={{ width: 40, height: 40 }}

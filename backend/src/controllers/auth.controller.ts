@@ -3,7 +3,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 
-// ✅ Fonction bien typée avec RequestHandler
 export const register: RequestHandler = async (req, res) => {
   const { nom, email, password, role } = req.body;
 
@@ -24,7 +23,6 @@ export const register: RequestHandler = async (req, res) => {
   }
 };
 
-// ✅ Fonction login typée aussi avec RequestHandler
 export const login: RequestHandler = async (req, res) => {
   const { email, password } = req.body;
 

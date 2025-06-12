@@ -2,6 +2,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
+const baseUploadPath = process.env.LOCAL_UPLOADS
+  ? path.resolve(__dirname, '../uploads')  // dossier local dans backend/uploads
+  : '/mnt/data/uploads';
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let folder = 'autres';
@@ -11,7 +14,7 @@ const storage = multer.diskStorage({
     else if (req.baseUrl.includes('plateformes')) folder = 'platforms';
     else if (req.baseUrl.includes('factures')) folder = 'factures';
 
-    const dir = path.resolve('/mnt/data/uploads', folder);
+    const dir = path.resolve(__dirname, '../uploads', folder);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -23,21 +26,20 @@ const storage = multer.diskStorage({
   }
 });
 
-// ✅ Accepter uniquement PDF pour tous sauf "photoVehicule"
+
+// Reste pareil
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const isVehiculeRoute = req.baseUrl.includes('vehicule');
   const isPhotoVehicule = file.fieldname === 'photoVehicule';
 
   if (isVehiculeRoute) {
     if (isPhotoVehicule) {
-      // Accepter uniquement les images pour photoVehicule
       if (/^image\/(jpeg|png|jpg|webp)$/.test(file.mimetype)) {
         return cb(null, true);
       } else {
         return cb(new Error('Seules les images sont autorisées pour le véhicule (photoVehicule).'));
       }
     } else {
-      // Tous les autres fichiers doivent être PDF
       if (file.mimetype === 'application/pdf') {
         return cb(null, true);
       } else {
@@ -45,8 +47,6 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
       }
     }
   }
-
-  // Si ce n’est pas la route /vehicule, tout passe
   cb(null, true);
 };
 
