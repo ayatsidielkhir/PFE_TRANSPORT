@@ -24,7 +24,7 @@ const DossierJuridique: React.FC = () => {
 
 useEffect(() => {
   const fetchDossier = async () => {
-    const res = await axios.get('/api/dossier-juridique');
+    const res = await axios.get('/dossier-juridique');
     setDossier(res.data);
     console.log('📁 Données reçues sans les champs système :', res.data);
   };
@@ -33,7 +33,7 @@ useEffect(() => {
 
 
   const fetchDossier = async () => {
-    const res = await axios.get('/api/dossier-juridique');
+    const res = await axios.get('/dossier-juridique');
     setDossier(res.data);
   };
 
@@ -42,7 +42,7 @@ useEffect(() => {
     const key = editKey ? editKey : `custom_${form.name}`;
     if (form.file) formData.append(key, form.file);
 
-    await axios.post('/api/dossier-juridique', formData);
+    await axios.post('/dossier-juridique', formData);
     setDrawerOpen(false);
     setForm({ name: '', file: null });
     setEditKey(null);
@@ -51,7 +51,7 @@ useEffect(() => {
   };
 
   const handlePreview = (fileName: string) => {
-  setPreviewFile(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
+  setPreviewFile(`http://localhost:5000/uploads/juridique/${fileName}`);
 };
 
   const filtered = Object.entries(dossier).filter(([key]) =>
@@ -62,7 +62,7 @@ useEffect(() => {
   if (!confirmDelete) return;
 
   try {
-    await axios.delete(`/api/dossier-juridique/${key}`);
+    await axios.delete(`/dossier-juridique/${key}`);
     fetchDossier(); // 🔁 recharge la liste
   } catch (err) {
     console.error('Erreur lors de la suppression', err);

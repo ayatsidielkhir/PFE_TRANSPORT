@@ -55,12 +55,12 @@ const ChargesPage: React.FC = () => {
   }, [charges, filterType, filterStatut, filterDateFrom, filterDateTo]);
 
   const fetchCharges = async () => {
-    const res = await axios.get('/api/charges');
+    const res = await axios.get('/charges');
     setCharges(res.data);
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get('/api/chauffeurs');
+    const res = await axios.get('/chauffeurs');
     setChauffeurs(res.data);
   };
 
@@ -110,8 +110,8 @@ const ChargesPage: React.FC = () => {
 
     try {
       const res = isEditing && form._id
-        ? await axios.put(`/api/charges/${form._id}`, finalForm)
-        : await axios.post('/api/charges', finalForm);
+        ? await axios.put(`/charges/${form._id}`, finalForm)
+        : await axios.post('/charges', finalForm);
       if ([200, 201].includes(res.status)) {
         fetchCharges();
         setDrawerOpen(false);
@@ -124,7 +124,7 @@ const ChargesPage: React.FC = () => {
   const handleDelete = async (id?: string) => {
     if (!id) return;
     if (window.confirm("Supprimer cette charge ?")) {
-      await axios.delete(`/api/charges/${id}`);
+      await axios.delete(`/charges/${id}`);
       fetchCharges();
     }
   };
