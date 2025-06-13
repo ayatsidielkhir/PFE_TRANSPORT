@@ -6,6 +6,10 @@ const chargeSchema = new mongoose.Schema({
     enum: ['Salaire', 'CNSS', 'Entretien', 'Carburant', 'Vignette', 'Autre', 'Sortie Caisse'],
     required: true,
   },
+  autreType: {
+  type: String,
+  trim: true,
+},
   description: {
     type: String,
     trim: true,

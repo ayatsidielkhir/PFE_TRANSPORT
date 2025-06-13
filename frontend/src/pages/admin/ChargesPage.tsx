@@ -81,7 +81,7 @@ const ChargesPage: React.FC = () => {
   };
 
   const handleAdd = () => {
-    setForm({ type: '', montant: 0, date: '', statut: 'Non payé' });
+    setForm({ type: '', montant: 0, date: '', statut: 'Non payé', autreType:'' });
     setChauffeurSelectionne(null);
     setIsEditing(false);
     setDrawerOpen(true);
@@ -100,13 +100,12 @@ const ChargesPage: React.FC = () => {
       return;
     }
 
+     const { autreType, ...rest } = form;
     const finalForm = {
-      ...form,
-      type: form.type === 'Autre' ? form.autreType?.trim() ?? 'Autre' : form.type,
+      ...rest,
+      type: form.type === 'Autre' ? 'Autre' : form.type,
     };
 
-  
-      
 
     try {
       const res = isEditing && form._id
