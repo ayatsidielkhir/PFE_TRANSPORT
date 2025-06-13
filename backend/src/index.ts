@@ -15,6 +15,7 @@ import dossierJuridiqueRoutes from './routes/dossierjuridique.routes';
 import platformRoutes from './routes/plateformes.routes';
 import factureRoutes from './routes/facture.routes';
 import chargeRoutes from './routes/charge.routes';
+import caisseRoutes from './routes/caisse.routes';
 
 dotenv.config();
 
@@ -58,9 +59,9 @@ mongoose.connect(MONGO_URI)
     app.use('/api/plateformes', platformRoutes);
     app.use('/api/factures', factureRoutes);
     app.use('/api/charges', chargeRoutes);
+    app.use('/api/caisse', caisseRoutes);
+    app.use('/uploads/caisse', express.static(path.join(__dirname, '../uploads/caisse')));
 
-    // Servir les fichiers uploadés localement
-    app.use('/uploads', express.static(path.resolve(__dirname, '../../uploads')));
 
     app.get('/', (_req, res) => {
       res.send("Bienvenue sur l'API backend");

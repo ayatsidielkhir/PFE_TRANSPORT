@@ -10,6 +10,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../logoMme-.png';
 import { useTheme } from '@mui/material/styles';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+
 
 const drawerWidth = 240;
 
@@ -24,6 +26,8 @@ const sidebarItems = {
     { label: 'Dossier Juridique', icon: <Gavel />, path: '/admin/dossier-juridique' },
     { label: 'Plateformes', icon: <Settings />, path: '/admin/plateformes' },
     { label: 'Charges', icon: <Paid />, path: '/admin/charges' },
+    { label: 'Caisse', icon: <AttachMoneyIcon />, path: '/admin/caisse' },
+
   ]
 };
 
@@ -34,13 +38,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const token = localStorage.getItem('token');
-  let role = 'guest';
+let role = 'guest';
+const token = localStorage.getItem('token');
+
+if (token) {
   try {
-    role = JSON.parse(atob(token!.split('.')[1])).role;
-  } catch {
-    role = 'guest';
+    const decoded = JSON.parse(atob(token.split('.')[1]));
+    role = decoded.role || 'guest';
+  } catch (e) {
+    console.error('Erreur décodage token:', e);
   }
+}
+
+console.log("Rôle détecté :", role);
+
+
 
   const toggleDrawer = () => {
     setOpen(prev => {
@@ -199,3 +211,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     </Box>
   );
 }
+
+
+
+
+
