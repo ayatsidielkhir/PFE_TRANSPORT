@@ -121,7 +121,14 @@ const DossierJuridique: React.FC = () => {
             <TableBody>
               {filtered.map(([key, value], i) => (
                 <TableRow key={key} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
-                  <TableCell>{key.replace('custom_', '').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}</TableCell>
+                  <TableCell>
+                    {key
+                      .replace('custom_', '')
+                      .replace(/([A-Z])/g, ' $1')
+                      .replace(/[_-]/g, ' ')
+                      .toLowerCase()
+                      .replace(/^./, c => c.toUpperCase())}
+                  </TableCell>
                   <TableCell>
                     <Tooltip title="Prévisualiser le document">
                       <IconButton
@@ -154,63 +161,90 @@ const DossierJuridique: React.FC = () => {
           </Table>
         </Paper>
 
-        <Drawer anchor="right" open={drawerOpen} onClose={() => {
-          setDrawerOpen(false);
-          setEditKey(null);
-        }}>
-          <Box p={3} mt={10} width={{ xs: '100vw', sm: 400 }}>
-            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2}>
-              {editKey ? 'Modifier le document' : 'Ajouter un document'}
-            </Typography>
-            <TextField
-              label="Nom du document"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              fullWidth
-              sx={{ mb: 2 }}
-              disabled={!!editKey}
-            />
-            <Button variant="outlined" component="label" fullWidth>
-              Télécharger le fichier
-              <input type="file" hidden onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })} />
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleUpload}
-              fullWidth
-              sx={{ mt: 2, backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#1565c0' }, fontWeight: 'bold' }}
-              disabled={!form.file}
-            >
-              Enregistrer
-            </Button>
-          </Box>
-        </Drawer>
+              <Drawer anchor="right" open={drawerOpen} onClose={() => {
+  setDrawerOpen(false);
+  setEditKey(null);
+}}>
+  <Box p={3} mt={10} width={{ xs: '100vw', sm: 400 }}>
+    <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2}>
+      {editKey ? 'Modifier le document' : 'Ajouter un document'}
+    </Typography>
+
+    {/* ✅ Champ nom modifiable même en mode modification */}
+    <TextField
+      label="Nom du document"
+      value={form.name}
+      onChange={(e) => setForm({ ...form, name: e.target.value })}
+      fullWidth
+      sx={{ mb: 2 }}
+    />
+
+    {/* ✅ Bouton upload avec affichage du nom du fichier sélectionné */}
+    <Button
+      variant="outlined"
+      component="label"
+      fullWidth
+      sx={{ justifyContent: 'space-between', textTransform: 'none' }}
+    >
+      {form.file ? form.file.name : 'Télécharger le fichier'}
+      <input
+        type="file"
+        hidden
+        onChange={(e) =>
+          setForm({ ...form, file: e.target.files?.[0] || null })
+        }
+      />
+    </Button>
+
+    <Button
+      variant="contained"
+      onClick={handleUpload}
+      fullWidth
+      sx={{
+        mt: 2,
+        backgroundColor: '#1976d2',
+        '&:hover': { backgroundColor: '#1565c0' },
+        fontWeight: 'bold'
+      }}
+      disabled={!form.file}
+    >
+      Enregistrer
+    </Button>
+  </Box>
+</Drawer>
+
 
         <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
-          <DialogTitle>
-            Prévisualisation
-            <Button
-              component="a"
-              href={previewFile || '#'}
-              target="_blank"
-              download
-              sx={{
-                ml: 2,
-                fontSize: '0.8rem',
-                textTransform: 'none',
-                backgroundColor: '#1976d2',
-                color: 'white',
-                '&:hover': { backgroundColor: '#0d47a1' }
-              }}
-            >
-              Télécharger
-            </Button>
-          </DialogTitle>
+          <DialogTitle>Prévisualisation</DialogTitle>
           <DialogContent>
             {previewFile && previewFile.match(/\.(pdf)$/i) ? (
-              <Box component="iframe" src={previewFile} width="100%" height="600px" />
+              <Box component="iframe" src={previewFile} width="100%" height="700px" />
             ) : (
-              <Box component="img" src={previewFile || ''} width="100%" sx={{ maxHeight: 600, objectFit: 'contain' }} />
+              <Box display="flex" flexDirection="column" alignItems="center">
+                <Box
+                  component="img"
+                  src={previewFile || ''}
+                  sx={{
+                    maxHeight: '80vh',
+                    maxWidth: '100%',
+                    objectFit: 'contain',
+                    mb: 2,
+                    borderRadius: 2,
+                    boxShadow: 2
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  color="primary"
+                  href={previewFile || '#'}
+                  download
+                  target="_blank"
+                  sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                >
+                  Télécharger l’image
+                </Button>
+
+              </Box>
             )}
           </DialogContent>
         </Dialog>
