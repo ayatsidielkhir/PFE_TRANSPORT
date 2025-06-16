@@ -4,11 +4,12 @@ import {
   Paper, Button, IconButton, Drawer, TextField, InputAdornment, Tooltip, Dialog, DialogContent,
   DialogTitle
 } from '@mui/material';
-import { Description, Add, InsertDriveFile, Search as SearchIcon, Edit, Delete } from '@mui/icons-material';
+import { Description, Add, Search as SearchIcon, Edit, Delete } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import Layout from '../../components/Layout';
 import { Visibility } from '@mui/icons-material';
 
+const API = process.env.REACT_APP_API_URL;
 
 interface Dossier {
   [key: string]: string;
@@ -22,27 +23,20 @@ const DossierJuridique: React.FC = () => {
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [editKey, setEditKey] = useState<string | null>(null);
 
-useEffect(() => {
   const fetchDossier = async () => {
-    const res = await axios.get('/api/dossier-juridique');
+    const res = await axios.get(`${API}/dossier-juridique`);
     setDossier(res.data);
     console.log('📁 Données reçues sans les champs système :', res.data);
   };
-  fetchDossier();
-}, []);
 
-
-  const fetchDossier = async () => {
-    const res = await axios.get('/api/dossier-juridique');
-    setDossier(res.data);
-  };
+  useEffect(() => { fetchDossier(); }, []);
 
   const handleUpload = async () => {
     const formData = new FormData();
     const key = editKey ? editKey : `custom_${form.name}`;
     if (form.file) formData.append(key, form.file);
 
-    await axios.post('/api/dossier-juridique', formData);
+    await axios.post(`${API}/dossier-juridique`, formData);
     setDrawerOpen(false);
     setForm({ name: '', file: null });
     setEditKey(null);
@@ -51,24 +45,24 @@ useEffect(() => {
   };
 
   const handlePreview = (fileName: string) => {
-  setPreviewFile(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
-};
+    setPreviewFile(`${API}/uploads/juridique/${fileName}`);
+  };
 
   const filtered = Object.entries(dossier).filter(([key]) =>
     key.toLowerCase().includes(search.toLowerCase())
   );
+
   const handleDelete = async (key: string) => {
-  const confirmDelete = window.confirm(`Voulez-vous vraiment supprimer le document "${key}" ?`);
-  if (!confirmDelete) return;
+    const confirmDelete = window.confirm(`Voulez-vous vraiment supprimer le document "${key}" ?`);
+    if (!confirmDelete) return;
 
-  try {
-    await axios.delete(`/api/dossier-juridique/${key}`);
-    fetchDossier(); // 🔁 recharge la liste
-  } catch (err) {
-    console.error('Erreur lors de la suppression', err);
-  }
-};
-
+    try {
+      await axios.delete(`${API}/dossier-juridique/${key}`);
+      fetchDossier();
+    } catch (err) {
+      console.error('Erreur lors de la suppression', err);
+    }
+  };
 
   return (
     <Layout>

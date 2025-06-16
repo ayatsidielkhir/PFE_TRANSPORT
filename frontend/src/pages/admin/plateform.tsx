@@ -8,6 +8,9 @@ import { Add, Edit, Delete, Language, Search as SearchIcon, Margin } from '@mui/
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
+const API = process.env.REACT_APP_API_URL;
+
+
 interface Plateforme {
   _id?: string;
   nom: string;
@@ -28,14 +31,14 @@ const PlateformesPage: React.FC = () => {
   const perPage = 5;
 
   useEffect(() => {
-    axios.get('https://mme-backend.onrender.com/api/plateformes').then(res => {
+    axios.get('${API}/plateformes').then(res => {
       setPlateformes(res.data);
       setFilteredPlateformes(res.data);
     });
   }, []);
 
   const fetchPlateformes = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/plateformes');
+    const res = await axios.get('${API}/plateformes');
     setPlateformes(res.data);
     setFilteredPlateformes(res.data);
   };
@@ -47,9 +50,9 @@ const PlateformesPage: React.FC = () => {
 
     try {
       if (form._id) {
-        await axios.put(`https://mme-backend.onrender.com/api/plateformes/${form._id}`, formData);
+        await axios.put(`${API}/plateformes/${form._id}`, formData);
       } else {
-        await axios.post('https://mme-backend.onrender.com/api/plateformes', formData);
+        await axios.post('${API}/plateformes', formData);
       }
       setDrawerOpen(false);
       setForm({ nom: '', email: '', password: '', lien: '' });
@@ -67,7 +70,7 @@ const PlateformesPage: React.FC = () => {
 
   const handleDelete = async (id?: string) => {
     if (id && window.confirm('Supprimer cette plateforme ?')) {
-      await axios.delete(`https://mme-backend.onrender.com/api/plateformes/${id}`);
+      await axios.delete(`${API}/plateformes/${id}`);
       fetchPlateformes();
     }
   };
@@ -154,7 +157,7 @@ const PlateformesPage: React.FC = () => {
                   <TableCell>
                     {p.logo ? (
                       <Avatar
-                        src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`}
+                        src={`http://localhost:5000/uploads/platforms/${p.logo}`}
                         alt="logo"
                         variant="rounded"
                         sx={{ width: 40, height: 40 }}

@@ -15,6 +15,7 @@ import AdminComptabilite from './pages/admin/Comptabilite';
 import DossierJuridique from './pages/admin/DossierJuridique'; // ✅ import ajouté
 import PlateformesPage from './pages/admin/plateform';
 import ChargesPage from './pages/admin/ChargesPage';
+import CaissePage from './pages/admin/caisse'; // ⬅️ si ton fichier s'appelle Caisse.tsx
 
 
 
@@ -35,6 +36,7 @@ function App() {
         <Route path="/admin/dossier-juridique" element={<ProtectedRoute><DossierJuridique /></ProtectedRoute>} /> 
         <Route path="/admin/plateformes" element={<ProtectedRoute><PlateformesPage /></ProtectedRoute>} /> 
         <Route path="/admin/charges" element={<ProtectedRoute><ChargesPage /></ProtectedRoute>} />
+        <Route path="/admin/caisse" element={<ProtectedRoute><CaissePage /></ProtectedRoute>} />
 
         <Route path="*" element={<Login />} />
       </Routes>

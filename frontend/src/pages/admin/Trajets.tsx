@@ -12,6 +12,9 @@ import AdminLayout from '../../components/Layout';
 import { useTheme } from '@mui/material/styles';
 import { Route } from '@mui/icons-material';
 
+const API = process.env.REACT_APP_API_URL;
+
+
 
 
 
@@ -65,17 +68,17 @@ const TrajetsPage: React.FC = () => {
 
   useEffect(() => { fetchData(); }, [filters]);
 
-  const fetchData = async () => {
-    const query = new URLSearchParams();
-    if (filters.mois) query.append('mois', filters.mois);
-    if (filters.partenaire) query.append('partenaire', filters.partenaire);
+    const fetchData = async () => {
+      const query = new URLSearchParams();
+      if (filters.mois) query.append('mois', filters.mois);
+      if (filters.partenaire) query.append('partenaire', filters.partenaire);
 
-    const [trajetRes, chaufRes, vehicRes, partRes] = await Promise.all([
-      axios.get(`https://mme-backend.onrender.com/api/trajets?${query.toString()}`),
-      axios.get('https://mme-backend.onrender.com/api/chauffeurs'),
-      axios.get('https://mme-backend.onrender.com/api/vehicules'),
-      axios.get('https://mme-backend.onrender.com/api/partenaires')
-    ]);
+      const [trajetRes, chaufRes, vehicRes, partRes] = await Promise.all([
+        axios.get(`${API}/trajets?${query.toString()}`),
+        axios.get(`${API}/chauffeurs`),
+        axios.get(`${API}/vehicules`),
+        axios.get(`${API}/partenaires`)
+      ]);
 
     const trajets = trajetRes.data.map((t: any) => ({
       ...t,
@@ -101,15 +104,16 @@ const TrajetsPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    const url = form._id
-      ? `https://mme-backend.onrender.com/api/trajets/${form._id}`
-      : 'https://mme-backend.onrender.com/api/trajets';
-    const method = form._id ? 'put' : 'post';
+  const url = form._id
+    ? `${API}/trajets/${form._id}`
+    : `${API}/trajets`;
+  const method = form._id ? 'put' : 'post';
 
-    await axios[method](url, form);
-    setDrawerOpen(false);
-    fetchData();
-  };
+  await axios[method](url, form);
+  setDrawerOpen(false);
+  fetchData();
+};
+
 
   const getChauffeurName = (id?: string) => {
     if (!id) return '';
@@ -191,9 +195,12 @@ const TrajetsPage: React.FC = () => {
                     <TableCell>{t.consommationMAD} MAD</TableCell>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={1}>
-                        {part?.logo && (
-                          <Avatar src={`https://mme-backend.onrender.com/uploads/partenaires/${part.logo}`} sx={{ width: 28, height: 28 }} />
-                        )}
+                          {part?.logo && (
+                            <Avatar
+                              src={`${API}/uploads/partenaires/${part.logo}`}
+                              sx={{ width: 28, height: 28 }}
+                            />
+                          )}
                         <Typography variant="body2">{part?.nom}</Typography>
                       </Box>
                     </TableCell>
@@ -228,7 +235,7 @@ const TrajetsPage: React.FC = () => {
                       <Tooltip title="Supprimer">
                         <IconButton onClick={async () => {
                           if (window.confirm('Supprimer ce trajet ?')) {
-                            await axios.delete(`https://mme-backend.onrender.com/api/trajets/${t._id}`);
+                            await axios.delete(`${API}/trajets/${t._id}`);
                             fetchData();
                           }
                         }} sx={{ color: '#d32f2f' }}>

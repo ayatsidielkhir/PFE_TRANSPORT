@@ -15,13 +15,14 @@ import dossierJuridiqueRoutes from './routes/dossierjuridique.routes';
 import platformRoutes from './routes/plateformes.routes';
 import factureRoutes from './routes/facture.routes';
 import chargeRoutes from './routes/charge.routes';
+import caisseRoutes from './routes/caisse.routes';
 
 dotenv.config();
 
 const app = express();
 
 // Définir les origines autorisées
-const allowedOrigins = ['https://mme-express.ma'];
+const allowedOrigins = ['http://localhost:3000'];
 
 const corsOptions: cors.CorsOptions = {
   origin: function (origin, callback) {
@@ -36,7 +37,6 @@ const corsOptions: cors.CorsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -48,7 +48,7 @@ mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
 
-    app.use('/auth', authRoutes);
+    app.use('/api/auth', authRoutes);
     app.use('/api/chauffeurs', chauffeurRoutes);
     app.use('/api/vehicules', vehiculeRoutes);
     app.use('/api/trajets', trajetRoutes);
@@ -59,12 +59,12 @@ mongoose.connect(MONGO_URI)
     app.use('/api/plateformes', platformRoutes);
     app.use('/api/factures', factureRoutes);
     app.use('/api/charges', chargeRoutes);
+    app.use('/api/caisse', caisseRoutes);
+    app.use('/uploads/caisse', express.static(path.join(__dirname, '../uploads/caisse')));
 
-
-    app.use('/uploads', express.static('/mnt/data/uploads')); // ✅ déjà correct
 
     app.get('/', (_req, res) => {
-      res.send('Bienvenue sur l\'API backend');
+      res.send("Bienvenue sur l'API backend");
     });
 
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -5,16 +5,14 @@ import {
 } from '@mui/material';
 import { Delete, Edit, Add, Search as SearchIcon } from '@mui/icons-material';
 import axios from 'axios';
-import { BusinessCenter } from '@mui/icons-material'; 
-
+import { BusinessCenter } from '@mui/icons-material';
 import AdminLayout from '../../components/Layout';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Avatar } from '@mui/material';
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
-
-
+const API = process.env.REACT_APP_API_URL;
 
 interface Partenaire {
   _id: string;
@@ -36,7 +34,7 @@ const PartenairesPage: React.FC = () => {
   const perPage = 5;
 
   const fetchPartenaires = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/partenaires');
+    const res = await axios.get(`${API}/partenaires`);
     setPartenaires(res.data);
   };
 
@@ -63,9 +61,9 @@ const PartenairesPage: React.FC = () => {
     if (form.logo) formData.append('logo', form.logo);
 
     if (editData) {
-      await axios.put(`https://mme-backend.onrender.com/api/partenaires/${editData._id}`, formData);
+      await axios.put(`${API}/partenaires/${editData._id}`, formData);
     } else {
-      await axios.post('https://mme-backend.onrender.com/api/partenaires', formData);
+      await axios.post(`${API}/partenaires`, formData);
     }
 
     setDrawerOpen(false);
@@ -75,7 +73,7 @@ const PartenairesPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await axios.delete(`https://mme-backend.onrender.com/api/partenaires/${id}`);
+    await axios.delete(`${API}/partenaires/${id}`);
     fetchPartenaires();
   };
 
@@ -84,76 +82,68 @@ const PartenairesPage: React.FC = () => {
   );
 
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-  
-const theme = useTheme();
-const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <AdminLayout>
       <Box p={3} maxWidth="1400px" mx="auto">
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3} display="flex" alignItems="center" gap={1}>
-         <HandshakeIcon sx={{ width: 40, height: 32 }} />
-        Gestion des Partenaires
-      </Typography>
+          <HandshakeIcon sx={{ width: 40, height: 32 }} />
+          Gestion des Partenaires
+        </Typography>
 
-        <Paper
-  elevation={2}
-  sx={{
-    p: 2,
-    mb: 3,
-    backgroundColor: '#e3f2fd',
-    borderRadius: 2,
-  }}
->
-  <Box
-    display="flex"
-    flexDirection={isMobile ? 'column' : 'row'}
-    justifyContent="space-between"
-    alignItems={isMobile ? 'stretch' : 'center'}
-    gap={isMobile ? 2 : 0}
-  >
-    <TextField
-      size="small"
-      placeholder="Rechercher un partenaire..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon />
-          </InputAdornment>
-        ),
-      }}
-      sx={{
-        width: isMobile ? '100%' : '35%',
-        backgroundColor: 'white',
-        borderRadius: 1,
-      }}
-    />
+        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
+          <Box
+            display="flex"
+            flexDirection={isMobile ? 'column' : 'row'}
+            justifyContent="space-between"
+            alignItems={isMobile ? 'stretch' : 'center'}
+            gap={isMobile ? 2 : 0}
+          >
+            <TextField
+              size="small"
+              placeholder="Rechercher un partenaire..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                width: isMobile ? '100%' : '35%',
+                backgroundColor: 'white',
+                borderRadius: 1,
+              }}
+            />
 
-    <Button
-      variant="contained"
-      startIcon={<Add />}
-      onClick={() => {
-        setEditData(null);
-        setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null });
-        setDrawerOpen(true);
-      }}
-      sx={{
-        backgroundColor: '#001e61',
-        borderRadius: 3,
-        textTransform: 'none',
-        fontWeight: 'bold',
-        px: 3,
-        boxShadow: 2,
-        '&:hover': { backgroundColor: '#001447' },
-        width: isMobile ? '100%' : 'auto'
-      }}
-    >
-      Ajouter un partenaire
-    </Button>
-  </Box>
-</Paper>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => {
+                setEditData(null);
+                setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null });
+                setDrawerOpen(true);
+              }}
+              sx={{
+                backgroundColor: '#001e61',
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 'bold',
+                px: 3,
+                boxShadow: 2,
+                '&:hover': { backgroundColor: '#001447' },
+                width: isMobile ? '100%' : 'auto'
+              }}
+            >
+              Ajouter un partenaire
+            </Button>
+          </Box>
+        </Paper>
 
         <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
           <Table>
@@ -171,7 +161,7 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
                     {p.logo ? (
                       <Box
                         component="img"
-                        src={`https://mme-backend.onrender.com/uploads/partenaires/${p.logo}`}
+                        src={`${API}/uploads/partenaires/${p.logo}`}
                         alt="logo partenaire"
                         sx={{ width: 70, height: 70, objectFit: 'contain', borderRadius: 2, boxShadow: 1 }}
                       />
@@ -200,95 +190,90 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
           <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
         </Box>
 
-<Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-  <Box p={3} width={isMobile ? '100vw' : 450}>
-    {/* Avatar / Logo centré */}
-    <Box display="flex" justifyContent="center" mb={3}>
-      <label htmlFor="logo-input">
-        <Avatar
-          src={
-            form.logo instanceof File
-              ? URL.createObjectURL(form.logo)
-              : editData?.logo
-              ? `https://mme-backend.onrender.com/uploads/partenaires/${editData.logo}`
-              : undefined
-          }
-          sx={{
-            width: 110,
-            height: 110,
-            borderRadius: '12px',
-            objectFit: 'contain',
-            backgroundColor: '#f0f0f0',
-            cursor: 'pointer',
-            boxShadow: 2,
-            mt: 2,
-            fontSize: 16,
-            color: '#666',
-            marginTop:'20px'
-          }}
-        >
-          {!form.logo && !editData?.logo && 'Logo'}
-        </Avatar>
-      </label>
-      <input
-        id="logo-input"
-        name="logo"
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={handleInputChange}
-      />
-    </Box>
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={isMobile ? '100vw' : 450}>
+            <Box display="flex" justifyContent="center" mb={3}>
+              <label htmlFor="logo-input">
+                <Avatar
+                  src={
+                    form.logo instanceof File
+                      ? URL.createObjectURL(form.logo)
+                      : editData?.logo
+                        ? `${API}/uploads/partenaires/${editData.logo}`
+                        : undefined
+                  }
+                  sx={{
+                    width: 110,
+                    height: 110,
+                    borderRadius: '12px',
+                    objectFit: 'contain',
+                    backgroundColor: '#f0f0f0',
+                    cursor: 'pointer',
+                    boxShadow: 2,
+                    mt: 2,
+                    fontSize: 16,
+                    color: '#666',
+                    marginTop: '20px'
+                  }}
+                >
+                  {!form.logo && !editData?.logo && 'Logo'}
+                </Avatar>
+              </label>
+              <input
+                id="logo-input"
+                name="logo"
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleInputChange}
+              />
+            </Box>
 
-    {/* Inputs alignés en 2 colonnes */}
-    <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-      {[
-        { name: 'nom', label: 'Nom' },
-        { name: 'ice', label: 'ICE' },
-        { name: 'adresse', label: 'Adresse' },
-        { name: 'email', label: 'Email' },
-        { name: 'telephone', label: 'Téléphone' }
-      ].map(({ name, label }) => (
-        <Box key={name} flex="1 1 45%">
-          <TextField
-            fullWidth
-            label={label}
-            name={name}
-            value={form[name as keyof typeof form] || ''}
-            onChange={handleInputChange}
-            sx={{
-              '& .MuiInputBase-root': {
+            <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+              {[
+                { name: 'nom', label: 'Nom' },
+                { name: 'ice', label: 'ICE' },
+                { name: 'adresse', label: 'Adresse' },
+                { name: 'email', label: 'Email' },
+                { name: 'telephone', label: 'Téléphone' }
+              ].map(({ name, label }) => (
+                <Box key={name} flex="1 1 45%">
+                  <TextField
+                    fullWidth
+                    label={label}
+                    name={name}
+                    value={form[name as keyof typeof form] || ''}
+                    onChange={handleInputChange}
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        borderRadius: '12px',
+                        backgroundColor: '#f9fafb'
+                      }
+                    }}
+                  />
+                </Box>
+              ))}
+            </Box>
+
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleSubmit}
+              sx={{
+                mt: 4,
+                backgroundColor: '#001e61',
                 borderRadius: '12px',
-                backgroundColor: '#f9fafb'
-              }
-            }}
-          />
-        </Box>
-      ))}
-    </Box>
-
-    {/* Bouton de validation */}
-    <Button
-      fullWidth
-      variant="contained"
-      onClick={handleSubmit}
-      sx={{
-        mt: 4,
-        backgroundColor: '#001e61',
-        borderRadius: '12px',
-        textTransform: 'none',
-        fontWeight: 'bold',
-        py: 1.5,
-        fontSize: '16px',
-        '&:hover': { backgroundColor: '#001447' }
-      }}
-    >
-      {editData ? 'Mettre à jour' : 'Ajouter'}
-    </Button>
-  </Box>
-</Drawer>
-
-
+                textTransform: 'none',
+                fontWeight: 'bold',
+                py: 1.5,
+                fontSize: '16px',
+                '&:hover': { backgroundColor: '#001447' }
+              }}
+            >
+              {editData ? 'Mettre à jour' : 'Ajouter'}
+            </Button>
+          </Box>
+        </Drawer>
       </Box>
     </AdminLayout>
   );

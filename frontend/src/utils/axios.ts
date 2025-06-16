@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'https://mme-backend.onrender.com', // ✅ Corrigé ici
+  baseURL: process.env.REACT_APP_API_URL,
+  withCredentials: true, 
 });
 
 export default instance;

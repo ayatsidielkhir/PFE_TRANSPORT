@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import './login.css';
-import axios from 'axios';
+import axios from '../utils/axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import logo from '../logoMme-.png'; // 🔁 assurez-vous que ce chemin est correct
+import logo from '../logoMme-.png';
+
+const API = process.env.REACT_APP_API_URL;
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,7 +14,7 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, { email, password });
+      const res = await axios.post(`${API}/auth/login`, { email, password });
       const { token, user } = res.data;
 
       localStorage.setItem('token', token);

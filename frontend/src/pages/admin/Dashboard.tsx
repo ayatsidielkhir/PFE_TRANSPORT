@@ -12,6 +12,9 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import MapIcon from '@mui/icons-material/Map';
 
+const API = process.env.REACT_APP_API_URL;
+
+
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState({
     chauffeurs: 0,
@@ -21,7 +24,7 @@ const DashboardPage: React.FC = () => {
   });
 
   useEffect(() => {
-    axios.get('https://mme-backend.onrender.com/api/admin/dashboard')
+        axios.get(`${API}/admin/dashboard`)
       .then(res => {
         const { chauffeurs, vehicules, factures, trajets } = res.data;
         setStats({ chauffeurs, vehicules, factures, trajets });

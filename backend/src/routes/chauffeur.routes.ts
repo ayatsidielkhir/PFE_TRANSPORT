@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
@@ -10,14 +10,12 @@ import {
   updateChauffeur
 } from '../controllers/chauffeur.controller';
 
-import { RequestHandler } from 'express';
-
 const router = Router();
 
-// ✅ Configuration Multer avec disque persistant Render
+// ✅ Configuration Multer (upload local)
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const dir = path.resolve('/mnt/data/uploads', 'chauffeurs');
+    const dir = path.resolve(__dirname, '../../uploads/chauffeurs');
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -28,21 +26,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ✅ Téléchargement de fichier
-const downloadFile: RequestHandler = (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.resolve('/mnt/data/uploads', 'chauffeurs', filename);
-
-  if (!fs.existsSync(filePath)) {
-    res.status(404).json({ message: 'Fichier introuvable' });
-    return;
-  }
-
-  res.download(filePath);
-};
-
-// ✅ Routes
-
+// Routes CRUD Chauffeurs
 router.get('/', getChauffeurs);
 
 router.post(
@@ -70,6 +54,17 @@ router.put(
 );
 
 router.delete('/:id', deleteChauffeur);
-router.get('/download/:filename', downloadFile);
+
+// ✅ Télécharger les fichiers localement
+router.get('/download/:filename', (req, res) => {
+  const filePath = path.resolve(__dirname, '../../uploads/chauffeurs', req.params.filename);
+
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ message: 'Fichier introuvable' });
+    return;
+  }
+
+  res.download(filePath);
+});
 
 export default router;

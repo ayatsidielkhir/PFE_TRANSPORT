@@ -15,6 +15,11 @@
   import { FolderOpen } from '@mui/icons-material';
 
 
+  
+  const API = process.env.REACT_APP_API_URL;
+
+
+
 
 
 
@@ -77,12 +82,12 @@
     }, []);
 
     const fetchVehicules = async () => {
-      const res = await axios.get('/api/vehicules');
+      const res = await axios.get('/vehicules');
       setVehicules(res.data);
     };
 
     const fetchChauffeurs = async () => {
-      const res = await axios.get('/api/chauffeurs');
+      const res = await axios.get('/chauffeurs');
       setChauffeurs(res.data);
     };
 
@@ -118,7 +123,7 @@
       setPhotoVehiculeFile(null);
       setPreviewPhotoVehicule(
         vehicule.photoVehicule
-          ? `https://mme-backend.onrender.com/uploads/vehicules/${vehicule.photoVehicule}`
+          ? `http://localhost:5000/uploads/vehicules/${vehicule.photoVehicule}`
           : null
       );
 
@@ -149,8 +154,8 @@
 
       try {
         const res = isEditing && form._id
-          ? await axios.put(`/api/vehicules/${form._id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-          : await axios.post('/api/vehicules', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+          ? await axios.put(`/vehicules/${form._id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+          : await axios.post('/vehicules', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
         if ([200, 201].includes(res.status)) {
           fetchVehicules();
@@ -166,7 +171,7 @@
       if (!id) return;
       if (window.confirm('Supprimer ce véhicule ?')) {
         try {
-          await axios.delete(`/api/vehicules/${id}`);
+          await axios.delete(`/vehicules/${id}`);
           fetchVehicules();
         } catch (err) {
           alert("Erreur lors de la suppression.");
@@ -180,7 +185,7 @@
 
     const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';
-    const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
+    const url = `http://localhost:5000/uploads/vehicules/${file}`;
     return (
       <Tooltip title="Voir le PDF">
         <IconButton onClick={() => setModalUrl(url)}>
@@ -280,7 +285,7 @@
                     <TableCell>
                       {v.photoVehicule ? (
                         <Avatar
-                          src={`https://mme-backend.onrender.com/uploads/vehicules/${v.photoVehicule}`}
+                          src={`http://localhost:5000/uploads/vehicules/${v.photoVehicule}`}
                           variant="rounded"
                           sx={{ width: 40, height: 40 }}
                         />
@@ -325,7 +330,7 @@
                       src={
                         previewPhotoVehicule
                           || (form.photoVehicule
-                              ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}`
+                              ? `http://localhost:5000/uploads/vehicules/${form.photoVehicule}`
                               : '')
                       }
                     sx={{
