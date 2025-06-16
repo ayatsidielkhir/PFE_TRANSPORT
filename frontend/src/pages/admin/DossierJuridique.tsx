@@ -4,10 +4,9 @@ import {
   Paper, Button, IconButton, Drawer, TextField, InputAdornment, Tooltip, Dialog, DialogContent,
   DialogTitle
 } from '@mui/material';
-import { Description, Add, Search as SearchIcon, Edit, Delete } from '@mui/icons-material';
+import { Description, Add, Search as SearchIcon, Edit, Delete, Visibility } from '@mui/icons-material';
 import axios from '../../utils/axios';
 import Layout from '../../components/Layout';
-import { Visibility } from '@mui/icons-material';
 
 const API = process.env.REACT_APP_API_URL;
 
@@ -26,7 +25,6 @@ const DossierJuridique: React.FC = () => {
   const fetchDossier = async () => {
     const res = await axios.get(`${API}/dossier-juridique`);
     setDossier(res.data);
-    console.log('📁 Données reçues sans les champs système :', res.data);
   };
 
   useEffect(() => { fetchDossier(); }, []);
@@ -124,17 +122,16 @@ const DossierJuridique: React.FC = () => {
               {filtered.map(([key, value], i) => (
                 <TableRow key={key} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
                   <TableCell>{key.replace('custom_', '').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}</TableCell>
-                    <TableCell>
-                      <Tooltip title="Prévisualiser le document">
-                        <IconButton
-                          onClick={() => handlePreview(value)}
-                          sx={{ color: '#1976d2' }}
-                        >
-                          <Visibility />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-
+                  <TableCell>
+                    <Tooltip title="Prévisualiser le document">
+                      <IconButton
+                        onClick={() => handlePreview(value)}
+                        sx={{ color: '#1976d2' }}
+                      >
+                        <Visibility />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
                   <TableCell>
                     <Tooltip title="Modifier">
                       <IconButton onClick={() => {
@@ -145,12 +142,11 @@ const DossierJuridique: React.FC = () => {
                         <Edit fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                      <Tooltip title="Supprimer">
-                          <IconButton onClick={() => handleDelete(key)}  sx={{ color: '#d32f2f' }}>
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
+                    <Tooltip title="Supprimer">
+                      <IconButton onClick={() => handleDelete(key)} sx={{ color: '#d32f2f' }}>
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
@@ -158,13 +154,12 @@ const DossierJuridique: React.FC = () => {
           </Table>
         </Paper>
 
-        {/* Drawer */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => {
           setDrawerOpen(false);
           setEditKey(null);
         }}>
-          <Box p={3} mt={10} width={{ xs: '100vw', sm: 400 }} >
-            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2} >
+          <Box p={3} mt={10} width={{ xs: '100vw', sm: 400 }}>
+            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2}>
               {editKey ? 'Modifier le document' : 'Ajouter un document'}
             </Typography>
             <TextField
@@ -191,12 +186,31 @@ const DossierJuridique: React.FC = () => {
           </Box>
         </Drawer>
 
-        {/* Aperçu PDF */}
-          <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
-          <DialogTitle>Prévisualisation</DialogTitle>
+        <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
+          <DialogTitle>
+            Prévisualisation
+            <Button
+              component="a"
+              href={previewFile || '#'}
+              target="_blank"
+              download
+              sx={{
+                ml: 2,
+                fontSize: '0.8rem',
+                textTransform: 'none',
+                backgroundColor: '#1976d2',
+                color: 'white',
+                '&:hover': { backgroundColor: '#0d47a1' }
+              }}
+            >
+              Télécharger
+            </Button>
+          </DialogTitle>
           <DialogContent>
-            {previewFile && (
+            {previewFile && previewFile.match(/\.(pdf)$/i) ? (
               <Box component="iframe" src={previewFile} width="100%" height="600px" />
+            ) : (
+              <Box component="img" src={previewFile || ''} width="100%" sx={{ maxHeight: 600, objectFit: 'contain' }} />
             )}
           </DialogContent>
         </Dialog>

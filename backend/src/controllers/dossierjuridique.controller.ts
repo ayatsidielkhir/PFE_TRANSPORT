@@ -46,20 +46,33 @@ export const uploadDossier = async (req: Request, res: Response) => {
   res.status(201).json({ message: 'Documents enregistrés' });
 };
 
-export const deleteFileFromDossier = async (req: Request, res: Response) => {
-  const { field } = req.params;
-  const dossier = await DossierJuridique.findOne();
+export const deleteFileFromDossier: RequestHandler = async (req, res) => {
+  try {
+    const { field } = req.params;
 
-  if (!dossier || !(dossier as any)[field]) {
-    res.status(404).json({ message: 'Document non trouvé' });
-    return;
+    if (!field) {
+      res.status(400).json({ message: 'Champ non fourni' });
+      return;
+    }
+
+    const dossier = await DossierJuridique.findOne();
+    if (!dossier || !(dossier as any)[field]) {
+      res.status(404).json({ message: 'Document non trouvé' });
+      return;
+    }
+
+    const filename = (dossier as any)[field];
+    const filePath = path.resolve('/mnt/data/uploads/juridique', filename);
+
+    if (typeof filename === 'string' && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    await DossierJuridique.updateOne({}, { $unset: { [field]: '' } });
+
+    res.json({ message: 'Document supprimé' });
+  } catch (err) {
+    console.error('❌ Erreur suppression fichier:', err);
+    res.status(500).json({ message: 'Erreur serveur lors de la suppression' });
   }
-
-  const filename = (dossier as any)[field];
-  const filePath = path.resolve('/mnt/data/uploads/juridique', filename);
-
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-
-  await DossierJuridique.updateOne({}, { $unset: { [field]: '' } });
-  res.json({ message: 'Document supprimé' });
 };
