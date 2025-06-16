@@ -16,6 +16,8 @@ import platformRoutes from './routes/plateformes.routes';
 import factureRoutes from './routes/facture.routes';
 import chargeRoutes from './routes/charge.routes';
 import caisseRoutes from './routes/caisse.routes';
+import uploadsRoutes from './routes/uploads.routes';
+
 
 dotenv.config();
 
@@ -62,6 +64,8 @@ mongoose.connect(MONGO_URI)
     app.use('/api/factures', factureRoutes);
     app.use('/api/charges', chargeRoutes);
     app.use('/api/caisse', caisseRoutes);
+    app.use('/api/uploads', uploadsRoutes);
+
 
     // ✅ Chemins statiques vers les fichiers
     app.use('/uploads/chauffeurs', express.static('/mnt/data/uploads/chauffeurs'));
