@@ -61,18 +61,20 @@ export const deleteFileFromDossier: RequestHandler = async (req, res) => {
       return;
     }
 
-    const filename = (dossier as any)[field];
+    const rawFilename = (dossier as any)[field];
+    const filename = typeof rawFilename === 'string' ? rawFilename : String(rawFilename);
     const filePath = path.resolve('/mnt/data/uploads/juridique', filename);
 
-    if (typeof filename === 'string' && fs.existsSync(filePath)) {
+    if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
 
     await DossierJuridique.updateOne({}, { $unset: { [field]: '' } });
 
-    res.json({ message: 'Document supprimé' });
+    res.json({ message: 'Document supprimé' }); // ✅ PAS DE return ici
   } catch (err) {
     console.error('❌ Erreur suppression fichier:', err);
-    res.status(500).json({ message: 'Erreur serveur lors de la suppression' });
+    res.status(500).json({ message: 'Erreur serveur lors de la suppression' }); // ✅ PAS DE return ici
   }
 };
+
