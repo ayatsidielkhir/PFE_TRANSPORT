@@ -2,10 +2,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Utilise le chemin selon l'environnement (local ou Render)
-const baseUploadPath = process.env.LOCAL_UPLOADS
-  ? path.resolve(__dirname, '../uploads')
-  : '/mnt/data/uploads';
+// ✅ Utilise toujours le chemin persistant de Render
+const baseUploadPath = '/mnt/data/uploads';
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -15,8 +13,10 @@ const storage = multer.diskStorage({
     else if (req.baseUrl.includes('dossier-juridique')) folder = 'juridique';
     else if (req.baseUrl.includes('plateformes')) folder = 'platforms';
     else if (req.baseUrl.includes('factures')) folder = 'factures';
+    else if (req.baseUrl.includes('caisse')) folder = 'caisse';
+    else if (req.baseUrl.includes('partenaires')) folder = 'partenaires';
 
-    const dir = path.resolve(baseUploadPath, folder); // ✅ correction ici
+    const dir = path.resolve(baseUploadPath, folder);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -34,7 +34,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
 
   if (isVehiculeRoute) {
     if (isPhotoVehicule) {
-      if (/^image\/(jpeg|png|jpg|webp)$/.test(file.mimetype)) {
+      if (/^image\/(jpeg|png|jpg|webp)$/i.test(file.mimetype)) {
         return cb(null, true);
       } else {
         return cb(new Error('Seules les images sont autorisées pour le véhicule (photoVehicule).'));
@@ -47,7 +47,8 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
       }
     }
   }
-  cb(null, true);
+
+  cb(null, true); // autorise les autres fichiers ailleurs
 };
 
 const upload = multer({ storage, fileFilter });
