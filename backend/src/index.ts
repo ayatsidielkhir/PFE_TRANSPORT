@@ -21,10 +21,9 @@ dotenv.config();
 
 const app = express();
 
-// ✅ Origines autorisées pour le CORS
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://mme-express.ma',             // Ton domaine custom
+  'https://mme-express.ma',
 ];
 
 const corsOptions: cors.CorsOptions = {
@@ -47,12 +46,10 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI!;
 
-// ✅ Connexion MongoDB
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
 
-    // ✅ Routes API
     app.use('/api/auth', authRoutes);
     app.use('/api/chauffeurs', chauffeurRoutes);
     app.use('/api/vehicules', vehiculeRoutes);
@@ -66,15 +63,15 @@ mongoose.connect(MONGO_URI)
     app.use('/api/charges', chargeRoutes);
     app.use('/api/caisse', caisseRoutes);
 
-    // ✅ Routes statiques des fichiers sur disque Render (/mnt/data/uploads)
+    // ✅ Chemins statiques vers les fichiers
     app.use('/uploads/chauffeurs', express.static('/mnt/data/uploads/chauffeurs'));
     app.use('/uploads/vehicules', express.static('/mnt/data/uploads/vehicules'));
     app.use('/uploads/juridique', express.static('/mnt/data/uploads/juridique'));
     app.use('/uploads/platforms', express.static('/mnt/data/uploads/platforms'));
     app.use('/uploads/factures', express.static('/mnt/data/uploads/factures'));
     app.use('/uploads/caisse', express.static('/mnt/data/uploads/caisse'));
+    app.use('/uploads/partenaires', express.static('/mnt/data/uploads/partenaires')); // ✅ Corrigé
 
-    // ✅ Test route
     app.get('/', (_req, res) => {
       res.send("Bienvenue sur l'API backend");
     });
