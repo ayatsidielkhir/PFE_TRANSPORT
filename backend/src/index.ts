@@ -22,7 +22,10 @@ dotenv.config();
 const app = express();
 
 // Définir les origines autorisées
-const allowedOrigins = ['http://localhost:3000'];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://mme-express.ma' // ← Ajoute ici ton vrai domaine Render/Custom
+];
 
 const corsOptions: cors.CorsOptions = {
   origin: function (origin, callback) {
