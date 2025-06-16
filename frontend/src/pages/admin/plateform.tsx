@@ -157,7 +157,7 @@ const PlateformesPage: React.FC = () => {
                   <TableCell>
                     {p.logo ? (
                       <Avatar
-                        src={`http://localhost:5000/uploads/platforms/${p.logo}`}
+                        src={`https://mme-backend.onrender.com/uploads/platforms/${p.logo}`}
                         alt="logo"
                         variant="rounded"
                         sx={{ width: 40, height: 40 }}

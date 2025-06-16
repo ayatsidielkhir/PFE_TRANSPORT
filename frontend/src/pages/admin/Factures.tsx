@@ -95,7 +95,7 @@ const selectedClient = partenaires.find(p => p._id === client);
         date, partenaire: client, ice: selectedClient?.ice || '', tracteur, lignes, tva,
         totalHT: parseFloat(totalHT.toFixed(2)), totalTTC: parseFloat(totalTTC.toFixed(2))
       });
-      window.open(`http://localhost:5000${res.data.fileUrl}`, '_blank');
+      window.open(`https://mme-backend.onrender.com${res.data.fileUrl}`, '_blank');
       const updated = await axios.get('${API}/factures');
       setFactures(updated.data); resetForm();
     } catch (err) {
@@ -242,7 +242,7 @@ const selectedClient = partenaires.find(p => p._id === client);
                           </Button>
                         </TableCell>
                         <TableCell>
-                          <Button size="small" onClick={() => window.open(`http://localhost:5000${f.fileUrl}`, '_blank')}>Voir PDF</Button>
+                          <Button size="small" onClick={() => window.open(`https://mme-backend.onrender.com${f.fileUrl}`, '_blank')}>Voir PDF</Button>
                         </TableCell>
                         <TableCell>
                           <Button size="small" color="warning" onClick={() => handleEdit(f)}>Modifier</Button>

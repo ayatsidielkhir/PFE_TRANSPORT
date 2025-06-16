@@ -123,7 +123,7 @@
       setPhotoVehiculeFile(null);
       setPreviewPhotoVehicule(
         vehicule.photoVehicule
-          ? `http://localhost:5000/uploads/vehicules/${vehicule.photoVehicule}`
+          ? `https://mme-backend.onrender.com/uploads/vehicules/${vehicule.photoVehicule}`
           : null
       );
 
@@ -185,7 +185,7 @@
 
     const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';
-    const url = `http://localhost:5000/uploads/vehicules/${file}`;
+    const url = `https://mme-backend.onrender.com/uploads/vehicules/${file}`;
     return (
       <Tooltip title="Voir le PDF">
         <IconButton onClick={() => setModalUrl(url)}>
@@ -285,7 +285,7 @@
                     <TableCell>
                       {v.photoVehicule ? (
                         <Avatar
-                          src={`http://localhost:5000/uploads/vehicules/${v.photoVehicule}`}
+                          src={`https://mme-backend.onrender.com/uploads/vehicules/${v.photoVehicule}`}
                           variant="rounded"
                           sx={{ width: 40, height: 40 }}
                         />
@@ -330,7 +330,7 @@
                       src={
                         previewPhotoVehicule
                           || (form.photoVehicule
-                              ? `http://localhost:5000/uploads/vehicules/${form.photoVehicule}`
+                              ? `https://mme-backend.onrender.com/uploads/vehicules/${form.photoVehicule}`
                               : '')
                       }
                     sx={{

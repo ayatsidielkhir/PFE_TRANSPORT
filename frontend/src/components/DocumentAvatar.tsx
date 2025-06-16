@@ -12,8 +12,7 @@ const DocumentAvatar: React.FC<Props> = ({ fileName, onClick }) => {
   if (!fileName) return <Avatar sx={{ bgcolor: '#ccc' }}>?</Avatar>;
 
   const isPdf = fileName.toLowerCase().endsWith('.pdf');
-  const fileUrl = `http://localhost:5000
-/uploads/chauffeurs/${encodeURIComponent(fileName)}`;
+  const fileUrl = `https://mme-backend.onrender.com/uploads/chauffeurs/${encodeURIComponent(fileName)}`;
 
   return isPdf ? (
     <Avatar sx={{ bgcolor: '#f44336', cursor: 'pointer' }} onClick={onClick}>
