@@ -12,6 +12,9 @@ import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+const API = process.env.REACT_APP_API_URL;
+console.log("➡️ API =", API);
+
 interface Operation {
   _id?: string;
   type: 'Entrée' | 'Sortie';
@@ -42,7 +45,7 @@ const CaissePage: React.FC = () => {
   const [dialogTitle, setDialogTitle] = useState('');
 
   const fetchData = async () => {
-    const res = await axios.get('http://localhost:5000/api/caisse');
+    const res = await axios.get(`${API}/caisse`);
     setOperations(res.data);
   };
 
@@ -120,7 +123,7 @@ const CaissePage: React.FC = () => {
     if (file) formData.append('justificatif', file);
 
     const method = selected ? axios.put : axios.post;
-    const url = selected ? `http://localhost:5000/api/caisse/${selected._id}` : 'http://localhost:5000/api/caisse';
+    const url = selected ? `${API}/caisse/${selected._id}` : `${API}/caisse`;
 
     await method(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
     fetchData();
@@ -130,13 +133,12 @@ const CaissePage: React.FC = () => {
     setSelected(null);
   };
 
- const handleDelete = async (id: string) => {
-  if (window.confirm('Supprimer cette opération ?')) {
-    await axios.delete(`http://localhost:5000/api/caisse/${id}`);
-    fetchData(); // recharge les données correctement
-  }
-};
-
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Supprimer cette opération ?')) {
+      await axios.delete(`${API}/caisse/${id}`);
+      fetchData();
+    }
+  };
 
   const filtered = operations.filter(op =>
     (!filterType || op.type === filterType) &&
@@ -226,7 +228,7 @@ const CaissePage: React.FC = () => {
                     {op.justificatif && (
                       <Tooltip title="Voir justificatif">
                         <IconButton onClick={() => {
-                          setDialogImageSrc(`http://localhost:5000/uploads/caisse/${op.justificatif}`);
+                          setDialogImageSrc(`${API?.replace('/api', '')}/uploads/caisse/${op.justificatif}`);
                           setDialogTitle(op.justificatif || '');
                           setOpenDialog(true);
                         }}>
