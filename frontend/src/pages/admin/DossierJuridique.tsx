@@ -23,7 +23,7 @@ const DossierJuridique: React.FC = () => {
   const [editKey, setEditKey] = useState<string | null>(null);
 
   const fetchDossier = async () => {
-    const res = await axios.get(`${API}/dossier-juridique`);
+    const res = await axios.get('/dossier-juridique');
     setDossier(res.data);
   };
 
@@ -34,7 +34,7 @@ const DossierJuridique: React.FC = () => {
     const key = editKey ? editKey : `custom_${form.name}`;
     if (form.file) formData.append(key, form.file);
 
-    await axios.post(`${API}/dossier-juridique`, formData);
+    await axios.post('/dossier-juridique', formData);
     setDrawerOpen(false);
     setForm({ name: '', file: null });
     setEditKey(null);
@@ -55,7 +55,7 @@ const DossierJuridique: React.FC = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${API}/dossier-juridique/${key}`);
+      await axios.delete(`/dossier-juridique/${key}`);
       fetchDossier();
     } catch (err) {
       console.error('Erreur lors de la suppression', err);
@@ -161,58 +161,55 @@ const DossierJuridique: React.FC = () => {
           </Table>
         </Paper>
 
-              <Drawer anchor="right" open={drawerOpen} onClose={() => {
-  setDrawerOpen(false);
-  setEditKey(null);
-}}>
-  <Box p={3} mt={10} width={{ xs: '100vw', sm: 400 }}>
-    <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2}>
-      {editKey ? 'Modifier le document' : 'Ajouter un document'}
-    </Typography>
+        <Drawer anchor="right" open={drawerOpen} onClose={() => {
+          setDrawerOpen(false);
+          setEditKey(null);
+        }}>
+          <Box p={3} mt={10} width={{ xs: '100vw', sm: 400 }}>
+            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={2}>
+              {editKey ? 'Modifier le document' : 'Ajouter un document'}
+            </Typography>
 
-    {/* ✅ Champ nom modifiable même en mode modification */}
-    <TextField
-      label="Nom du document"
-      value={form.name}
-      onChange={(e) => setForm({ ...form, name: e.target.value })}
-      fullWidth
-      sx={{ mb: 2 }}
-    />
+            <TextField
+              label="Nom du document"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              fullWidth
+              sx={{ mb: 2 }}
+            />
 
-    {/* ✅ Bouton upload avec affichage du nom du fichier sélectionné */}
-    <Button
-      variant="outlined"
-      component="label"
-      fullWidth
-      sx={{ justifyContent: 'space-between', textTransform: 'none' }}
-    >
-      {form.file ? form.file.name : 'Télécharger le fichier'}
-      <input
-        type="file"
-        hidden
-        onChange={(e) =>
-          setForm({ ...form, file: e.target.files?.[0] || null })
-        }
-      />
-    </Button>
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+              sx={{ justifyContent: 'space-between', textTransform: 'none' }}
+            >
+              {form.file ? form.file.name : 'Télécharger le fichier'}
+              <input
+                type="file"
+                hidden
+                onChange={(e) =>
+                  setForm({ ...form, file: e.target.files?.[0] || null })
+                }
+              />
+            </Button>
 
-    <Button
-      variant="contained"
-      onClick={handleUpload}
-      fullWidth
-      sx={{
-        mt: 2,
-        backgroundColor: '#1976d2',
-        '&:hover': { backgroundColor: '#1565c0' },
-        fontWeight: 'bold'
-      }}
-      disabled={!form.file}
-    >
-      Enregistrer
-    </Button>
-  </Box>
-</Drawer>
-
+            <Button
+              variant="contained"
+              onClick={handleUpload}
+              fullWidth
+              sx={{
+                mt: 2,
+                backgroundColor: '#1976d2',
+                '&:hover': { backgroundColor: '#1565c0' },
+                fontWeight: 'bold'
+              }}
+              disabled={!form.file}
+            >
+              Enregistrer
+            </Button>
+          </Box>
+        </Drawer>
 
         <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
           <DialogTitle>Prévisualisation</DialogTitle>
@@ -243,7 +240,6 @@ const DossierJuridique: React.FC = () => {
                 >
                   Télécharger l’image
                 </Button>
-
               </Box>
             )}
           </DialogContent>

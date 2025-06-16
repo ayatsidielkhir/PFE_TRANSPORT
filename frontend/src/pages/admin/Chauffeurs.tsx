@@ -8,8 +8,6 @@ import { Delete, Edit, Search as SearchIcon, Add } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
-const API = process.env.REACT_APP_API_URL;
-
 interface Chauffeur {
   _id: string;
   nom: string;
@@ -41,9 +39,10 @@ const ChauffeursPage: React.FC = () => {
   });
 
   const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
+
   const renderDocumentAvatar = (file: string | undefined) => {
     if (!file) return '—';
-    const url = `${API}/uploads/chauffeurs/${file}`;
+    const url = `https://mme-backend.onrender.com/uploads/chauffeurs/${file}`;
     return (
       <Avatar
         src={isImageFile(file) ? url : '/pdf-icon.png'}
@@ -54,7 +53,7 @@ const ChauffeursPage: React.FC = () => {
   };
 
   const fetchChauffeurs = async () => {
-    const res = await axios.get(`${API}/chauffeurs`);
+    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
     setChauffeurs(res.data);
   };
 
@@ -88,8 +87,8 @@ const ChauffeursPage: React.FC = () => {
     });
 
     const url = selectedChauffeur
-      ? `${API}/chauffeurs/${selectedChauffeur._id}`
-      : `${API}/chauffeurs`;
+      ? `https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`
+      : `https://mme-backend.onrender.com/api/chauffeurs`;
 
     const method = selectedChauffeur ? axios.put : axios.post;
 
@@ -124,7 +123,7 @@ const ChauffeursPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Supprimer ce chauffeur ?")) return;
-    await axios.delete(`${API}/chauffeurs/${id}`);
+    await axios.delete(`https://mme-backend.onrender.com/api/chauffeurs/${id}`);
     fetchChauffeurs();
   };
 
@@ -200,8 +199,8 @@ const ChauffeursPage: React.FC = () => {
                   <TableCell>{c.nom}</TableCell>
                   <TableCell>{c.prenom}</TableCell>
                   <TableCell>{c.telephone}</TableCell>
-                  <TableCell>{c.cin}</TableCell>
                   <TableCell>{c.adresse}</TableCell>
+                  <TableCell>{c.cin}</TableCell>
                   <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
                   <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
                   <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
@@ -227,25 +226,23 @@ const ChauffeursPage: React.FC = () => {
 
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
           <DialogTitle>Visualiser le document</DialogTitle>
-              <DialogContent>
-                {dialogImageSrc.endsWith('.pdf') ? (
-                  <iframe
-                    src={dialogImageSrc}
-                    style={{ width: '100%', height: '80vh', border: 'none' }}
-                    title="Document PDF"
-                  />
-                ) : (
-                  <Box
-                    component="img"
-                    src={dialogImageSrc}
-                    alt="document"
-                    width="100%"
-                    sx={{ maxHeight: '80vh', objectFit: 'contain' }}
-                  />
-                )}
-              </DialogContent>
-
-
+          <DialogContent>
+            {dialogImageSrc.endsWith('.pdf') ? (
+              <iframe
+                src={dialogImageSrc}
+                style={{ width: '100%', height: '80vh', border: 'none' }}
+                title="Document PDF"
+              />
+            ) : (
+              <Box
+                component="img"
+                src={dialogImageSrc}
+                alt="document"
+                width="100%"
+                sx={{ maxHeight: '80vh', objectFit: 'contain' }}
+              />
+            )}
+          </DialogContent>
         </Dialog>
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
