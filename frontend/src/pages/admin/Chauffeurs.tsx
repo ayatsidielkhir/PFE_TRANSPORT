@@ -40,7 +40,6 @@ const ChauffeursPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const perPage = 5;
 
-  // Form contient soit string (nom fichier existant) soit File (nouveau upload) ou ''
   const [form, setForm] = useState<Record<string, string | File | null>>({
     nom: '', prenom: '', telephone: '', cin: '', adresse: '',
     photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
@@ -75,14 +74,15 @@ const ChauffeursPage: React.FC = () => {
     }
   };
 
-  // Affiche image preview (photo) ou image existante du backend
   const getPhotoPreviewUrl = () => {
-    if (previewPhoto) return previewPhoto; // preview temporaire upload
-    if (form.photo && typeof form.photo === 'string') return `${API}/uploads/chauffeurs/${form.photo}`;
-    return '';
-  };
+  if (previewPhoto) return previewPhoto;
+  if (form.photo && typeof form.photo === 'string') {
+    return `${API}/uploads/chauffeurs/${form.photo}`;
+  }
+  return '';
+};
 
-  // Pour afficher les documents : image, icône PDF ou '—'
+
   const renderDocumentAvatar = (file: string | undefined | null) => {
     if (!file) return '—';
 
@@ -132,7 +132,6 @@ const ChauffeursPage: React.FC = () => {
       if (value instanceof File) {
         formData.append(key, value);
       } else if (typeof value === 'string' && value.trim() !== '') {
-        // envoyer le nom du fichier existant pour ne pas le perdre
         formData.append(key, value);
       }
     });
@@ -155,6 +154,8 @@ const ChauffeursPage: React.FC = () => {
       alert("Erreur lors de l'enregistrement");
     }
   };
+  setPreviewPhoto(null);
+
 
   const handleEdit = (chauffeur: Chauffeur) => {
     setSelectedChauffeur(chauffeur);
@@ -254,11 +255,12 @@ const ChauffeursPage: React.FC = () => {
               {paginated.map((c, i) => (
                 <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
                   <TableCell>
-                    <Avatar
-                      src={c.photo ? `${API}/uploads/chauffeurs/${c.photo}` : ''}
+                      <Avatar
+                      src={typeof c.photo === 'string' ? `${API}/uploads/chauffeurs/${c.photo}` : ''}
                       sx={{ width: 40, height: 40 }}
                       variant="rounded"
                     />
+
                   </TableCell>
                   <TableCell>{c.nom}</TableCell>
                   <TableCell>{c.prenom}</TableCell>
@@ -320,6 +322,7 @@ const ChauffeursPage: React.FC = () => {
                       backgroundColor: '#f0f0f0'
                     }}
                   />
+
                 </label>
                 <input
                   id="photo"
@@ -380,25 +383,26 @@ const ChauffeursPage: React.FC = () => {
                 ].map(({ label, name }) => (
                   <Box key={name} flex="1 1 45%">
                     <Typography variant="body2" fontWeight={500} mb={0.5}>{label}</Typography>
-                    <Button
-                      component="label"
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        color: '#0d47a1',
-                        borderColor: '#90caf9',
-                        '&:hover': { borderColor: '#0d47a1' }
-                      }}
-                    >
-                      {form[name] && typeof form[name] === 'string'
-                        ? form[name]
-                        : form[name] instanceof File
-                          ? form[name].name
-                          : 'Choisir un fichier'}
-                      <input type="file" hidden name={name} onChange={handleInputChange} />
-                    </Button>
+                      <Button
+                        component="label"
+                        variant="outlined"
+                        fullWidth
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          color: '#0d47a1',
+                          borderColor: '#90caf9',
+                          '&:hover': { borderColor: '#0d47a1' }
+                        }}
+                      >
+                        {(() => {
+                          const val = form[name];
+                          if (val && typeof val === 'string') return val;
+                          if (val instanceof File) return val.name;
+                          return 'Choisir un fichier';
+                        })()}
+                        <input type="file" hidden name={name} onChange={handleInputChange} />
+                      </Button>
                   </Box>
                 ))}
               </Box>
