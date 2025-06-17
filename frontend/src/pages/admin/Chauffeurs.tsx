@@ -81,39 +81,48 @@ const ChauffeursPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        customDocs.forEach((doc, index) => {
-        formData.append(`customDocs[${index}][name]`, doc.name);
-        formData.append(`customDocs[${index}][file]`, doc.file);
-      });
+ const handleSubmit = async () => {
+  const formData = new FormData();
 
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'name' in value &&
-    'type' in value
-  ) {
-    formData.append(key, value as File);
-  } else if (typeof value === 'string') {
-    formData.append(key, value);
-  }
-});
-
-
-    try {
-      if (selectedChauffeur) {
-        await axios.put(`https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`, formData);
-      } else {
-        await axios.post('https://mme-backend.onrender.com/api/chauffeurs', formData);
-      }
-      fetchChauffeurs();
-      setDrawerOpen(false);
-    } catch (err) {
-      console.error('Erreur lors de la soumission', err);
+  // 1️⃣ Ajout des champs normaux
+  Object.entries(form).forEach(([key, value]) => {
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      'name' in value &&
+      'type' in value
+    ) {
+      formData.append(key, value as File);
+    } else if (typeof value === 'string') {
+      formData.append(key, value);
     }
-  };
+  });
+
+  // 2️⃣ Ajout des fichiers personnalisés EN DEHORS de la boucle précédente
+  customDocs.forEach((doc, index) => {
+    formData.append(`customDocs[${index}][name]`, doc.name);
+    formData.append(`customDocs[${index}][file]`, doc.file);
+  });
+
+  try {
+    if (selectedChauffeur) {
+      await axios.put(
+        `https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`,
+        formData
+      );
+    } else {
+      await axios.post(
+        'https://mme-backend.onrender.com/api/chauffeurs',
+        formData
+      );
+    }
+    fetchChauffeurs();
+    setDrawerOpen(false);
+  } catch (err) {
+    console.error('Erreur lors de la soumission', err);
+  }
+};
+
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Confirmer la suppression ?')) return;
@@ -373,7 +382,43 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
       ))}
     </Box>
 
-    {/* 📎 Documents personnalisés */}
+   
+
+    {/* 📁 Autres documents standards */}
+    <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
+      {[ 
+        { name: 'scanCIN', label: 'Scan CIN' },
+        { name: 'scanPermis', label: 'Scan Permis' },
+        { name: 'scanVisa', label: 'Scan Visa' },
+        { name: 'certificatBonneConduite', label: 'Casier Judiciaire' }
+      ].map(({ name, label }) => (
+        <Box key={name} flex="1 1 45%">
+          <Typography fontWeight={500} mb={0.5}>{label}</Typography>
+          <Button
+            component="label"
+            variant="outlined"
+            fullWidth
+            sx={{
+              borderRadius: '12px',
+              backgroundColor: '#ffffff',
+              textTransform: 'none',
+              fontSize: '14px',
+              py: 1
+            }}
+          >
+            {form[name] instanceof File ? (form[name] as File).name : 'Choisir un fichier'}
+            <input
+              type="file"
+              name={name}
+              hidden
+              onChange={handleInputChange}
+            />
+          </Button>
+        </Box>
+      ))}
+    </Box>
+
+     {/* 📎 Documents personnalisés */}
     <Box mt={3} mb={2}>
       <Typography fontWeight="bold" mb={1}>Ajouter un autre document</Typography>
       <Box display="flex" flexDirection="column" gap={1}>
@@ -432,40 +477,6 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
           </Box>
         )}
       </Box>
-    </Box>
-
-    {/* 📁 Autres documents standards */}
-    <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
-      {[ 
-        { name: 'scanCIN', label: 'Scan CIN' },
-        { name: 'scanPermis', label: 'Scan Permis' },
-        { name: 'scanVisa', label: 'Scan Visa' },
-        { name: 'certificatBonneConduite', label: 'Casier Judiciaire' }
-      ].map(({ name, label }) => (
-        <Box key={name} flex="1 1 45%">
-          <Typography fontWeight={500} mb={0.5}>{label}</Typography>
-          <Button
-            component="label"
-            variant="outlined"
-            fullWidth
-            sx={{
-              borderRadius: '12px',
-              backgroundColor: '#ffffff',
-              textTransform: 'none',
-              fontSize: '14px',
-              py: 1
-            }}
-          >
-            {form[name] instanceof File ? (form[name] as File).name : 'Choisir un fichier'}
-            <input
-              type="file"
-              name={name}
-              hidden
-              onChange={handleInputChange}
-            />
-          </Button>
-        </Box>
-      ))}
     </Box>
 
     {/* ✅ Bouton final */}
