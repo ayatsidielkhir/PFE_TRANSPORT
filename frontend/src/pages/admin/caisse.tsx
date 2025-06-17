@@ -148,8 +148,6 @@ const CaissePage: React.FC = () => {
   return (
     <AdminLayout>
       <Box p={3} maxWidth="1300px" mx="auto">
-        <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>Gestion de la Caisse</Typography>
-
         {/* Statistiques stylisées */}
         <Box display="flex" gap={2} mb={3} flexWrap="wrap">
           {[{
