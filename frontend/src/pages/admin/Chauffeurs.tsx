@@ -16,6 +16,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { FolderOpen } from '@mui/icons-material';
+const API = process.env.REACT_APP_API_URL;
 
 
 interface Chauffeur {
@@ -56,8 +57,8 @@ const ChauffeursPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const fetchChauffeurs = async () => {
-    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
+   const fetchChauffeurs = async () => {
+    const res = await axios.get(`${API}/chauffeurs`);
     setChauffeurs(res.data);
   };
 
@@ -82,52 +83,43 @@ const ChauffeursPage: React.FC = () => {
   };
 
 const handleSubmit = async () => {
-  const formData = new FormData();
+    const formData = new FormData();
 
-  // 🔹 1. Ajouter les champs standards
-  Object.entries(form).forEach(([key, value]) => {
-    if (value instanceof File) {
-      formData.append(key, value);
-    } else if (typeof value === 'string') {
-      formData.append(key, value);
+    Object.entries(form).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else if (typeof value === 'string') {
+        formData.append(key, value);
+      }
+    });
+
+    customDocs.forEach((doc, index) => {
+      formData.append(`customDocs[${index}][name]`, doc.name);
+      formData.append(`customDocs[${index}][file]`, doc.file, doc.file.name);
+    });
+
+    try {
+      if (selectedChauffeur) {
+        await axios.put(`${API}/chauffeurs/${selectedChauffeur._id}`, formData);
+      } else {
+        await axios.post(`${API}/chauffeurs`, formData);
+      }
+
+      fetchChauffeurs();
+      setDrawerOpen(false);
+      resetForm();
+      setCustomDocs([]);
+    } catch (err) {
+      console.error('❌ Erreur lors de la soumission', err);
     }
-  });
-
-  // 🔹 2. Ajouter les fichiers personnalisés
-  customDocs.forEach((doc, index) => {
-    formData.append(`customDocs[${index}][name]`, doc.name);
-    formData.append(`customDocs[${index}][file]`, doc.file, doc.file.name);
-  });
-
-  // 🔍 Facultatif : afficher les données envoyées pour debug
-  formData.forEach((value, key) => {
-    console.log('📦', key, value);
-  });
-
-  try {
-    if (selectedChauffeur) {
-      await axios.put(`${process.env.REACT_APP_API_URL}/chauffeurs/${selectedChauffeur._id}`, formData);
-    } else {
-      await axios.post(`${process.env.REACT_APP_API_URL}/chauffeurs`, formData);
-    }
-
-    // 🔄 Rafraîchir les données après soumission
-    fetchChauffeurs();
-    setDrawerOpen(false);
-    resetForm();
-    setCustomDocs([]);
-  } catch (err) {
-    console.error('❌ Erreur lors de la soumission', err);
-  }
-};
-
+  };
 
 
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Confirmer la suppression ?')) return;
     try {
-      await axios.delete(`https://mme-backend.onrender.com/api/chauffeurs/${id}`);
+      await axios.delete(`${API}/chauffeurs/${id}`);
       fetchChauffeurs();
     } catch (err) {
       console.error('Erreur de suppression', err);
