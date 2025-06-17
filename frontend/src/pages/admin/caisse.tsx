@@ -241,8 +241,8 @@ const CaissePage: React.FC = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <IconButton onClick={() => { setForm(op); setSelected(op); setDrawerOpen(true); }}><Edit /></IconButton>
-                    <IconButton onClick={() => handleDelete(op._id!)}><Delete /></IconButton>
+                    <IconButton onClick={() => { setForm(op); setSelected(op); setDrawerOpen(true); }} sx={{ color: '#001e61' }}><Edit /></IconButton>
+                    <IconButton onClick={() => handleDelete(op._id!)} sx={{ color: '#d32f2f' }}><Delete /></IconButton>
                   </TableCell>
                 </TableRow>
               );

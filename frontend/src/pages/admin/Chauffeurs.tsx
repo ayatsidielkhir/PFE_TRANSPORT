@@ -268,7 +268,7 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
                   <TableCell>{c.adresse}</TableCell>
                     <TableCell>
                       <Tooltip title="Voir les documents">
-                        <IconButton onClick={() => handleVoirDocs(c)}>
+                        <IconButton onClick={() => handleVoirDocs(c)} sx={{ color: 'green' }}>
                           <FolderOpen />
                         </IconButton>
                       </Tooltip>

@@ -255,7 +255,7 @@ const TrajetsPage: React.FC = () => {
         </Paper>
       </Box>
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box p={3} width={isMobile ? '100vw' : 500}>
+        <Box p={3}  mt={10} width={isMobile ? '100vw' : 500}>
           <Typography variant="h6" fontWeight="bold" color="#001e61" mb={3}>
             {form._id ? 'Modifier le trajet' : 'Ajouter un trajet'}
           </Typography>

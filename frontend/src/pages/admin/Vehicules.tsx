@@ -299,9 +299,11 @@
                     <TableCell>{v.controle_technique}</TableCell>
                     <TableCell>
                       <Tooltip title="Voir tous les documents">
-                        <IconButton onClick={() => handleVoirPlus(v)}>
-                          <FolderOpen />
-                        </IconButton>
+                          <TableCell align="center">
+                            <IconButton onClick={() => handleVoirPlus(v)} sx={{ color: 'green' }}>
+                              <FolderOpen />
+                            </IconButton>
+                          </TableCell>
                       </Tooltip>
                     </TableCell>
 

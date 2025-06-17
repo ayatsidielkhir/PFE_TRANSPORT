@@ -195,7 +195,7 @@ const PartenairesPage: React.FC = () => {
         </Box>
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={isMobile ? '100vw' : 450}>
+          <Box p={3}  mt={10} width={isMobile ? '100vw' : 450}>
             <Box display="flex" justifyContent="center" mb={3}>
               <label htmlFor="logo-input">
                 <Avatar

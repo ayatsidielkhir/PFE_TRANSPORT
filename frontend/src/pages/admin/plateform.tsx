@@ -190,7 +190,7 @@ const PlateformesPage: React.FC = () => {
 
         {/* Drawer */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} mt={8} width={{ xs: '100vw', sm: 450}}>
+          <Box p={3} mt={10} width={{ xs: '100vw', sm: 450}}>
             <Typography variant="h6" fontWeight="bold" color="#001e61" mb={3}>
               {form._id ? 'Modifier la plateforme' : 'Ajouter une plateforme'}
             </Typography>
