@@ -4,7 +4,7 @@ import {
   Table, TableHead, TableRow, TableCell, TableBody, IconButton,
   useMediaQuery, InputLabel, FormControl, Badge, Pagination, Paper, Dialog, DialogTitle, DialogContent, Tooltip
 } from '@mui/material';
-import { Add, Edit, Delete, Visibility, PictureAsPdf } from '@mui/icons-material';
+import { Add, Edit, Delete, Visibility, PictureAsPdf, GridOn } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 import * as XLSX from 'xlsx';
@@ -13,7 +13,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const API = process.env.REACT_APP_API_URL;
-console.log("➡️ API =", API);
 
 interface Operation {
   _id?: string;
@@ -71,7 +70,6 @@ const CaissePage: React.FC = () => {
   const handleExportPDF = () => {
     const doc = new jsPDF();
     doc.text('Liste des opérations de caisse', 14, 14);
-
     autoTable(doc, {
       startY: 20,
       head: [['Type', 'Montant', 'Date', 'Nom', 'Sujet', 'Paiement', 'Statut']],
@@ -85,7 +83,6 @@ const CaissePage: React.FC = () => {
         op.statut
       ])
     });
-
     doc.save('operations_caisse.pdf');
   };
 
@@ -104,20 +101,12 @@ const CaissePage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.date) {
-      alert("Veuillez renseigner la date");
-      return;
-    }
+    if (!form.date) return alert("Veuillez renseigner la date");
 
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (key === 'date') {
-          const formattedDate = new Date(value).toISOString();
-          formData.append(key, formattedDate);
-        } else {
-          formData.append(key, value.toString());
-        }
+      if (value) {
+        formData.append(key, key === 'date' ? new Date(value).toISOString() : value.toString());
       }
     });
     if (file) formData.append('justificatif', file);
@@ -150,12 +139,8 @@ const CaissePage: React.FC = () => {
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   const currentMonth = new Date().getMonth();
-  const totalEntrees = operations
-    .filter(op => op.type === 'Entrée' && new Date(op.date).getMonth() === currentMonth)
-    .reduce((sum, op) => sum + op.montant, 0);
-  const totalSorties = operations
-    .filter(op => op.type === 'Sortie' && new Date(op.date).getMonth() === currentMonth)
-    .reduce((sum, op) => sum + op.montant, 0);
+  const totalEntrees = operations.filter(op => op.type === 'Entrée' && new Date(op.date).getMonth() === currentMonth).reduce((sum, op) => sum + op.montant, 0);
+  const totalSorties = operations.filter(op => op.type === 'Sortie' && new Date(op.date).getMonth() === currentMonth).reduce((sum, op) => sum + op.montant, 0);
   const soldeGlobal = operations.reduce((acc, op) => acc + (op.type === 'Entrée' ? op.montant : -op.montant), 0);
 
   let solde = 0;
@@ -165,57 +150,78 @@ const CaissePage: React.FC = () => {
       <Box p={3} maxWidth="1300px" mx="auto">
         <Typography variant="h4" fontWeight="bold" color="primary" mb={3}>Gestion de la Caisse</Typography>
 
-        <Box display="flex" gap={2} mb={3}>
-          <Paper elevation={2} sx={{ flex: 1, p: 2, textAlign: 'center', borderLeft: '6px solid #001e61' }}>
-            <Typography variant="subtitle2">Solde actuel</Typography>
-            <Typography variant="h6" fontWeight={700}>{soldeGlobal.toFixed(2)} MAD</Typography>
-          </Paper>
-          <Paper elevation={2} sx={{ flex: 1, p: 2, textAlign: 'center', borderLeft: '6px solid #388e3c' }}>
-            <Typography variant="subtitle2">Entrées</Typography>
-            <Typography variant="h6" fontWeight={700}>{totalEntrees.toFixed(2)} MAD</Typography>
-          </Paper>
-          <Paper elevation={2} sx={{ flex: 1, p: 2, textAlign: 'center', borderLeft: '6px solid #d32f2f' }}>
-            <Typography variant="subtitle2">Sorties</Typography>
-            <Typography variant="h6" fontWeight={700}>{totalSorties.toFixed(2)} MAD</Typography>
-          </Paper>
+        {/* Statistiques stylisées */}
+        <Box display="flex" gap={2} mb={3} flexWrap="wrap">
+          {[{
+            label: 'Solde actuel',
+            value: soldeGlobal.toFixed(2) + ' MAD',
+            color: '#001e61'
+          }, {
+            label: 'Entrées ce mois',
+            value: totalEntrees.toFixed(2) + ' MAD',
+            color: '#388e3c'
+          }, {
+            label: 'Sorties ce mois',
+            value: totalSorties.toFixed(2) + ' MAD',
+            color: '#d32f2f'
+          }].map((stat, idx) => (
+            <Paper key={idx} elevation={3} sx={{
+              flex: '1 1 200px', p: 2, borderLeft: `6px solid ${stat.color}`,
+              borderRadius: 2, backgroundColor: '#fefefe', textAlign: 'center'
+            }}>
+              <Typography variant="subtitle2" color="textSecondary">{stat.label}</Typography>
+              <Typography variant="h6" fontWeight="bold">{stat.value}</Typography>
+            </Paper>
+          ))}
         </Box>
 
-        <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-          <FormControl><InputLabel>Type</InputLabel>
-            <Select value={filterType} onChange={e => setFilterType(e.target.value)} label="Type">
-              <MenuItem value="">Tous</MenuItem>
-              <MenuItem value="Entrée">Entrée</MenuItem>
-              <MenuItem value="Sortie">Sortie</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl><InputLabel>Statut</InputLabel>
-            <Select value={filterStatut} onChange={e => setFilterStatut(e.target.value)} label="Statut">
-              <MenuItem value="">Tous</MenuItem>
-              <MenuItem value="Payé">Payé</MenuItem>
-              <MenuItem value="Non payé">Non payé</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField label="Nom" value={filterNom} onChange={e => setFilterNom(e.target.value)} />
-          <TextField label="Sujet" value={search} onChange={e => setSearch(e.target.value)} />
-          <Button onClick={resetFilters} variant="outlined">Réinitialiser</Button>
-          <Button variant="contained" color="error" onClick={handleExportPDF} startIcon={<PictureAsPdf />}>PDF</Button>
-          <Button variant="contained" color="success" onClick={handleExportExcel} startIcon={<PictureAsPdf />}>Excel</Button>
-          <Button variant="contained" onClick={() => setDrawerOpen(true)} startIcon={<Add />}>Ajouter</Button>
-        </Box>
+        {/* Filtres */}
+        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
+          <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} justifyContent="space-between" alignItems={isMobile ? 'stretch' : 'center'} gap={2}>
+            <Box display="flex" flexWrap="wrap" gap={2} width={isMobile ? '100%' : '75%'}>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel sx={{ backgroundColor: 'white', px: 0.5 }}>Type</InputLabel>
+                <Select value={filterType} onChange={e => setFilterType(e.target.value)} sx={{ borderRadius: 2, backgroundColor: 'white' }}>
+                  <MenuItem value="">Tous</MenuItem>
+                  <MenuItem value="Entrée">Entrée</MenuItem>
+                  <MenuItem value="Sortie">Sortie</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel sx={{ backgroundColor: 'white', px: 0.5 }}>Statut</InputLabel>
+                <Select value={filterStatut} onChange={e => setFilterStatut(e.target.value)} sx={{ borderRadius: 2, backgroundColor: 'white' }}>
+                  <MenuItem value="">Tous</MenuItem>
+                  <MenuItem value="Payé">Payé</MenuItem>
+                  <MenuItem value="Non payé">Non payé</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField label="Nom" value={filterNom} onChange={e => setFilterNom(e.target.value)} size="small" />
+              <TextField label="Sujet" value={search} onChange={e => setSearch(e.target.value)} size="small" />
+              <Button onClick={resetFilters} size="small" color="inherit" sx={{ height: 40, fontWeight: 'bold' }}>Réinitialiser</Button>
+            </Box>
+            <Button variant="contained" startIcon={<Add />} onClick={() => setDrawerOpen(true)} sx={{
+              backgroundColor: '#001e61', borderRadius: 3, textTransform: 'none',
+              fontWeight: 'bold', px: 3, boxShadow: 2, '&:hover': { backgroundColor: '#001447' }
+            }}>
+              Ajouter Opération
+            </Button>
+          </Box>
+        </Paper>
 
+        {/* Tableau */}
         <Table>
-          <TableHead>
+          <TableHead sx={{ backgroundColor: '#e3f2fd' }}>
             <TableRow>
               {['Type', 'Montant', 'Date', 'Nom', 'Sujet', 'Paiement', 'Statut', 'Solde', 'Justificatif', 'Actions'].map(h => (
-                <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>{h}</TableCell>
+                <TableCell key={h} sx={{ fontWeight: 'bold' }}>{h}</TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginated.map(op => {
+            {paginated.map((op, i) => {
               solde += op.type === 'Entrée' ? op.montant : -op.montant;
               return (
-                <TableRow key={op._id}>
+                <TableRow key={op._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
                   <TableCell>{op.type}</TableCell>
                   <TableCell>{op.montant.toFixed(2)} MAD</TableCell>
                   <TableCell>{new Date(op.date).toLocaleDateString()}</TableCell>
@@ -247,17 +253,24 @@ const CaissePage: React.FC = () => {
           </TableBody>
         </Table>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} />
+        {/* Pagination + export */}
+        <Box mt={2} display="flex" justifyContent="space-between" alignItems="center" flexDirection={isMobile ? 'column' : 'row'} gap={2}>
+          <Box flex={1} display="flex" justifyContent="center">
+            <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, value) => setPage(value)} color="primary" />
+          </Box>
+          <Box display="flex" gap={1}>
+            <Button variant="contained" startIcon={<PictureAsPdf />} onClick={handleExportPDF} sx={{ backgroundColor: '#d32f2f', borderRadius: 3 }}>PDF</Button>
+            <Button variant="contained" startIcon={<GridOn />} onClick={handleExportExcel} sx={{ backgroundColor: '#388e3c', borderRadius: 3 }}>Excel</Button>
+          </Box>
         </Box>
 
+        {/* Drawer */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
           <Box p={3} width={isMobile ? '100vw' : 400} sx={{ bgcolor: 'white' }}>
             <Typography variant="h6" fontWeight={600} mb={2}>Ajouter / Modifier Opération</Typography>
 
             <TextField fullWidth label="Nom" name="nom" value={form.nom || ''} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField fullWidth label="Sujet" name="sujet" value={form.sujet || ''} onChange={handleChange} sx={{ mb: 2 }} />
-
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel>Type</InputLabel>
               <Select name="type" value={form.type || ''} label="Type" onChange={handleChange}>
@@ -265,7 +278,6 @@ const CaissePage: React.FC = () => {
                 <MenuItem value="Sortie">Sortie</MenuItem>
               </Select>
             </FormControl>
-
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel>Mode Paiement</InputLabel>
               <Select name="modePaiement" value={form.modePaiement || ''} label="Mode Paiement" onChange={handleChange}>
@@ -273,7 +285,6 @@ const CaissePage: React.FC = () => {
                 <MenuItem value="Virement">Virement</MenuItem>
               </Select>
             </FormControl>
-
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel>Statut</InputLabel>
               <Select name="statut" value={form.statut || ''} label="Statut" onChange={handleChange}>
@@ -281,19 +292,17 @@ const CaissePage: React.FC = () => {
                 <MenuItem value="Non payé">Non payé</MenuItem>
               </Select>
             </FormControl>
-
             <TextField label="Montant" name="montant" type="number" fullWidth value={form.montant || ''} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Date" name="date" type="date" fullWidth value={form.date ? new Date(form.date).toISOString().split('T')[0] : ''} onChange={handleChange} InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} />
-
             <Button component="label" variant="outlined" fullWidth sx={{ mb: 2 }}>
               Justificatif (PDF/Image)
               <input hidden type="file" accept=".pdf,image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
             </Button>
-
-            <Button variant="contained" fullWidth onClick={handleSubmit}>Enregistrer</Button>
+            <Button variant="contained" fullWidth onClick={handleSubmit} sx={{ mt: 2, borderRadius: 3 }}>Enregistrer</Button>
           </Box>
         </Drawer>
 
+        {/* Dialog justificatif */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md">
           <DialogTitle>Visualisation PDF</DialogTitle>
           <DialogContent>
