@@ -106,9 +106,9 @@ const handleSubmit = async () => {
 
   try {
     if (selectedChauffeur) {
-      await axios.put(`${process.env.REACT_APP_API_URL}/api/chauffeurs/${selectedChauffeur._id}`, formData);
+      await axios.put(`${process.env.REACT_APP_API_URL}/chauffeurs/${selectedChauffeur._id}`, formData);
     } else {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/chauffeurs`, formData);
+      await axios.post(`${process.env.REACT_APP_API_URL}/chauffeurs`, formData);
     }
 
     // 🔄 Rafraîchir les données après soumission
