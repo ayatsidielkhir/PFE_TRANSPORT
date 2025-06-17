@@ -266,10 +266,6 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
                   <TableCell>{c.telephone}</TableCell>
                   <TableCell>{c.cin}</TableCell>
                   <TableCell>{c.adresse}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
                     <TableCell>
                       <Tooltip title="Voir les documents">
                         <IconButton onClick={() => handleVoirDocs(c)}>
