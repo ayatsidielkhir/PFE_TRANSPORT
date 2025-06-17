@@ -23,16 +23,18 @@ export const getDossier: RequestHandler = async (_req, res) => {
 };
 
 
+
 export const uploadDossier: RequestHandler = async (req, res) => {
   const uploaded = req.files;
+  const newKey = req.body.key;
+  const oldKey = req.body.oldKey;
 
   if (!uploaded || !Array.isArray(uploaded) || uploaded.length === 0) {
     res.status(400).json({ message: 'Aucun fichier reçu' });
     return;
   }
 
-  const key = req.body.key;
-  if (!key) {
+  if (!newKey) {
     res.status(400).json({ message: 'Clé de document manquante (key)' });
     return;
   }
@@ -40,17 +42,31 @@ export const uploadDossier: RequestHandler = async (req, res) => {
   const file = uploaded[0];
   const filename = file.filename;
 
-  const updateData = { [key]: filename };
+  const updateData = { [newKey]: filename };
 
   const existing = await DossierJuridique.findOne();
+
   if (existing) {
-    await DossierJuridique.updateOne({}, { $set: updateData });
+    // 🧽 Supprimer ancien champ si différent
+    if (oldKey && oldKey !== newKey && (existing as any)[oldKey]) {
+      const oldFileName = (existing as any)[oldKey];
+      const filePath = path.resolve('/mnt/data/uploads/juridique', oldFileName);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+      await DossierJuridique.updateOne({}, {
+        $unset: { [oldKey]: '' },
+        $set: updateData
+      });
+    } else {
+      await DossierJuridique.updateOne({}, { $set: updateData });
+    }
   } else {
     await DossierJuridique.create(updateData);
   }
 
-  res.status(201).json({ message: 'Document enregistré avec succès' }); // ✅ OK sans return
+  res.status(201).json({ message: 'Document mis à jour' });
 };
+
 
 
 export const deleteFileFromDossier: RequestHandler = async (req, res) => {

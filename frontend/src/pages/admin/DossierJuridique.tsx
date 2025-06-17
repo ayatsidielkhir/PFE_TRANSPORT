@@ -29,28 +29,29 @@ const DossierJuridique: React.FC = () => {
 
   useEffect(() => { fetchDossier(); }, []);
 
- const handleUpload = async () => {
-  const key = editKey ? editKey : `custom_${form.name}`;
+const handleUpload = async () => {
+  const oldKey = editKey;
   const newKey = `custom_${form.name}`;
 
-  // 1. Renommer si le nom change uniquement
-  if (!form.file && editKey && editKey !== newKey) {
+  // 1. Renommer uniquement (si pas de fichier)
+  if (!form.file && oldKey && oldKey !== newKey) {
     await axios.put('/dossier-juridique/rename', {
-      oldKey: editKey,
+      oldKey,
       newKey,
     });
   }
 
-  // 2. Upload ou remplacement du fichier
+  // 2. Upload fichier (nouveau ou remplaçant)
   if (form.file) {
     const formData = new FormData();
     formData.append('file', form.file);
     formData.append('key', newKey);
+    if (oldKey) formData.append('oldKey', oldKey); // ✅ utile pour supprimer l'ancien champ + fichier
 
     await axios.post('/dossier-juridique', formData);
   }
 
-  // 3. Réinitialiser l'état
+  // 3. Réinitialisation
   setDrawerOpen(false);
   setForm({ name: '', file: null });
   setEditKey(null);
