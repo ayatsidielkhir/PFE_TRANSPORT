@@ -159,11 +159,10 @@ const PartenairesPage: React.FC = () => {
                 <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
                   <TableCell>
                     {p.logo ? (
-                      <Box
-                        component="img"
+                      <Avatar
                         src={`${API}/uploads/partenaires/${p.logo}`}
-                        alt="logo partenaire"
-                        sx={{ width: 70, height: 70, objectFit: 'contain', borderRadius: 2, boxShadow: 1 }}
+                        variant="rounded"
+                        sx={{ width: 40, height: 40, borderRadius: 2 }}
                       />
                     ) : 'N/A'}
                   </TableCell>
@@ -195,29 +194,30 @@ const PartenairesPage: React.FC = () => {
             <Box display="flex" justifyContent="center" mb={3}>
               <label htmlFor="logo-input">
                 <Avatar
-                  src={
-                    form.logo instanceof File
-                      ? URL.createObjectURL(form.logo)
-                      : editData?.logo
-                        ? `${API}/uploads/partenaires/${editData.logo}`
-                        : undefined
-                  }
-                  sx={{
-                    width: 110,
-                    height: 110,
-                    borderRadius: '12px',
-                    objectFit: 'contain',
-                    backgroundColor: '#f0f0f0',
-                    cursor: 'pointer',
-                    boxShadow: 2,
-                    mt: 2,
-                    fontSize: 16,
-                    color: '#666',
-                    marginTop: '20px'
-                  }}
-                >
-                  {!form.logo && !editData?.logo && 'Logo'}
-                </Avatar>
+                    src={
+                      form.logo instanceof File
+                        ? URL.createObjectURL(form.logo)
+                        : editData?.logo
+                          ? `${API}/uploads/partenaires/${editData.logo}`
+                          : undefined
+                    }
+                    variant="rounded"
+                    sx={{
+                      width: 110,
+                      height: 110,
+                      borderRadius: '12px',
+                      objectFit: 'cover',
+                      backgroundColor: '#f0f0f0',
+                      cursor: 'pointer',
+                      boxShadow: 2,
+                      mt: 2,
+                      fontSize: 16,
+                      color: '#666',
+                    }}
+                  >
+                    {!form.logo && !editData?.logo && 'Logo'}
+                  </Avatar>
+
               </label>
               <input
                 id="logo-input"
