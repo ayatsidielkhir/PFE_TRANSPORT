@@ -78,3 +78,32 @@ export const deleteFileFromDossier: RequestHandler = async (req, res) => {
   }
 };
 
+export const renameDossierField: RequestHandler = async (req, res) => {
+  try {
+    const { oldKey, newKey } = req.body;
+
+    if (!oldKey || !newKey || oldKey === newKey) {
+      res.status(400).json({ message: 'Clés invalides' });
+      return;
+    }
+
+    const doc = await DossierJuridique.findOne();
+    if (!doc || !(doc as any)[oldKey]) {
+      res.status(404).json({ message: 'Champ à renommer non trouvé' });
+      return;
+    }
+
+    const value = (doc as any)[oldKey];
+
+    await DossierJuridique.updateOne({}, {
+      $unset: { [oldKey]: '' },
+      $set: { [newKey]: value }
+    });
+
+    res.json({ message: 'Champ renommé avec succès' }); // ✅ pas de return ici
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors du renommage', error }); // ✅ pas de return ici
+  }
+};
+
+

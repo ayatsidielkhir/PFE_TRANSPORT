@@ -32,7 +32,19 @@ const DossierJuridique: React.FC = () => {
   const handleUpload = async () => {
     const formData = new FormData();
     const key = editKey ? editKey : `custom_${form.name}`;
-    if (form.file) formData.append(key, form.file);
+    if (!form.file && editKey && editKey !== `custom_${form.name}`) {
+      await axios.put('/dossier-juridique/rename', {
+        oldKey: editKey,
+        newKey: `custom_${form.name}`
+      });
+      setDrawerOpen(false);
+      setForm({ name: '', file: null });
+      setEditKey(null);
+      setSearch('');
+      fetchDossier();
+      return;
+    }
+
 
     await axios.post('/dossier-juridique', formData);
     setDrawerOpen(false);

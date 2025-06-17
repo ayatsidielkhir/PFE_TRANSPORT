@@ -5,7 +5,8 @@ import fs from 'fs';
 import {
   getDossier,
   uploadDossier,
-  deleteFileFromDossier
+  deleteFileFromDossier,
+  renameDossierField 
 } from '../controllers/dossierjuridique.controller';
 
 const router = express.Router();
@@ -30,5 +31,6 @@ const upload = multer({ storage });
 router.get('/', getDossier); // GET tous les fichiers
 router.post('/', upload.any(), uploadDossier); // POST upload (multi-fichiers)
 router.delete('/:field', deleteFileFromDossier); // DELETE fichier spécifique
+router.put('/rename', renameDossierField);
 
 export default router;
