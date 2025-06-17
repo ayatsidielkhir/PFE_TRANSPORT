@@ -196,7 +196,6 @@ const CaissePage: React.FC = () => {
                 </Select>
               </FormControl>
               <TextField label="Nom" value={filterNom} onChange={e => setFilterNom(e.target.value)} size="small" />
-              <TextField label="Sujet" value={search} onChange={e => setSearch(e.target.value)} size="small" />
               <Button onClick={resetFilters} size="small" color="inherit" sx={{ height: 40, fontWeight: 'bold' }}>Réinitialiser</Button>
             </Box>
             <Button variant="contained" startIcon={<Add />} onClick={() => setDrawerOpen(true)} sx={{
