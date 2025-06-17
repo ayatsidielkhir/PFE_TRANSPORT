@@ -325,21 +325,20 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
 
 
 
-<Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-  <Box p={3} width={isMobile ? '100vw' : 450}>
-    <Box display="flex" justifyContent="center" mb={3} mt={5}>
+              <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Box p={3} width={isMobile ? '100vw' : 480}>
+    {/* 📷 Photo du chauffeur */}
+    <Box display="flex" justifyContent="center" mb={3}>
       <label htmlFor="photo-input">
         <Avatar
           src={previewPhoto || ''}
           sx={{
-            width: 110,
-            height: 110,
-            cursor: 'pointer',
-            borderRadius: '50%',
+            width: 120,
+            height: 120,
+            borderRadius: '12px',
             boxShadow: 2,
             backgroundColor: '#f0f0f0',
-            mt: 6,
-            marginTop: '28px'
+            cursor: 'pointer'
           }}
         />
       </label>
@@ -348,12 +347,13 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
         name="photo"
         type="file"
         accept="image/*"
-        style={{ display: 'none' }}
+        hidden
         onChange={handleInputChange}
       />
     </Box>
 
-    <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+    {/* 🧾 Champs standards */}
+    <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
       {['nom', 'prenom', 'telephone', 'cin', 'adresse'].map(field => (
         <Box key={field} flex="1 1 45%">
           <TextField
@@ -369,72 +369,78 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
               }
             }}
           />
-       
-
         </Box>
-        
-        
       ))}
-
-         <Box mt={3}>
-          <Typography fontWeight="bold" mb={1}>Ajouter un autre document</Typography>
-          <Box display="flex" flexDirection="column" gap={1}>
-            <TextField
-              label="Nom du document"
-              value={newDocName}
-              onChange={(e) => setNewDocName(e.target.value)}
-              fullWidth
-            />
-            <Button
-              component="label"
-              variant="outlined"
-              sx={{ textTransform: 'none', borderRadius: '12px' }}
-            >
-              {newDocFile ? newDocFile.name : 'Choisir un fichier'}
-              <input
-                type="file"
-                hidden
-                onChange={(e) => setNewDocFile(e.target.files?.[0] || null)}
-              />
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (newDocName && newDocFile) {
-                  setCustomDocs([...customDocs, { name: newDocName, file: newDocFile }]);
-                  setNewDocName('');
-                  setNewDocFile(null);
-                } else {
-                  alert('Veuillez indiquer un nom et un fichier.');
-                }
-              }}
-              sx={{ backgroundColor: '#001e61', borderRadius: '12px' }}
-            >
-              Ajouter au chauffeur
-            </Button>
-            {customDocs.length > 0 && (
-              <Box mt={2}>
-                <Typography fontWeight={600}>Documents ajoutés :</Typography>
-                <ul>
-                  {customDocs.map((doc, idx) => (
-                    <li key={idx}>
-                      {doc.name} – {doc.file.name}
-                    </li>
-                  ))}
-                </ul>
-              </Box>
-            )}
-
-          </Box>
-        </Box>
     </Box>
 
-    <Box display="flex" flexWrap="wrap" gap={2}>
-      {[
+    {/* 📎 Documents personnalisés */}
+    <Box mt={3} mb={2}>
+      <Typography fontWeight="bold" mb={1}>Ajouter un autre document</Typography>
+      <Box display="flex" flexDirection="column" gap={1}>
+        <TextField
+          label="Nom du document"
+          value={newDocName}
+          onChange={(e) => setNewDocName(e.target.value)}
+          fullWidth
+        />
+        <Button
+          component="label"
+          variant="outlined"
+          sx={{ textTransform: 'none', borderRadius: '12px' }}
+        >
+          {newDocFile ? newDocFile.name : 'Choisir un fichier'}
+          <input
+            type="file"
+            hidden
+            onChange={(e) => setNewDocFile(e.target.files?.[0] || null)}
+          />
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => {
+            if (newDocName && newDocFile) {
+              setCustomDocs([...customDocs, { name: newDocName, file: newDocFile }]);
+              setNewDocName('');
+              setNewDocFile(null);
+            } else {
+              alert('Veuillez indiquer un nom et un fichier.');
+            }
+          }}
+          sx={{ backgroundColor: '#001e61', borderRadius: '12px', textTransform: 'none' }}
+        >
+          Ajouter au chauffeur
+        </Button>
+
+        {/* 📝 Liste des documents ajoutés */}
+        {customDocs.length > 0 && (
+          <Box mt={2}>
+            <Typography fontWeight={600} mb={1}>Documents ajoutés :</Typography>
+            <Box display="flex" flexDirection="column" gap={1}>
+              {customDocs.map((doc, idx) => (
+                <Box key={idx} display="flex" justifyContent="space-between" alignItems="center" p={1} border="1px solid #ccc" borderRadius={1}>
+                  <Typography fontSize={14}>{doc.name} – {doc.file.name}</Typography>
+                  <Button size="small" color="error" onClick={() => {
+                    const updated = [...customDocs];
+                    updated.splice(idx, 1);
+                    setCustomDocs(updated);
+                  }}>
+                    Supprimer
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
+      </Box>
+    </Box>
+
+    {/* 📁 Autres documents standards */}
+    <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
+      {[ 
         { name: 'scanCIN', label: 'Scan CIN' },
         { name: 'scanPermis', label: 'Scan Permis' },
         { name: 'scanVisa', label: 'Scan Visa' },
-        { name: 'certificatBonneConduite', label: 'Extrait de Casier Judiciaire' }
+        { name: 'certificatBonneConduite', label: 'Casier Judiciaire' }
       ].map(({ name, label }) => (
         <Box key={name} flex="1 1 45%">
           <Typography fontWeight={500} mb={0.5}>{label}</Typography>
@@ -462,12 +468,13 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
       ))}
     </Box>
 
+    {/* ✅ Bouton final */}
     <Button
       fullWidth
       variant="contained"
       onClick={handleSubmit}
       sx={{
-        mt: 4,
+        mt: 2,
         backgroundColor: '#001e61',
         borderRadius: '12px',
         textTransform: 'none',
@@ -482,26 +489,27 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
   </Box>
 </Drawer>
 
-<Dialog open={openDocsModal} onClose={() => setOpenDocsModal(false)} maxWidth="sm" fullWidth>
-  <DialogTitle>Documents du Chauffeur</DialogTitle>
-  <DialogContent>
-    {docsChauffeur && (
-      <Box display="flex" flexWrap="wrap" gap={2}>
-        {[
-          { key: 'scanCIN', label: 'Scan CIN' },
-          { key: 'scanPermis', label: 'Scan Permis' },
-          { key: 'scanVisa', label: 'Visa' },
-          { key: 'certificatBonneConduite', label: 'Casier Judiciaire' }
-        ].map(({ key, label }) => (
-          <Box key={key} textAlign="center">
-            <Typography fontSize={14} fontWeight={500}>{label}</Typography>
-            {renderDocumentAvatar((docsChauffeur as any)[key])}
-          </Box>
-        ))}
-      </Box>
-    )}
-  </DialogContent>
-</Dialog>
+
+      <Dialog open={openDocsModal} onClose={() => setOpenDocsModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Documents du Chauffeur</DialogTitle>
+        <DialogContent>
+          {docsChauffeur && (
+            <Box display="flex" flexWrap="wrap" gap={2}>
+              {[
+                { key: 'scanCIN', label: 'Scan CIN' },
+                { key: 'scanPermis', label: 'Scan Permis' },
+                { key: 'scanVisa', label: 'Visa' },
+                { key: 'certificatBonneConduite', label: 'Casier Judiciaire' }
+              ].map(({ key, label }) => (
+                <Box key={key} textAlign="center">
+                  <Typography fontSize={14} fontWeight={500}>{label}</Typography>
+                  {renderDocumentAvatar((docsChauffeur as any)[key])}
+                </Box>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
 
 
     </AdminLayout>
