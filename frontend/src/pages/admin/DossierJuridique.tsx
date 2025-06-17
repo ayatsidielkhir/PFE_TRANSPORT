@@ -140,12 +140,8 @@ const handleUpload = async () => {
               {filtered.map(([key, value], i) => (
                 <TableRow key={key} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
                   <TableCell>
-                    {key
-                      .replace('custom_', '')
-                      .replace(/([A-Z])/g, ' $1')
-                      .replace(/[_-]/g, ' ')
-                      .toLowerCase()
-                      .replace(/^./, c => c.toUpperCase())}
+                    {key.replace('custom_', '')}
+                    
                   </TableCell>
                   <TableCell>
                     <Tooltip title="Prévisualiser le document">
@@ -222,7 +218,9 @@ const handleUpload = async () => {
                 '&:hover': { backgroundColor: '#1565c0' },
                 fontWeight: 'bold'
               }}
-              disabled={!form.file}
+              disabled={
+                  (!form.file && (!editKey || `custom_${form.name}` === editKey))
+                }
             >
               Enregistrer
             </Button>
