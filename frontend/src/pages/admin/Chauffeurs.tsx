@@ -81,10 +81,10 @@ const ChauffeursPage: React.FC = () => {
     }
   };
 
- const handleSubmit = async () => {
+const handleSubmit = async () => {
   const formData = new FormData();
 
-  // 1. Ajouter d'abord les champs standards (nom, prénom, etc.)
+  // 🔹 1. Ajouter les champs standards
   Object.entries(form).forEach(([key, value]) => {
     if (value instanceof File) {
       formData.append(key, value);
@@ -93,25 +93,34 @@ const ChauffeursPage: React.FC = () => {
     }
   });
 
-  // 2. Ajouter les fichiers personnalisés une seule fois
+  // 🔹 2. Ajouter les fichiers personnalisés
   customDocs.forEach((doc, index) => {
-  formData.append(`customDocs[${index}][name]`, doc.name);
-  formData.append(`customDocs[${index}][file]`, doc.file, doc.file.name); // ✅ Très important
-});
+    formData.append(`customDocs[${index}][name]`, doc.name);
+    formData.append(`customDocs[${index}][file]`, doc.file, doc.file.name);
+  });
 
-  // 3. Envoi
+  // 🔍 Facultatif : afficher les données envoyées pour debug
+  formData.forEach((value, key) => {
+    console.log('📦', key, value);
+  });
+
   try {
     if (selectedChauffeur) {
-      await axios.put(`https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`, formData);
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/chauffeurs/${selectedChauffeur._id}`, formData);
     } else {
-      await axios.post(`https://mme-backend.onrender.com/api/chauffeurs`, formData);
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/chauffeurs`, formData);
     }
+
+    // 🔄 Rafraîchir les données après soumission
     fetchChauffeurs();
     setDrawerOpen(false);
+    resetForm();
+    setCustomDocs([]);
   } catch (err) {
-    console.error('Erreur lors de la soumission', err);
+    console.error('❌ Erreur lors de la soumission', err);
   }
 };
+
 
 
 

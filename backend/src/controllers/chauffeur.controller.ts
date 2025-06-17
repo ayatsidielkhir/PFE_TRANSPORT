@@ -25,15 +25,14 @@ export const deleteChauffeur: RequestHandler = async (req, res) => {
 export const updateChauffeur: RequestHandler = async (req, res) => {
   try {
     const updates: any = req.body;
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const filesArray = req.files as unknown as Express.Multer.File[];
+    const fileMap = Object.fromEntries(filesArray.map(file => [file.fieldname, file]));
 
-    if (files) {
-      if (files['scanPermis']) updates.scanPermis = files['scanPermis'][0].filename;
-      if (files['scanVisa']) updates.scanVisa = files['scanVisa'][0].filename;
-      if (files['scanCIN']) updates.scanCIN = files['scanCIN'][0].filename;
-      if (files['photo']) updates.photo = files['photo'][0].filename;
-      if (files['certificatBonneConduite']) updates.certificatBonneConduite = files['certificatBonneConduite'][0].filename;
-    }
+    if (fileMap['scanPermis']) updates.scanPermis = fileMap['scanPermis'].filename;
+    if (fileMap['scanVisa']) updates.scanVisa = fileMap['scanVisa'].filename;
+    if (fileMap['scanCIN']) updates.scanCIN = fileMap['scanCIN'].filename;
+    if (fileMap['photo']) updates.photo = fileMap['photo'].filename;
+    if (fileMap['certificatBonneConduite']) updates.certificatBonneConduite = fileMap['certificatBonneConduite'].filename;
 
     if ('visa_actif' in updates) {
       updates['visa.actif'] = updates.visa_actif === 'true' || updates.visa_actif === true;
@@ -45,18 +44,16 @@ export const updateChauffeur: RequestHandler = async (req, res) => {
     if (updates.contrat_date_expiration) updates['contrat.date_expiration'] = updates.contrat_date_expiration;
     if (updates.visa_date_expiration) updates['visa.date_expiration'] = updates.visa_date_expiration;
 
-    // ✅ Traitement des customDocs AVANT update
     const customDocs: { name: string; file: string }[] = [];
-
     Object.entries(req.body).forEach(([key, value]) => {
       const match = key.match(/^customDocs\[(\d+)\]\[name\]$/);
       if (match) {
         const index = match[1];
         const name = value as string;
         const fileField = `customDocs[${index}][file]`;
-        if (files && fileField in files) {
-          const file = files[fileField][0].filename;
-          customDocs.push({ name, file });
+        const matchedFile = filesArray.find(f => f.fieldname === fileField);
+        if (matchedFile) {
+          customDocs.push({ name, file: matchedFile.filename });
         }
       }
     });
@@ -66,7 +63,6 @@ export const updateChauffeur: RequestHandler = async (req, res) => {
     }
 
     await Chauffeur.findByIdAndUpdate(req.params.id, updates, { new: true });
-
     res.json({ message: 'Chauffeur modifié avec succès.' });
   } catch (err) {
     console.error('❌ Erreur modification chauffeur :', err);
@@ -75,75 +71,49 @@ export const updateChauffeur: RequestHandler = async (req, res) => {
 };
 
 
+
 // ✅ Ajouter un chauffeur
 export const addChauffeur: RequestHandler = async (req, res) => {
   try {
     const {
-      nom,
-      prenom,
-      telephone,
-      cin,
-      adresse,
-      observations,
-      permis_date_expiration,
-      contrat_type,
-      contrat_date_expiration,
-      visa_actif,
-      visa_date_expiration
+      nom, prenom, telephone, cin, adresse,
+      observations, permis_date_expiration,
+      contrat_type, contrat_date_expiration,
+      visa_actif, visa_date_expiration
     } = req.body;
 
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const filesArray = req.files as unknown as Express.Multer.File[];
+    const fileMap = Object.fromEntries(filesArray.map(file => [file.fieldname, file]));
 
-    const scanPermis = files && files['scanPermis'] ? files['scanPermis'][0].filename : '';
-    const scanVisa = files && files['scanVisa'] ? files['scanVisa'][0].filename : '';
-    const scanCIN = files && files['scanCIN'] ? files['scanCIN'][0].filename : '';
-    const photo = files && files['photo'] ? files['photo'][0].filename : '';
-    const certificatBonneConduite = files && files['certificatBonneConduite']
-      ? files['certificatBonneConduite'][0].filename
-      : '';
-
+    const scanPermis = fileMap['scanPermis']?.filename || '';
+    const scanVisa = fileMap['scanVisa']?.filename || '';
+    const scanCIN = fileMap['scanCIN']?.filename || '';
+    const photo = fileMap['photo']?.filename || '';
+    const certificatBonneConduite = fileMap['certificatBonneConduite']?.filename || '';
     const visaActifBool = visa_actif === 'true' || visa_actif === true;
 
-    // ✅ Traitement des customDocs
+    // ✅ Traiter les fichiers customDocs dynamiques
     const customDocs: { name: string; file: string }[] = [];
-
     Object.entries(req.body).forEach(([key, value]) => {
       const match = key.match(/^customDocs\[(\d+)\]\[name\]$/);
       if (match) {
         const index = match[1];
         const name = value as string;
         const fileField = `customDocs[${index}][file]`;
-        if (files && fileField in files) {
-          const file = files[fileField][0].filename;
-          customDocs.push({ name, file });
+        const matchedFile = filesArray.find(f => f.fieldname === fileField);
+        if (matchedFile) {
+          customDocs.push({ name, file: matchedFile.filename });
         }
       }
     });
 
     const chauffeur = new Chauffeur({
-      nom,
-      prenom,
-      telephone,
-      cin,
-      adresse,
-      observations,
-      permis: {
-        date_expiration: permis_date_expiration
-      },
-      contrat: {
-        type: contrat_type,
-        date_expiration: contrat_date_expiration
-      },
-      visa: {
-        actif: visaActifBool,
-        date_expiration: visa_date_expiration
-      },
-      scanPermis,
-      scanVisa,
-      scanCIN,
-      photo,
-      certificatBonneConduite,
-      customDocs // ✅ ajout ici
+      nom, prenom, telephone, cin, adresse, observations,
+      permis: { date_expiration: permis_date_expiration },
+      contrat: { type: contrat_type, date_expiration: contrat_date_expiration },
+      visa: { actif: visaActifBool, date_expiration: visa_date_expiration },
+      scanPermis, scanVisa, scanCIN, photo, certificatBonneConduite,
+      customDocs
     });
 
     await chauffeur.save();
@@ -157,4 +127,5 @@ export const addChauffeur: RequestHandler = async (req, res) => {
     }
   }
 };
+
 
