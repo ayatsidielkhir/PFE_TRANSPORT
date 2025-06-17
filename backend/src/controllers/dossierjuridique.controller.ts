@@ -23,19 +23,21 @@ export const getDossier: RequestHandler = async (_req, res) => {
 };
 
 
-export const uploadDossier = async (req: Request, res: Response) => {
+export const uploadDossier: RequestHandler = async (req, res) => {
   const uploaded = req.files;
 
   if (!uploaded || !Array.isArray(uploaded) || uploaded.length === 0) {
-    return res.status(400).json({ message: 'Aucun fichier reçu' });
+    res.status(400).json({ message: 'Aucun fichier reçu' });
+    return;
   }
 
   const key = req.body.key;
   if (!key) {
-    return res.status(400).json({ message: 'Clé de document manquante (key)' });
+    res.status(400).json({ message: 'Clé de document manquante (key)' });
+    return;
   }
 
-  const file = uploaded[0]; // un seul fichier attendu à la fois
+  const file = uploaded[0];
   const filename = file.filename;
 
   const updateData = { [key]: filename };
@@ -47,7 +49,7 @@ export const uploadDossier = async (req: Request, res: Response) => {
     await DossierJuridique.create(updateData);
   }
 
-  return res.status(201).json({ message: 'Document enregistré avec succès' });
+  res.status(201).json({ message: 'Document enregistré avec succès' }); // ✅ OK sans return
 };
 
 
