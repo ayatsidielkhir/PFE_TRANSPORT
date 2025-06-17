@@ -31,7 +31,7 @@ const PlateformesPage: React.FC = () => {
   const perPage = 5;
 
   useEffect(() => {
-    axios.get('${API}/plateformes').then(res => {
+      axios.get(`${API}/plateformes`).then(res => {
       setPlateformes(res.data);
       setFilteredPlateformes(res.data);
     });
@@ -44,24 +44,32 @@ const PlateformesPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => formData.append(key, value));
-    if (logo) formData.append('logo', logo);
+  const formData = new FormData();
+  Object.entries(form).forEach(([key, value]) => formData.append(key, value));
+  if (logo) formData.append('logo', logo);
 
-    try {
-      if (form._id) {
-        await axios.put(`${API}/plateformes/${form._id}`, formData);
-      } else {
-        await axios.post('${API}/plateformes', formData);
-      }
-      setDrawerOpen(false);
-      setForm({ nom: '', email: '', password: '', lien: '' });
-      setLogo(null);
-      fetchPlateformes();
-    } catch (error) {
-      alert("Erreur lors de l'enregistrement");
+  try {
+    let response;
+    if (form._id) {
+      response = await axios.put(`${API}/plateformes/${form._id}`, formData);
+    } else {
+      response = await axios.post(`${API}/plateformes`, formData);
     }
-  };
+
+    const saved = response.data;
+
+    // ✅ mettre à jour la liste avec données persistées
+    fetchPlateformes();
+
+    // ✅ Réinitialiser le formulaire
+    setDrawerOpen(false);
+    setForm({ nom: '', email: '', password: '', lien: '', _id: saved._id, logo: saved.logo });
+    setLogo(null);
+  } catch (error) {
+    alert("Erreur lors de l'enregistrement");
+  }
+};
+
 
   const handleEdit = (p: Plateforme) => {
     setForm(p);
