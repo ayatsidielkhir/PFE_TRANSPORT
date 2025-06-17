@@ -30,6 +30,7 @@ interface Chauffeur {
   scanPermis?: string;
   scanVisa?: string;
   certificatBonneConduite?: string;
+  customDocs?: { name: string; file: string }[];
 }
 
 const ChauffeursPage: React.FC = () => {
@@ -42,6 +43,10 @@ const ChauffeursPage: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openDocsModal, setOpenDocsModal] = useState(false);
   const [docsChauffeur, setDocsChauffeur] = useState<Chauffeur | null>(null);
+  const [customDocs, setCustomDocs] = useState<{ name: string; file: File }[]>([]);
+  const [newDocName, setNewDocName] = useState('');
+  const [newDocFile, setNewDocFile] = useState<File | null>(null);
+
 
   const [sortAsc, setSortAsc] = useState(true);
   const [page, setPage] = useState(1);
@@ -79,6 +84,11 @@ const ChauffeursPage: React.FC = () => {
   const handleSubmit = async () => {
     const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
+        customDocs.forEach((doc, index) => {
+        formData.append(`customDocs[${index}][name]`, doc.name);
+        formData.append(`customDocs[${index}][file]`, doc.file);
+      });
+
   if (
     typeof value === 'object' &&
     value !== null &&
@@ -294,23 +304,23 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="lg" fullWidth>
         <DialogTitle>Visualisation PDF</DialogTitle>
-        <DialogContent>
-          <iframe
-            src={dialogImageSrc || ''}
-            width="100%"
-            height="600px"
-            style={{ border: 'none' }}
-          />
-          <Box mt={2} textAlign="right">
-            <Button
-              onClick={() => window.open(dialogImageSrc || '', '_blank')}
-              variant="outlined"
-              color="primary"
-            >
-              Télécharger
-            </Button>
-          </Box>
-        </DialogContent>
+              <DialogContent>
+              {docsChauffeur && docsChauffeur.customDocs && docsChauffeur.customDocs.length > 0 && (
+                <Box mt={3}>
+                  <Typography fontWeight="bold" mb={1}>Autres documents</Typography>
+                  <Box display="flex" flexWrap="wrap" gap={2}>
+                    {docsChauffeur.customDocs.map((doc, idx) => (
+                      <Box key={idx} textAlign="center">
+                        <Typography fontSize={14} fontWeight={500}>{doc.name}</Typography>
+                        {renderDocumentAvatar(doc.file)}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </DialogContent>
+
+
       </Dialog>
 
 
@@ -359,8 +369,64 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
               }
             }}
           />
+       
+
         </Box>
+        
+        
       ))}
+
+         <Box mt={3}>
+          <Typography fontWeight="bold" mb={1}>Ajouter un autre document</Typography>
+          <Box display="flex" flexDirection="column" gap={1}>
+            <TextField
+              label="Nom du document"
+              value={newDocName}
+              onChange={(e) => setNewDocName(e.target.value)}
+              fullWidth
+            />
+            <Button
+              component="label"
+              variant="outlined"
+              sx={{ textTransform: 'none', borderRadius: '12px' }}
+            >
+              {newDocFile ? newDocFile.name : 'Choisir un fichier'}
+              <input
+                type="file"
+                hidden
+                onChange={(e) => setNewDocFile(e.target.files?.[0] || null)}
+              />
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (newDocName && newDocFile) {
+                  setCustomDocs([...customDocs, { name: newDocName, file: newDocFile }]);
+                  setNewDocName('');
+                  setNewDocFile(null);
+                } else {
+                  alert('Veuillez indiquer un nom et un fichier.');
+                }
+              }}
+              sx={{ backgroundColor: '#001e61', borderRadius: '12px' }}
+            >
+              Ajouter au chauffeur
+            </Button>
+            {customDocs.length > 0 && (
+              <Box mt={2}>
+                <Typography fontWeight={600}>Documents ajoutés :</Typography>
+                <ul>
+                  {customDocs.map((doc, idx) => (
+                    <li key={idx}>
+                      {doc.name} – {doc.file.name}
+                    </li>
+                  ))}
+                </ul>
+              </Box>
+            )}
+
+          </Box>
+        </Box>
     </Box>
 
     <Box display="flex" flexWrap="wrap" gap={2}>

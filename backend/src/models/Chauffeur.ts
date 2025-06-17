@@ -21,8 +21,17 @@ const chauffeurSchema = new mongoose.Schema({
   scanPermis: { type: String },
   scanVisa: { type: String },
   scanCIN: { type: String },
-  photo: { type: String }, // image chauffeur
-  certificatBonneConduite: { type: String }
+  photo: { type: String },
+  certificatBonneConduite: { type: String },
+
+  // ✅ Ajout des fichiers personnalisés
+  customDocs: [
+    {
+      name: { type: String, required: true },
+      file: { type: String, required: true }
+    }
+  ]
 }, { timestamps: true });
+
 
 export default mongoose.model('Chauffeur', chauffeurSchema);

@@ -45,6 +45,26 @@ export const updateChauffeur: RequestHandler = async (req, res) => {
     if (updates.contrat_date_expiration) updates['contrat.date_expiration'] = updates.contrat_date_expiration;
     if (updates.visa_date_expiration) updates['visa.date_expiration'] = updates.visa_date_expiration;
 
+    // ✅ Traitement des customDocs AVANT update
+    const customDocs: { name: string; file: string }[] = [];
+
+    Object.entries(req.body).forEach(([key, value]) => {
+      const match = key.match(/^customDocs\[(\d+)\]\[name\]$/);
+      if (match) {
+        const index = match[1];
+        const name = value as string;
+        const fileField = `customDocs[${index}][file]`;
+        if (files && fileField in files) {
+          const file = files[fileField][0].filename;
+          customDocs.push({ name, file });
+        }
+      }
+    });
+
+    if (customDocs.length > 0) {
+      updates.customDocs = customDocs;
+    }
+
     await Chauffeur.findByIdAndUpdate(req.params.id, updates, { new: true });
 
     res.json({ message: 'Chauffeur modifié avec succès.' });
@@ -53,6 +73,7 @@ export const updateChauffeur: RequestHandler = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la modification.' });
   }
 };
+
 
 // ✅ Ajouter un chauffeur
 export const addChauffeur: RequestHandler = async (req, res) => {
@@ -71,15 +92,33 @@ export const addChauffeur: RequestHandler = async (req, res) => {
       visa_date_expiration
     } = req.body;
 
-    const scanPermis = req.files && 'scanPermis' in req.files ? req.files['scanPermis'][0].filename : '';
-    const scanVisa = req.files && 'scanVisa' in req.files ? req.files['scanVisa'][0].filename : '';
-    const scanCIN = req.files && 'scanCIN' in req.files ? req.files['scanCIN'][0].filename : '';
-    const photo = req.files && 'photo' in req.files ? req.files['photo'][0].filename : '';
-    const certificatBonneConduite = req.files && 'certificatBonneConduite' in req.files
-      ? req.files['certificatBonneConduite'][0].filename
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const scanPermis = files && files['scanPermis'] ? files['scanPermis'][0].filename : '';
+    const scanVisa = files && files['scanVisa'] ? files['scanVisa'][0].filename : '';
+    const scanCIN = files && files['scanCIN'] ? files['scanCIN'][0].filename : '';
+    const photo = files && files['photo'] ? files['photo'][0].filename : '';
+    const certificatBonneConduite = files && files['certificatBonneConduite']
+      ? files['certificatBonneConduite'][0].filename
       : '';
 
     const visaActifBool = visa_actif === 'true' || visa_actif === true;
+
+    // ✅ Traitement des customDocs
+    const customDocs: { name: string; file: string }[] = [];
+
+    Object.entries(req.body).forEach(([key, value]) => {
+      const match = key.match(/^customDocs\[(\d+)\]\[name\]$/);
+      if (match) {
+        const index = match[1];
+        const name = value as string;
+        const fileField = `customDocs[${index}][file]`;
+        if (files && fileField in files) {
+          const file = files[fileField][0].filename;
+          customDocs.push({ name, file });
+        }
+      }
+    });
 
     const chauffeur = new Chauffeur({
       nom,
@@ -103,7 +142,8 @@ export const addChauffeur: RequestHandler = async (req, res) => {
       scanVisa,
       scanCIN,
       photo,
-      certificatBonneConduite
+      certificatBonneConduite,
+      customDocs // ✅ ajout ici
     });
 
     await chauffeur.save();
@@ -117,3 +157,4 @@ export const addChauffeur: RequestHandler = async (req, res) => {
     }
   }
 };
+
