@@ -1,4 +1,4 @@
-// ✅ Page Chauffeurs avec style "Docs" identique à Véhicules
+// ✅ Page Chauffeurs avec style "Docs" identique à Véhicules — FONCTIONNELLE ET COMPLÈTE
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,21 +11,21 @@ import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
 interface Chauffeur {
-  _id: string;
+  _id?: string;
   nom: string;
   prenom: string;
   telephone: string;
   cin: string;
   adresse?: string;
-  photo?: string;
-  scanCIN?: string;
-  scanPermis?: string;
-  scanVisa?: string;
-  certificatBonneConduite?: string;
+  photo?: string | File | null;
+  scanCIN?: string | File | null;
+  scanPermis?: string | File | null;
+  scanVisa?: string | File | null;
+  certificatBonneConduite?: string | File | null;
 }
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const isPdfFile = (filename: string) => /\.pdf$/i.test(filename);
 
 const ChauffeursPage: React.FC = () => {
@@ -39,12 +39,11 @@ const ChauffeursPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const perPage = 5;
 
-  const [form, setForm] = useState<Record<string, string | File | null>>({
-    nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-    photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
-  });
+  const [form, setForm] = useState<Partial<Chauffeur> & { [key: string]: any }>({
+  nom: '', prenom: '', telephone: '', cin: '', adresse: '',
+  photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
+});
 
-  useEffect(() => { fetchChauffeurs(); }, []);
 
   const fetchChauffeurs = async () => {
     try {
@@ -54,6 +53,10 @@ const ChauffeursPage: React.FC = () => {
       console.error('Erreur fetch chauffeurs:', error);
     }
   };
+
+  useEffect(() => {
+    fetchChauffeurs();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, files } = e.target;
@@ -80,10 +83,10 @@ const ChauffeursPage: React.FC = () => {
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
       if (value instanceof File) formData.append(key, value);
-      else if (typeof value === 'string' && value.trim() !== '') formData.append(key, value);
+      else if (typeof value === 'string') formData.append(key, value);
     });
     try {
-      if (selectedChauffeur) {
+      if (selectedChauffeur && selectedChauffeur._id) {
         await axios.put(`${API}/api/chauffeurs/${selectedChauffeur._id}`, formData);
       } else {
         await axios.post(`${API}/api/chauffeurs`, formData);
@@ -91,6 +94,7 @@ const ChauffeursPage: React.FC = () => {
       fetchChauffeurs();
       resetForm();
       setDrawerOpen(false);
+      setPreviewPhoto(null);
     } catch (err) {
       console.error(err);
       alert("Erreur lors de l'enregistrement");
@@ -99,24 +103,13 @@ const ChauffeursPage: React.FC = () => {
 
   const handleEdit = (chauffeur: Chauffeur) => {
     setSelectedChauffeur(chauffeur);
-    setForm({
-      nom: chauffeur.nom,
-      prenom: chauffeur.prenom,
-      telephone: chauffeur.telephone,
-      cin: chauffeur.cin,
-      adresse: chauffeur.adresse || '',
-      photo: chauffeur.photo || null,
-      scanCIN: chauffeur.scanCIN || null,
-      scanPermis: chauffeur.scanPermis || null,
-      scanVisa: chauffeur.scanVisa || null,
-      certificatBonneConduite: chauffeur.certificatBonneConduite || null,
-    });
+    setForm({ ...chauffeur });
     setPreviewPhoto(null);
     setDrawerOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Supprimer ce chauffeur ?")) return;
+  const handleDelete = async (id?: string) => {
+    if (!id || !window.confirm("Supprimer ce chauffeur ?")) return;
     try {
       await axios.delete(`${API}/api/chauffeurs/${id}`);
       fetchChauffeurs();
@@ -137,55 +130,42 @@ const ChauffeursPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box p={3} maxWidth="1400px" mx="auto">
-        <Typography variant="h5" fontWeight="bold" color="#001447" mb={3}>Gestion des Chauffeurs</Typography>
+      <Box p={3}>
+        <Typography variant="h5" fontWeight={600} mb={3}>Gestion des Chauffeurs</Typography>
+        <Box display="flex" justifyContent="space-between" mb={2}>
+          <TextField placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} size="small" />
+          <Button variant="contained" startIcon={<Add />} onClick={() => { resetForm(); setDrawerOpen(true); }}>Ajouter</Button>
+        </Box>
 
-        <Paper sx={{ p: 2, mb: 2, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <TextField
-              size="small"
-              placeholder="Rechercher un chauffeur..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
-              sx={{ width: '35%', backgroundColor: 'white', borderRadius: 1 }}
-            />
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => { setDrawerOpen(true); resetForm(); }}
-              sx={{ backgroundColor: '#001e61', borderRadius: 3, textTransform: 'none', fontWeight: 'bold', px: 3, boxShadow: 2 }}
-            >Ajouter un chauffeur</Button>
-          </Box>
-        </Paper>
-
-        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white' }}>
+        <Paper>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
-                {['Photo', 'Nom', 'Prénom', 'Téléphone', 'Adresse', 'Docs', 'Actions'].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
-                ))}
+              <TableRow>
+                <TableCell>Photo</TableCell>
+                <TableCell>Nom</TableCell>
+                <TableCell>Prénom</TableCell>
+                <TableCell>Téléphone</TableCell>
+                <TableCell>Docs</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((c, i) => (
-                <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
-                  <TableCell><Avatar src={c.photo ? `${API}/uploads/chauffeurs/${c.photo}` : ''} variant="rounded" sx={{ width: 40, height: 40 }} /></TableCell>
+                <TableRow key={c._id}>
+                  <TableCell><Avatar src={c.photo ? `${API}/uploads/chauffeurs/${c.photo}` : ''} /></TableCell>
                   <TableCell>{c.nom}</TableCell>
                   <TableCell>{c.prenom}</TableCell>
                   <TableCell>{c.telephone}</TableCell>
-                  <TableCell>{c.adresse}</TableCell>
                   <TableCell>
                     <Tooltip title="Voir les documents">
                       <IconButton onClick={() => { setSelectedDocsChauffeur(c); setOpenDocsModal(true); }}>
-                        <PictureAsPdf sx={{ fontSize: 25, color: 'red' }} />
+                        <PictureAsPdf sx={{ color: 'red' }} />
                       </IconButton>
                     </Tooltip>
                   </TableCell>
                   <TableCell>
-                    <Tooltip title="Modifier"><IconButton color="primary" onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
-                    <Tooltip title="Supprimer"><IconButton color="error" onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
+                    <IconButton onClick={() => handleEdit(c)}><Edit /></IconButton>
+                    <IconButton onClick={() => handleDelete(c._id)}><Delete /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -193,11 +173,35 @@ const ChauffeursPage: React.FC = () => {
           </Table>
         </Paper>
 
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} />
-        </Box>
+        <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} sx={{ mt: 2 }} />
 
-        {/* Dialog Docs */}
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3} width={360}>
+            <Box display="flex" justifyContent="center" mb={2}>
+              <label htmlFor="photo">
+                <Avatar src={getPhotoPreviewUrl()} sx={{ width: 80, height: 80, cursor: 'pointer' }} />
+              </label>
+              <input id="photo" name="photo" type="file" accept="image/*" onChange={handleInputChange} style={{ display: 'none' }} />
+            </Box>
+
+            {['nom', 'prenom', 'telephone', 'cin', 'adresse'].map(field => (
+              <TextField key={field} name={field} label={field} fullWidth sx={{ mb: 2 }} value={form[field] || ''} onChange={handleInputChange} />
+            ))}
+
+            {[{ name: 'scanCIN', label: 'CIN' }, { name: 'scanPermis', label: 'Permis' }, { name: 'scanVisa', label: 'Visa' }, { name: 'certificatBonneConduite', label: 'Certificat' }].map(({ name, label }) => (
+              <Box key={name} mb={2}>
+                <Typography fontWeight={500} mb={0.5}>{label}</Typography>
+                <Button component="label" variant="outlined" fullWidth>
+                  {form[name] instanceof File ? form[name].name : 'Choisir un fichier PDF'}
+                  <input type="file" name={name} hidden accept="application/pdf" onChange={handleInputChange} />
+                </Button>
+              </Box>
+            ))}
+
+            <Button variant="contained" fullWidth onClick={handleSubmit} sx={{ mt: 2 }}>{selectedChauffeur ? 'Mettre à jour' : 'Ajouter'}</Button>
+          </Box>
+        </Drawer>
+
         <Dialog open={openDocsModal} onClose={() => setOpenDocsModal(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Documents du chauffeur</DialogTitle>
           <DialogContent>
@@ -205,12 +209,12 @@ const ChauffeursPage: React.FC = () => {
               <Box display="flex" flexWrap="wrap" gap={2}>
                 {[{ key: 'scanCIN', label: 'CIN' }, { key: 'scanPermis', label: 'Permis' }, { key: 'scanVisa', label: 'Visa' }, { key: 'certificatBonneConduite', label: 'Certificat' }].map(({ key, label }) => {
                   const file = selectedDocsChauffeur[key as keyof Chauffeur];
-                  if (!file || !isPdfFile(file)) return null;
+                  if (!file || typeof file !== 'string' || !isPdfFile(file)) return null;
                   const url = `${API}/uploads/chauffeurs/${file}`;
                   return (
                     <Box key={key} textAlign="center">
                       <Typography fontSize={14} fontWeight={500}>{label}</Typography>
-                      <Tooltip title="Voir PDF">
+                      <Tooltip title="Voir le PDF">
                         <IconButton onClick={() => window.open(url, '_blank')}>
                           <PictureAsPdf sx={{ fontSize: 28, color: 'red' }} />
                         </IconButton>
