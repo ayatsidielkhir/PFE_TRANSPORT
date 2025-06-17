@@ -15,6 +15,9 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+import { FolderOpen } from '@mui/icons-material';
+
+
 interface Chauffeur {
   _id: string;
   nom: string;
@@ -37,6 +40,9 @@ const ChauffeursPage: React.FC = () => {
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [dialogImageSrc, setDialogImageSrc] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [openDocsModal, setOpenDocsModal] = useState(false);
+  const [docsChauffeur, setDocsChauffeur] = useState<Chauffeur | null>(null);
+
   const [sortAsc, setSortAsc] = useState(true);
   const [page, setPage] = useState(1);
   const [form, setForm] = useState<Record<string, string | File>>({});
@@ -127,6 +133,11 @@ const ChauffeursPage: React.FC = () => {
   setPreviewPhoto(`https://mme-backend.onrender.com/uploads/chauffeurs/${chauffeur.photo}`);
   setDrawerOpen(true);
 };
+const handleVoirDocs = (chauffeur: Chauffeur) => {
+  setDocsChauffeur(chauffeur);
+  setOpenDocsModal(true);
+};
+
 
 
   const resetForm = () => {
@@ -240,7 +251,7 @@ const ChauffeursPage: React.FC = () => {
           <Table size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow>
-                {['Photo', 'Nom', 'Prénom', 'Téléphone', 'CIN', 'Adresse', 'CIN', 'Permis', 'Visa', 'Casier Judiciaire', 'Actions'].map(h => (
+                {['Photo', 'Nom', 'Prénom', 'Téléphone', 'CIN', 'Adresse','Docs', 'Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -254,10 +265,13 @@ const ChauffeursPage: React.FC = () => {
                   <TableCell>{c.telephone}</TableCell>
                   <TableCell>{c.cin}</TableCell>
                   <TableCell>{c.adresse}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
-                  <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
+                    <TableCell>
+                      <Tooltip title="Voir les documents">
+                        <IconButton onClick={() => handleVoirDocs(c)}>
+                          <FolderOpen />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
                   <TableCell>
                     <Tooltip title="Modifier"><IconButton sx={{ color: '#001e61' }} onClick={() => handleEdit(c)}><Edit /></IconButton></Tooltip>
                     <Tooltip title="Supprimer"><IconButton sx={{ color: '#d32f2f' }} onClick={() => handleDelete(c._id)}><Delete /></IconButton></Tooltip>
@@ -401,6 +415,28 @@ const ChauffeursPage: React.FC = () => {
     </Button>
   </Box>
 </Drawer>
+
+<Dialog open={openDocsModal} onClose={() => setOpenDocsModal(false)} maxWidth="sm" fullWidth>
+  <DialogTitle>Documents du Chauffeur</DialogTitle>
+  <DialogContent>
+    {docsChauffeur && (
+      <Box display="flex" flexWrap="wrap" gap={2}>
+        {[
+          { key: 'scanCIN', label: 'Scan CIN' },
+          { key: 'scanPermis', label: 'Scan Permis' },
+          { key: 'scanVisa', label: 'Visa' },
+          { key: 'certificatBonneConduite', label: 'Casier Judiciaire' }
+        ].map(({ key, label }) => (
+          <Box key={key} textAlign="center">
+            <Typography fontSize={14} fontWeight={500}>{label}</Typography>
+            {renderDocumentAvatar((docsChauffeur as any)[key])}
+          </Box>
+        ))}
+      </Box>
+    )}
+  </DialogContent>
+</Dialog>
+
 
     </AdminLayout>
   );
