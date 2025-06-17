@@ -31,17 +31,18 @@ const PlateformesPage: React.FC = () => {
   const perPage = 5;
 
   useEffect(() => {
-    axios.get('${API}/plateformes').then(res => {
-      setPlateformes(res.data);
-      setFilteredPlateformes(res.data);
-    });
-  }, []);
-
-  const fetchPlateformes = async () => {
-    const res = await axios.get('${API}/plateformes');
+  axios.get(`${API}/plateformes`).then(res => {
     setPlateformes(res.data);
     setFilteredPlateformes(res.data);
-  };
+  });
+}, []);
+
+const fetchPlateformes = async () => {
+  const res = await axios.get(`${API}/plateformes`);
+  setPlateformes(res.data);
+  setFilteredPlateformes(res.data);
+};
+
 
   const handleSubmit = async () => {
     const formData = new FormData();
@@ -52,8 +53,9 @@ const PlateformesPage: React.FC = () => {
       if (form._id) {
         await axios.put(`${API}/plateformes/${form._id}`, formData);
       } else {
-        await axios.post('${API}/plateformes', formData);
+        await axios.post(`${API}/plateformes`, formData); // ✅ méthode POST pour ajout
       }
+      
       setDrawerOpen(false);
       setForm({ nom: '', email: '', password: '', lien: '' });
       setLogo(null);
@@ -111,7 +113,7 @@ const PlateformesPage: React.FC = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon />
+                    <SearchIcon />
                 </InputAdornment>
               )
             }}
