@@ -25,16 +25,20 @@ export const getDossier: RequestHandler = async (_req, res) => {
 
 export const uploadDossier = async (req: Request, res: Response) => {
   const uploaded = req.files;
-  const updateData: Record<string, string> = {};
 
-  if (Array.isArray(uploaded)) {
-    for (const file of uploaded) {
-      updateData[file.fieldname] = file.filename;
-    }
-  } else {
-    res.status(400).json({ message: 'Fichiers non valides' });
-    return;
+  if (!uploaded || !Array.isArray(uploaded) || uploaded.length === 0) {
+    return res.status(400).json({ message: 'Aucun fichier reçu' });
   }
+
+  const key = req.body.key;
+  if (!key) {
+    return res.status(400).json({ message: 'Clé de document manquante (key)' });
+  }
+
+  const file = uploaded[0]; // un seul fichier attendu à la fois
+  const filename = file.filename;
+
+  const updateData = { [key]: filename };
 
   const existing = await DossierJuridique.findOne();
   if (existing) {
@@ -43,8 +47,9 @@ export const uploadDossier = async (req: Request, res: Response) => {
     await DossierJuridique.create(updateData);
   }
 
-  res.status(201).json({ message: 'Documents enregistrés' });
+  return res.status(201).json({ message: 'Document enregistré avec succès' });
 };
+
 
 export const deleteFileFromDossier: RequestHandler = async (req, res) => {
   try {

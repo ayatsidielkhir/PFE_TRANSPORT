@@ -29,30 +29,35 @@ const DossierJuridique: React.FC = () => {
 
   useEffect(() => { fetchDossier(); }, []);
 
-  const handleUpload = async () => {
-    const formData = new FormData();
-    const key = editKey ? editKey : `custom_${form.name}`;
-    if (!form.file && editKey && editKey !== `custom_${form.name}`) {
-      await axios.put('/dossier-juridique/rename', {
-        oldKey: editKey,
-        newKey: `custom_${form.name}`
-      });
-      setDrawerOpen(false);
-      setForm({ name: '', file: null });
-      setEditKey(null);
-      setSearch('');
-      fetchDossier();
-      return;
-    }
+ const handleUpload = async () => {
+  const key = editKey ? editKey : `custom_${form.name}`;
+  const newKey = `custom_${form.name}`;
 
+  // 1. Renommer si le nom change uniquement
+  if (!form.file && editKey && editKey !== newKey) {
+    await axios.put('/dossier-juridique/rename', {
+      oldKey: editKey,
+      newKey,
+    });
+  }
+
+  // 2. Upload ou remplacement du fichier
+  if (form.file) {
+    const formData = new FormData();
+    formData.append('file', form.file);
+    formData.append('key', newKey);
 
     await axios.post('/dossier-juridique', formData);
-    setDrawerOpen(false);
-    setForm({ name: '', file: null });
-    setEditKey(null);
-    setSearch('');
-    fetchDossier();
-  };
+  }
+
+  // 3. Réinitialiser l'état
+  setDrawerOpen(false);
+  setForm({ name: '', file: null });
+  setEditKey(null);
+  setSearch('');
+  fetchDossier();
+};
+
 
   const handlePreview = (fileName: string) => {
   setPreviewFile(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
