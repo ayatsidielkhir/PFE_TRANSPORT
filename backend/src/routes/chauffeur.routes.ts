@@ -26,12 +26,32 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ✅ Routes CRUD Chauffeurs
+// Routes CRUD Chauffeurs
 router.get('/', getChauffeurs);
 
-// ✅ Utilisation de `.any()` au lieu de `.fields(...)` pour accepter fichiers dynamiques comme `customDocs`
-router.post('/', upload.any(), addChauffeur);
-router.put('/:id', upload.any(), updateChauffeur);
+router.post(
+  '/',
+  upload.fields([
+    { name: 'scanPermis', maxCount: 1 },
+    { name: 'scanVisa', maxCount: 1 },
+    { name: 'scanCIN', maxCount: 1 },
+    { name: 'photo', maxCount: 1 },
+    { name: 'certificatBonneConduite', maxCount: 1 }
+  ]),
+  addChauffeur
+);
+
+router.put(
+  '/:id',
+  upload.fields([
+    { name: 'scanPermis', maxCount: 1 },
+    { name: 'scanVisa', maxCount: 1 },
+    { name: 'scanCIN', maxCount: 1 },
+    { name: 'photo', maxCount: 1 },
+    { name: 'certificatBonneConduite', maxCount: 1 }
+  ]),
+  updateChauffeur
+);
 
 router.delete('/:id', deleteChauffeur);
 

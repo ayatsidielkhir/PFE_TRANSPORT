@@ -16,7 +16,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import { FolderOpen } from '@mui/icons-material';
-const API = process.env.REACT_APP_API_URL;
 
 
 interface Chauffeur {
@@ -31,7 +30,6 @@ interface Chauffeur {
   scanPermis?: string;
   scanVisa?: string;
   certificatBonneConduite?: string;
-  customDocs?: { name: string; file: string }[];
 }
 
 const ChauffeursPage: React.FC = () => {
@@ -44,10 +42,6 @@ const ChauffeursPage: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openDocsModal, setOpenDocsModal] = useState(false);
   const [docsChauffeur, setDocsChauffeur] = useState<Chauffeur | null>(null);
-  const [customDocs, setCustomDocs] = useState<{ name: string; file: File }[]>([]);
-  const [newDocName, setNewDocName] = useState('');
-  const [newDocFile, setNewDocFile] = useState<File | null>(null);
-
 
   const [sortAsc, setSortAsc] = useState(true);
   const [page, setPage] = useState(1);
@@ -57,8 +51,8 @@ const ChauffeursPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-   const fetchChauffeurs = async () => {
-    const res = await axios.get(`${API}/chauffeurs`);
+  const fetchChauffeurs = async () => {
+    const res = await axios.get('https://mme-backend.onrender.com/api/chauffeurs');
     setChauffeurs(res.data);
   };
 
@@ -82,44 +76,39 @@ const ChauffeursPage: React.FC = () => {
     }
   };
 
-const handleSubmit = async () => {
+  const handleSubmit = async () => {
     const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'name' in value &&
+    'type' in value
+  ) {
+    formData.append(key, value as File);
+  } else if (typeof value === 'string') {
+    formData.append(key, value);
+  }
+});
 
-    Object.entries(form).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if (typeof value === 'string') {
-        formData.append(key, value);
-      }
-    });
-
-    customDocs.forEach((doc, index) => {
-      formData.append(`customDocs[${index}][name]`, doc.name);
-      formData.append(`customDocs[${index}][file]`, doc.file, doc.file.name);
-    });
 
     try {
       if (selectedChauffeur) {
-        await axios.put(`${API}/chauffeurs/${selectedChauffeur._id}`, formData);
+        await axios.put(`https://mme-backend.onrender.com/api/chauffeurs/${selectedChauffeur._id}`, formData);
       } else {
-        await axios.post(`${API}/chauffeurs`, formData);
+        await axios.post('https://mme-backend.onrender.com/api/chauffeurs', formData);
       }
-
       fetchChauffeurs();
       setDrawerOpen(false);
-      resetForm();
-      setCustomDocs([]);
     } catch (err) {
-      console.error('❌ Erreur lors de la soumission', err);
+      console.error('Erreur lors de la soumission', err);
     }
   };
-
-
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Confirmer la suppression ?')) return;
     try {
-      await axios.delete(`${API}/chauffeurs/${id}`);
+      await axios.delete(`https://mme-backend.onrender.com/api/chauffeurs/${id}`);
       fetchChauffeurs();
     } catch (err) {
       console.error('Erreur de suppression', err);
@@ -262,10 +251,11 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
           <Table size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow>
-                {['Photo', 'Nom', 'Prénom', 'Téléphone', 'CIN', 'Adresse','Docs', 'Actions'].map(h => (
+                {['Photo', 'Nom', 'Prénom', 'Téléphone', 'CIN', 'Adresse', 'Docs', 'Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
+
             </TableHead>
             <TableBody>
               {paginated.map((c, i) => (
@@ -276,6 +266,10 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
                   <TableCell>{c.telephone}</TableCell>
                   <TableCell>{c.cin}</TableCell>
                   <TableCell>{c.adresse}</TableCell>
+                  <TableCell>{renderDocumentAvatar(c.scanCIN)}</TableCell>
+                  <TableCell>{renderDocumentAvatar(c.scanPermis)}</TableCell>
+                  <TableCell>{renderDocumentAvatar(c.scanVisa)}</TableCell>
+                  <TableCell>{renderDocumentAvatar(c.certificatBonneConduite)}</TableCell>
                     <TableCell>
                       <Tooltip title="Voir les documents">
                         <IconButton onClick={() => handleVoirDocs(c)}>
@@ -305,41 +299,42 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="lg" fullWidth>
         <DialogTitle>Visualisation PDF</DialogTitle>
-              <DialogContent>
-              {docsChauffeur && docsChauffeur.customDocs && docsChauffeur.customDocs.length > 0 && (
-                <Box mt={3}>
-                  <Typography fontWeight="bold" mb={1}>Autres documents</Typography>
-                  <Box display="flex" flexWrap="wrap" gap={2}>
-                    {docsChauffeur.customDocs.map((doc, idx) => (
-                      <Box key={idx} textAlign="center">
-                        <Typography fontSize={14} fontWeight={500}>{doc.name}</Typography>
-                        {renderDocumentAvatar(doc.file)}
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-            </DialogContent>
-
-
+        <DialogContent>
+          <iframe
+            src={dialogImageSrc || ''}
+            width="100%"
+            height="600px"
+            style={{ border: 'none' }}
+          />
+          <Box mt={2} textAlign="right">
+            <Button
+              onClick={() => window.open(dialogImageSrc || '', '_blank')}
+              variant="outlined"
+              color="primary"
+            >
+              Télécharger
+            </Button>
+          </Box>
+        </DialogContent>
       </Dialog>
 
 
 
-              <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-  <Box p={3} width={isMobile ? '100vw' : 480}>
-    {/* 📷 Photo du chauffeur */}
-    <Box display="flex" justifyContent="center" mb={3}>
+<Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+  <Box p={3} width={isMobile ? '100vw' : 450}>
+    <Box display="flex" justifyContent="center" mb={3} mt={5}>
       <label htmlFor="photo-input">
         <Avatar
           src={previewPhoto || ''}
           sx={{
-            width: 120,
-            height: 120,
-            borderRadius: '12px',
+            width: 110,
+            height: 110,
+            cursor: 'pointer',
+            borderRadius: '50%',
             boxShadow: 2,
             backgroundColor: '#f0f0f0',
-            cursor: 'pointer'
+            mt: 6,
+            marginTop: '28px'
           }}
         />
       </label>
@@ -348,13 +343,12 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
         name="photo"
         type="file"
         accept="image/*"
-        hidden
+        style={{ display: 'none' }}
         onChange={handleInputChange}
       />
     </Box>
 
-    {/* 🧾 Champs standards */}
-    <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
+    <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
       {['nom', 'prenom', 'telephone', 'cin', 'adresse'].map(field => (
         <Box key={field} flex="1 1 45%">
           <TextField
@@ -374,15 +368,12 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
       ))}
     </Box>
 
-   
-
-    {/* 📁 Autres documents standards */}
-    <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
-      {[ 
+    <Box display="flex" flexWrap="wrap" gap={2}>
+      {[
         { name: 'scanCIN', label: 'Scan CIN' },
         { name: 'scanPermis', label: 'Scan Permis' },
         { name: 'scanVisa', label: 'Scan Visa' },
-        { name: 'certificatBonneConduite', label: 'Casier Judiciaire' }
+        { name: 'certificatBonneConduite', label: 'Extrait de Casier Judiciaire' }
       ].map(({ name, label }) => (
         <Box key={name} flex="1 1 45%">
           <Typography fontWeight={500} mb={0.5}>{label}</Typography>
@@ -410,74 +401,12 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
       ))}
     </Box>
 
-     {/* 📎 Documents personnalisés */}
-    <Box mt={3} mb={2}>
-      <Typography fontWeight="bold" mb={1}>Ajouter un autre document</Typography>
-      <Box display="flex" flexDirection="column" gap={1}>
-        <TextField
-          label="Nom du document"
-          value={newDocName}
-          onChange={(e) => setNewDocName(e.target.value)}
-          fullWidth
-        />
-        <Button
-          component="label"
-          variant="outlined"
-          sx={{ textTransform: 'none', borderRadius: '12px' }}
-        >
-          {newDocFile ? newDocFile.name : 'Choisir un fichier'}
-          <input
-            type="file"
-            hidden
-            onChange={(e) => setNewDocFile(e.target.files?.[0] || null)}
-          />
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => {
-            if (newDocName && newDocFile) {
-              setCustomDocs([...customDocs, { name: newDocName, file: newDocFile }]);
-              setNewDocName('');
-              setNewDocFile(null);
-            } else {
-              alert('Veuillez indiquer un nom et un fichier.');
-            }
-          }}
-          sx={{ backgroundColor: '#001e61', borderRadius: '12px', textTransform: 'none' }}
-        >
-          Ajouter au chauffeur
-        </Button>
-
-        {/* 📝 Liste des documents ajoutés */}
-        {customDocs.length > 0 && (
-          <Box mt={2}>
-            <Typography fontWeight={600} mb={1}>Documents ajoutés :</Typography>
-            <Box display="flex" flexDirection="column" gap={1}>
-              {customDocs.map((doc, idx) => (
-                <Box key={idx} display="flex" justifyContent="space-between" alignItems="center" p={1} border="1px solid #ccc" borderRadius={1}>
-                  <Typography fontSize={14}>{doc.name} – {doc.file.name}</Typography>
-                  <Button size="small" color="error" onClick={() => {
-                    const updated = [...customDocs];
-                    updated.splice(idx, 1);
-                    setCustomDocs(updated);
-                  }}>
-                    Supprimer
-                  </Button>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        )}
-      </Box>
-    </Box>
-
-    {/* ✅ Bouton final */}
     <Button
       fullWidth
       variant="contained"
       onClick={handleSubmit}
       sx={{
-        mt: 2,
+        mt: 4,
         backgroundColor: '#001e61',
         borderRadius: '12px',
         textTransform: 'none',
@@ -492,31 +421,29 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
   </Box>
 </Drawer>
 
-
-      <Dialog open={openDocsModal} onClose={() => setOpenDocsModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Documents du Chauffeur</DialogTitle>
-        <DialogContent>
-          {docsChauffeur && (
-            <Box display="flex" flexWrap="wrap" gap={2}>
-              {[
-                { key: 'scanCIN', label: 'Scan CIN' },
-                { key: 'scanPermis', label: 'Scan Permis' },
-                { key: 'scanVisa', label: 'Visa' },
-                { key: 'certificatBonneConduite', label: 'Casier Judiciaire' }
-              ].map(({ key, label }) => (
-                <Box key={key} textAlign="center">
-                  <Typography fontSize={14} fontWeight={500}>{label}</Typography>
-                  {renderDocumentAvatar((docsChauffeur as any)[key])}
-                </Box>
-              ))}
-            </Box>
-          )}
-        </DialogContent>
-      </Dialog>
+<Dialog open={openDocsModal} onClose={() => setOpenDocsModal(false)} maxWidth="sm" fullWidth>
+  <DialogTitle>Documents du Chauffeur</DialogTitle>
+  <DialogContent>
+    {docsChauffeur && (
+      <Box display="flex" flexWrap="wrap" gap={2}>
+        {[
+          { key: 'scanCIN', label: 'Scan CIN' },
+          { key: 'scanPermis', label: 'Scan Permis' },
+          { key: 'scanVisa', label: 'Visa' },
+          { key: 'certificatBonneConduite', label: 'Casier Judiciaire' }
+        ].map(({ key, label }) => (
+          <Box key={key} textAlign="center">
+            <Typography fontSize={14} fontWeight={500}>{label}</Typography>
+            {renderDocumentAvatar((docsChauffeur as any)[key])}
+          </Box>
+        ))}
+      </Box>
+    )}
+  </DialogContent>
+</Dialog>
 
 
     </AdminLayout>
   );
 };
-
 export default ChauffeursPage;
