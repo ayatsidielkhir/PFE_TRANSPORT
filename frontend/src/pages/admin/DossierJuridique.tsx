@@ -43,7 +43,7 @@ const DossierJuridique: React.FC = () => {
   };
 
   const handlePreview = (fileName: string) => {
-    setPreviewFile(`${API}/uploads/juridique/${fileName}`);
+  setPreviewFile(`https://mme-backend.onrender.com/uploads/juridique/${fileName}`);
   };
 
   const filtered = Object.entries(dossier).filter(([key]) =>
