@@ -197,7 +197,7 @@ const TrajetsPage: React.FC = () => {
                       <Box display="flex" alignItems="center" gap={1}>
                           {part?.logo && (
                             <Avatar
-                              src={`${API}/uploads/partenaires/${part.logo}`}
+                              src={`https://mme-backend.onrender.com/uploads/partenaires/${part.logo}`}
                               sx={{ width: 28, height: 28 }}
                             />
                           )}
