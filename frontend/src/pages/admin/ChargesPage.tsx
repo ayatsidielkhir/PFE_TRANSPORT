@@ -108,7 +108,8 @@
 
       const handleEdit = (charge: Charge) => {
         setForm(charge);
-        setChauffeurSelectionne(null);
+        setChauffeurSelectionne(charge.chauffeur || null);
+        setVehiculeSelectionne(charge.vehicule || null);
         setIsEditing(true);
         setDrawerOpen(true);
       };
@@ -120,25 +121,30 @@
         }
 
         const { autreType, ...rest } = form;
+
+        // 🔧 Ajout dynamique du champ chauffeur ou vehicule
         const finalForm = {
           ...rest,
           type: form.type === 'Autre' && autreType ? autreType : form.type,
+          chauffeur: chauffeurSelectionne?._id || undefined,
+          vehicule: vehiculeSelectionne?._id || undefined
         };
-
-
 
         try {
           const res = isEditing && form._id
             ? await axios.put(`${API}/charges/${form._id}`, finalForm)
             : await axios.post(`${API}/charges`, finalForm);
+
           if ([200, 201].includes(res.status)) {
             fetchCharges();
             setDrawerOpen(false);
           }
-        } catch {
+        } catch (err) {
+          console.error("Erreur enregistrement :", err);
           alert("Erreur lors de l'enregistrement.");
         }
       };
+
 
       const handleDelete = async (id?: string) => {
         if (!id) return;
