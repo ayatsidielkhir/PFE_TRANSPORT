@@ -117,22 +117,26 @@ const ChauffeursPage: React.FC = () => {
 
   const handleEdit = (chauffeur: Chauffeur) => {
   setSelectedChauffeur(chauffeur);
+
   const formatted: Record<string, string> = {
     nom: chauffeur.nom || '',
     prenom: chauffeur.prenom || '',
     telephone: chauffeur.telephone || '',
     cin: chauffeur.cin || '',
     adresse: chauffeur.adresse || '',
-    photo: chauffeur.photo || '',
     scanCIN: chauffeur.scanCIN || '',
     scanPermis: chauffeur.scanPermis || '',
     scanVisa: chauffeur.scanVisa || '',
-    certificatBonneConduite: chauffeur.certificatBonneConduite || ''
+    certificatBonneConduite: chauffeur.certificatBonneConduite || '',
+    photo: chauffeur.photo || ''
   };
+
   setForm(formatted);
   setPreviewPhoto(`https://mme-backend.onrender.com/uploads/chauffeurs/${chauffeur.photo}`);
   setDrawerOpen(true);
 };
+
+
 const handleVoirDocs = (chauffeur: Chauffeur) => {
   setDocsChauffeur(chauffeur);
   setOpenDocsModal(true);
