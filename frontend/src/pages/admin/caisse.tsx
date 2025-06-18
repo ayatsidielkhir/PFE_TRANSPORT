@@ -96,9 +96,15 @@ const CaissePage: React.FC = () => {
   useEffect(() => { fetchData(); }, []);
 
   const handleChange = (e: any) => {
-    const { name, value } = e.target;
+      const { name, value } = e.target;
+      const newForm = { ...form, [name!]: value };
     setForm(prev => ({ ...prev, [name!]: value }));
-  };
+     // ✅ Si on sélectionne Entrée ➜ statut = Payé automatiquement
+    if (name === 'type' && value === 'Entrée') {
+      newForm.statut = 'Payé';
+    }
+    setForm(newForm);
+    };
 
   const handleSubmit = async () => {
     if (!form.date) return alert("Veuillez renseigner la date");
@@ -263,7 +269,7 @@ const CaissePage: React.FC = () => {
 
         {/* Drawer */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3} width={isMobile ? '100vw' : 400} sx={{ bgcolor: 'white' }}>
+          <Box p={3} mt={10} width={isMobile ? '100vw' : 400} sx={{ bgcolor: 'white' }}>
             <Typography variant="h6" fontWeight={600} mb={2}>Ajouter / Modifier Opération</Typography>
 
             <TextField fullWidth label="Nom" name="nom" value={form.nom || ''} onChange={handleChange} sx={{ mb: 2 }} />
@@ -283,12 +289,19 @@ const CaissePage: React.FC = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Statut</InputLabel>
-              <Select name="statut" value={form.statut || ''} label="Statut" onChange={handleChange}>
-                <MenuItem value="Payé">Payé</MenuItem>
-                <MenuItem value="Non payé">Non payé</MenuItem>
-              </Select>
-            </FormControl>
+            <InputLabel>Statut</InputLabel>
+            <Select
+              name="statut"
+              value={form.statut || ''}
+              label="Statut"
+              onChange={handleChange}
+              disabled={form.type === 'Entrée'} // ✅ Désactivation si Entrée
+            >
+              <MenuItem value="Payé">Payé</MenuItem>
+              <MenuItem value="Non payé">Non payé</MenuItem>
+            </Select>
+          </FormControl>
+
             <TextField label="Montant" name="montant" type="number" fullWidth value={form.montant || ''} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Date" name="date" type="date" fullWidth value={form.date ? new Date(form.date).toISOString().split('T')[0] : ''} onChange={handleChange} InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} />
             <Button component="label" variant="outlined" fullWidth sx={{ mb: 2 }}>
