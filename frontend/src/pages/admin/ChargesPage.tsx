@@ -30,6 +30,7 @@
     interface Vehicule {
     _id: string;
     nom: string;
+    matricule: string;
   }
 
 
@@ -434,11 +435,12 @@
                 {['Carburant', 'Entretien', 'Vignette'].includes(form.type) && (
                   <Autocomplete
                     options={vehicules}
-                    getOptionLabel={(option) => option.nom}
+                    getOptionLabel={(option) => `${option.nom} - ${option.matricule}`}
                     value={vehiculeSelectionne}
                     onChange={(_, newValue) => setVehiculeSelectionne(newValue)}
                     renderInput={(params) => <TextField {...params} label="Véhicule" margin="normal" />}
                   />
+
                 )}
 
 
