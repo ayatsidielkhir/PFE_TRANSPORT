@@ -71,43 +71,39 @@ export const addChauffeur: RequestHandler = async (req, res) => {
       visa_date_expiration
     } = req.body;
 
-    const scanPermis = req.files && 'scanPermis' in req.files ? req.files['scanPermis'][0].filename : '';
-    const scanVisa = req.files && 'scanVisa' in req.files ? req.files['scanVisa'][0].filename : '';
-    const scanCIN = req.files && 'scanCIN' in req.files ? req.files['scanCIN'][0].filename : '';
-    const photo = req.files && 'photo' in req.files ? req.files['photo'][0].filename : '';
-    const certificatBonneConduite = req.files && 'certificatBonneConduite' in req.files
-      ? req.files['certificatBonneConduite'][0].filename
-      : '';
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    const visaActifBool = visa_actif === 'true' || visa_actif === true;
+    const getFile = (field: string) =>
+      files?.[field]?.[0]?.filename || '';
 
     const chauffeur = new Chauffeur({
-      nom,
-      prenom,
-      telephone,
-      cin,
-      adresse,
-      observations,
-      permis: {
-        date_expiration: permis_date_expiration
-      },
-      contrat: {
-        type: contrat_type,
-        date_expiration: contrat_date_expiration
-      },
-      visa: {
-        actif: visaActifBool,
-        date_expiration: visa_date_expiration
-      },
-      scanPermis,
-      scanVisa,
-      scanCIN,
-      photo,
-      certificatBonneConduite
-    });
+  nom,
+  prenom,
+  telephone,
+  cin,
+  adresse,
+  observations,
+  permis: {
+    date_expiration: permis_date_expiration
+  },
+  contrat: {
+    type: contrat_type,
+    date_expiration: contrat_date_expiration
+  },
+  visa: {
+    actif: visa_actif === 'true' || visa_actif === true,
+    date_expiration: visa_date_expiration
+  },
+  scanPermis: getFile('scanPermis'),
+  scanVisa: getFile('scanVisa'),
+  scanCIN: getFile('scanCIN'),
+  photo: getFile('photo'),
+  certificatBonneConduite: getFile('certificatBonneConduite')
+});
+
 
     await chauffeur.save();
-    res.status(201).json(chauffeur);
+    res.status(201).json(chauffeur); // 🔁 Très important de renvoyer les bonnes valeurs
   } catch (err: any) {
     console.error('❌ Erreur lors de la création du chauffeur :', err);
     if (err.code === 11000) {

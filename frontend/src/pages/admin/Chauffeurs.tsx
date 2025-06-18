@@ -76,35 +76,39 @@
         }
       };
 
-        const handleSubmit = async () => {
-      const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (typeof value === 'object' && value !== null && 'name' in value && 'type' in value) {
-          formData.append(key, value as File);
-        } else if (typeof value === 'string') {
-          formData.append(key, value);
-        }
-      });
+      const handleSubmit = async () => {
+  const formData = new FormData();
+  Object.entries(form).forEach(([key, value]) => {
+    if (typeof value === 'object' && value !== null && 'name' in value && 'type' in value) {
+      formData.append(key, value as File);
+    } else if (typeof value === 'string') {
+      formData.append(key, value);
+    }
+  });
 
-      try {
-        const config = {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        };
-
-        if (selectedChauffeur) {
-          await axios.put(`/chauffeurs/${selectedChauffeur._id}`, formData, config);
-        } else {
-          await axios.post('/chauffeurs', formData, config);
-        }
-
-        fetchChauffeurs();
-        setDrawerOpen(false);
-      } catch (err) {
-        console.error('Erreur lors de la soumission', err);
-      }
+  try {
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     };
+
+    if (selectedChauffeur) {
+      await axios.put(`/chauffeurs/${selectedChauffeur._id}`, formData, config);
+      fetchChauffeurs(); // Pour la mise à jour, pas besoin d'attendre
+    } else {
+      await axios.post('/chauffeurs', formData, config);
+      setTimeout(() => {
+        fetchChauffeurs(); // Laisse Render enregistrer les fichiers
+      }, 500);
+    }
+
+    setDrawerOpen(false);
+  } catch (err) {
+    console.error('Erreur lors de la soumission', err);
+  }
+};
+
 
 
       const handleDelete = async (id: string) => {
