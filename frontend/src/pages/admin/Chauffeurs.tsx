@@ -30,6 +30,7 @@ interface Chauffeur {
   scanPermis?: string;
   scanVisa?: string;
   certificatBonneConduite?: string;
+  customDocs?: { name: string; file: string }[];
 }
 
 const ChauffeursPage: React.FC = () => {
@@ -150,17 +151,18 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
     setPreviewPhoto(null);
   };
 
-  const renderDocumentAvatar = (file?: string) => {
-    if (!file) return '—';
-    const url = `https://mme-backend.onrender.com/uploads/chauffeurs/${file}`;
-    return (
-      <Tooltip title="Voir le PDF">
-        <IconButton onClick={() => (setDialogImageSrc(url), setOpenDialog(true))}>
-          <PictureAsPdf sx={{ fontSize: 25, color: 'red' }} />
-        </IconButton>
-      </Tooltip>
-    );
-  };
+const renderDocumentAvatar = (file?: string) => {
+  if (!file || file.trim() === '') return '—'; // ✅ Important
+  const url = `https://mme-backend.onrender.com/uploads/chauffeurs/${file}`;
+  return (
+    <Tooltip title="Voir le PDF">
+      <IconButton onClick={() => (setDialogImageSrc(url), setOpenDialog(true))}>
+        <PictureAsPdf sx={{ fontSize: 25, color: 'red' }} />
+      </IconButton>
+    </Tooltip>
+  );
+};
+
 
   const filtered = chauffeurs
     .filter(c => c.nom.toLowerCase().includes(search.toLowerCase()) || c.prenom.toLowerCase().includes(search.toLowerCase()))
@@ -423,8 +425,10 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
 
 <Dialog open={openDocsModal} onClose={() => setOpenDocsModal(false)} maxWidth="sm" fullWidth>
   <DialogTitle>Documents du Chauffeur</DialogTitle>
-  <DialogContent>
-    {docsChauffeur && (
+      <DialogContent>
+  {docsChauffeur && (
+    <>
+      <Typography fontWeight={600} mb={2}>Documents standards</Typography>
       <Box display="flex" flexWrap="wrap" gap={2}>
         {[
           { key: 'scanCIN', label: 'Scan CIN' },
@@ -434,12 +438,32 @@ const handleVoirDocs = (chauffeur: Chauffeur) => {
         ].map(({ key, label }) => (
           <Box key={key} textAlign="center">
             <Typography fontSize={14} fontWeight={500}>{label}</Typography>
-            {renderDocumentAvatar((docsChauffeur as any)[key])}
+            {(docsChauffeur as any)[key]?.trim()
+              ? renderDocumentAvatar((docsChauffeur as any)[key])
+              : '—'}
           </Box>
         ))}
       </Box>
-    )}
-  </DialogContent>
+
+      {docsChauffeur.customDocs && docsChauffeur.customDocs.length > 0 && (
+        <>
+          <Typography fontWeight={600} mt={3} mb={2}>Documents personnalisés</Typography>
+          <Box display="flex" flexWrap="wrap" gap={2}>
+            {docsChauffeur.customDocs.map((doc, index) => (
+              <Box key={index} textAlign="center">
+                <Typography fontSize={14} fontWeight={500}>{doc.name}</Typography>
+                {doc.file?.trim()
+                  ? renderDocumentAvatar(doc.file)
+                  : '—'}
+              </Box>
+            ))}
+          </Box>
+        </>
+      )}
+    </>
+  )}
+</DialogContent>
+
 </Dialog>
 
 

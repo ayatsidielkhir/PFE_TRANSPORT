@@ -81,30 +81,31 @@ export const addChauffeur: RequestHandler = async (req, res) => {
 
     const visaActifBool = visa_actif === 'true' || visa_actif === true;
 
-    const chauffeur = new Chauffeur({
-      nom,
-      prenom,
-      telephone,
-      cin,
-      adresse,
-      observations,
-      permis: {
-        date_expiration: permis_date_expiration
-      },
-      contrat: {
-        type: contrat_type,
-        date_expiration: contrat_date_expiration
-      },
-      visa: {
-        actif: visaActifBool,
-        date_expiration: visa_date_expiration
-      },
-      scanPermis,
-      scanVisa,
-      scanCIN,
-      photo,
-      certificatBonneConduite
-    });
+      const chauffeur = new Chauffeur({
+  nom,
+  prenom,
+  telephone,
+  cin,
+  adresse,
+  observations,
+  permis: {
+    date_expiration: permis_date_expiration
+  },
+  contrat: {
+    type: contrat_type,
+    date_expiration: contrat_date_expiration
+  },
+  visa: {
+    actif: visaActifBool,
+    date_expiration: visa_date_expiration
+  },
+  ...(scanPermis && { scanPermis }),
+  ...(scanVisa && { scanVisa }),
+  ...(scanCIN && { scanCIN }),
+  ...(photo && { photo }),
+  ...(certificatBonneConduite && { certificatBonneConduite }),
+});
+
 
     await chauffeur.save();
     res.status(201).json(chauffeur);
