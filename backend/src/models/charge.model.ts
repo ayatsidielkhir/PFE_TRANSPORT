@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 
 const chargeSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ['Salaire', 'CNSS', 'Entretien', 'Carburant', 'Vignette', 'Autre', 'Sortie Caisse'],
-    required: true,
-  },
+type: {
+  type: String,
+  required: true,
+  trim: true
+},
   autreType: {
   type: String,
   trim: true,
