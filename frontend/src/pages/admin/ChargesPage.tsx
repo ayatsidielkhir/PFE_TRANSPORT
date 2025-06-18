@@ -23,7 +23,15 @@
     date: string;
     statut: 'Payé' | 'Non payé';
     autreType?: string;
+    chauffeur?: Chauffeur;
+    vehicule?: Vehicule;
+
   }
+  interface Vehicule {
+  _id: string;
+  nom: string;
+}
+
 
   interface Chauffeur {
     _id: string;
@@ -32,6 +40,8 @@
   }
 
   const ChargesPage: React.FC = () => {
+    const [vehicules, setVehicules] = useState<Vehicule[]>([]);
+    const [vehiculeSelectionne, setVehiculeSelectionne] = useState<Vehicule | null>(null);
     const [charges, setCharges] = useState<Charge[]>([]);
     const [filteredCharges, setFilteredCharges] = useState<Charge[]>([]);
     const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
@@ -47,7 +57,14 @@
     useEffect(() => {
       fetchCharges();
       fetchChauffeurs();
+      fetchVehicules();
+
     }, []);
+    const fetchVehicules = async () => {
+    const res = await axios.get(`${API}/vehicules`);
+    setVehicules(res.data);
+  };
+
 
     useEffect(() => {
       applyFilters();
@@ -77,6 +94,9 @@
       if (field === 'type' && !['Salaire', 'CNSS'].includes(value)) {
         setChauffeurSelectionne(null);
       }
+      if (field === 'type' && !['Carburant', 'Entretien', 'Vignette'].includes(value)) {
+      setVehiculeSelectionne(null);
+}
     };
 
     const handleAdd = () => {
@@ -102,8 +122,10 @@
       const { autreType, ...rest } = form;
       const finalForm = {
         ...rest,
-        type: form.type === 'Autre' ? 'Autre' : form.type,
+        type: form.type === 'Autre' && autreType ? autreType : form.type,
       };
+
+
 
       try {
         const res = isEditing && form._id
@@ -315,20 +337,29 @@
         <TableContainer component={Paper}>
           <Table>
             <TableHead  sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#001e61' }}>
-              <TableRow>
-                <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Montant</strong></TableCell>
-                <TableCell><strong>Date</strong></TableCell>
-                <TableCell><strong>Statut</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
-              </TableRow>
+                <TableRow>
+                  <TableCell><strong>Type</strong></TableCell>
+                  <TableCell><strong>Montant</strong></TableCell>
+                  <TableCell><strong>Date</strong></TableCell>
+                  <TableCell><strong>Statut</strong></TableCell>
+                  <TableCell><strong>Chauffeur / Véhicule</strong></TableCell>
+                  <TableCell><strong>Actions</strong></TableCell>
+                </TableRow>
             </TableHead>
             <TableBody>
             {paginatedCharges.map((c: Charge, i: number) => (
                 <TableRow key={c._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
                   <TableCell>{c.type}</TableCell>
                   <TableCell>{c.montant.toFixed(2)} MAD</TableCell>
+                  <TableCell>
+                    {c.chauffeur
+                      ? `${c.chauffeur.nom} ${c.chauffeur.prenom}`
+                      : c.vehicule
+                      ? c.vehicule.nom
+                      : '--'}
+                  </TableCell>
                   <TableCell>{new Date(c.date).toLocaleDateString()}</TableCell>
+
                   <TableCell>
                     <Chip
                       label={c.statut}
@@ -368,7 +399,7 @@
 
           {/* ✅ Drawer Formulaire */}
           <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-            <Box p={3} width={400}>
+            <Box p={3}  mt={10} width={400}>
               <Typography variant="h6" mb={2}>{isEditing ? 'Modifier' : 'Ajouter'} une Charge</Typography>
 
               <FormControl fullWidth margin="normal">
@@ -393,6 +424,17 @@
                   renderInput={(params) => <TextField {...params} label="Chauffeur" margin="normal" />}
                 />
               )}
+              {['Carburant', 'Entretien', 'Vignette'].includes(form.type) && (
+                <Autocomplete
+                  options={vehicules}
+                  getOptionLabel={(option) => option.nom}
+                  value={vehiculeSelectionne}
+                  onChange={(_, newValue) => setVehiculeSelectionne(newValue)}
+                  renderInput={(params) => <TextField {...params} label="Véhicule" margin="normal" />}
+                />
+              )}
+
+
 
               <TextField label="Montant (MAD)" type="number" fullWidth margin="normal" value={form.montant} onChange={e => handleChange('montant', parseFloat(e.target.value))} />
               <TextField type="date" label="Date" fullWidth margin="normal" InputLabelProps={{ shrink: true }} value={form.date} onChange={e => handleChange('date', e.target.value)} />

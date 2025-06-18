@@ -6,6 +6,7 @@ export const getCharges: RequestHandler = async (_req, res) => {
   try {
     const charges = await Charge.find()
       .populate({ path: 'chauffeur', select: 'nom prenom', strictPopulate: false }) // Sécurisé
+      .populate({ path: 'vehicule', select: 'nom', strictPopulate: false })
       .sort({ date: -1 });
 
     res.json(charges);
@@ -19,7 +20,7 @@ export const getCharges: RequestHandler = async (_req, res) => {
 // ✅ POST create new charge
 export const addCharge: RequestHandler = async (req, res) => {
   try {
-    const { type, montant, date, statut, chauffeur, autreType } = req.body;
+    const { type, montant, date, statut, chauffeur, vehicule, autreType } = req.body;
 
     // Si type = "Autre", on remplace par "autreType"
     const finalType = type === 'Autre' ? autreType?.trim() || 'Autre' : type;
@@ -29,7 +30,8 @@ export const addCharge: RequestHandler = async (req, res) => {
       montant,
       date,
       statut,
-      chauffeur: chauffeur || undefined
+      chauffeur: chauffeur || undefined,
+      vehicule: vehicule || undefined // ✅ ici
     });
 
     await newCharge.save();

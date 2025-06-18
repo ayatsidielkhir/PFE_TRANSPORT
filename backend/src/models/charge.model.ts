@@ -31,6 +31,10 @@ const chargeSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Chauffeur',
   },
+   vehicule: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Vehicule',
+},
   notes: {
     type: String,
   },
