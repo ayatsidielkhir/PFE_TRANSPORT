@@ -25,7 +25,10 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
       totalHT,
       tva,
       totalTTC,
+      mode
     } = req.body;
+
+    const factureMode = mode || 'manual';
 
     // 🔎 Chercher le nom du client
     const partenaire = await Partenaire.findById(clientId);
@@ -36,7 +39,7 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
     const template = fs.readFileSync(templatePath, 'utf8');
 
     const html = ejs.render(template, {
-      client: clientNom, // ✅ corrige le .nom dans le template
+      client: clientNom,
       ice,
       date,
       numero,
@@ -44,8 +47,11 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
       tracteur,
       totalHT,
       tva,
-      totalTTC
+      totalTTC,
+      mode: factureMode ?? 'manual'
+
     });
+
 
     // 🚀 Lancer Puppeteer pour créer le PDF
     const browser = await puppeteer.launch({
