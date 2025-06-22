@@ -4,151 +4,61 @@
   <meta charset="UTF-8" />
   <title>Facture <%= numero %></title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      font-size: 11px;
-      position: relative;
-    }
-
-    .wrapper {
-      min-height: 100%;
-      padding: 40px;
-      padding-bottom: 100px; /* Espace pour le footer */
-    }
-
-    .logo {
-      width: 180px;
-    }
-
-    .top {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .info {
-      margin-top: 10px;
-      line-height: 1.6;
-      text-align: left;
-    }
-
-    .info span {
-      font-weight: bold;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid #000;
-      padding: 6px;
-      text-align: center;
-    }
-
-    th {
-      background-color: #f0f0f0;
-    }
-
-    .totaux {
-      width: 60%;
-      margin-top: 20px;
-      float: right;
-      clear: both;
-    }
-
-    .totaux td {
-      padding: 5px;
-      border: 1px solid #000;
-      font-weight: bold;
-    }
-
-    .totaux td:first-child {
-      text-align: right;
-    }
-
-    .signature {
-      margin-top: 200px;
-      font-weight: 300;
-    }
-
-    .footer {
-      position: fixed;
-      bottom: 20px;
-      left: 0;
-      width: 100%;
-      font-size: 9px;
-      text-align: center;
-      border-top: 3px solid red;
-      padding-top: 5px;
-    }
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h1 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f5f5f5; }
+    .totaux { margin-top: 30px; float: right; width: 300px; }
+    .totaux td { border: none; }
+    .footer { margin-top: 50px; text-align: right; font-size: 12px; }
   </style>
 </head>
 <body>
-  <div class="wrapper">
-    <div class="top">
-      <div class="info">
-        <p><span>Facture N° :</span> <%= numero %></p>
-        <p><span>CLIENT :</span> <%= client %></p> <!-- ✅ corrigé ici -->
-        <p><span>Tanger le :</span> <%= date %></p>
-        <p><span>ICE N° :</span> <%= ice %></p>
-        <p><span>Tracteur :</span> <%= tracteur %></p>
-      </div>
-    </div>
+  <h1>Facture N° <%= numero %></h1>
 
-    <table>
-      <thead>
+  <p><strong>Date :</strong> <%= date %></p>
+  <p><strong>Client :</strong> <%= client %></p>
+  <p><strong>ICE :</strong> <%= ice %></p>
+  <p><strong>Tracteur :</strong> <%= tracteur %></p>
+
+  <% if (mode === 'auto') { %>
+    <p style="color: #2a7; font-style: italic;">🛠️ Facture générée automatiquement à partir des trajets non facturés</p>
+  <% } else { %>
+    <p style="color: #888; font-style: italic;">✍️ Facture saisie manuellement</p>
+  <% } %>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Remorque</th>
+        <th>Chargement</th>
+        <th>Déchargement</th>
+        <th>Total HT (DH)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% lignes.forEach(ligne => { %>
         <tr>
-          <th>DATE</th>
-          <th>REMORQUE</th>
-          <th>Chargement</th>
-          <th>Déchargement</th>
-          <th>TOTAL HT (DH)</th>
+          <td><%= ligne.date %></td>
+          <td><%= ligne.remorque %></td>
+          <td><%= ligne.chargement %></td>
+          <td><%= ligne.dechargement %></td>
+          <td><%= ligne.totalHT.toFixed(2) %></td>
         </tr>
-      </thead>
-      <tbody>
-        <% lignes.forEach(l => { %>
-          <tr>
-            <td><%= l.date %></td>
-            <td><%= l.remorque %></td>
-            <td><%= l.chargement %></td>
-            <td><%= l.dechargement %></td>
-            <td><%= l.totalHT.toFixed(2) %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+      <% }) %>
+    </tbody>
+  </table>
 
-    <table class="totaux">
-      <tr>
-        <td>Totale en DH HT</td>
-        <td><%= totalHT.toFixed(2) %></td>
-      </tr>
-      <tr>
-        <td>TVA <%= tva %>%</td>
-        <td><%= (totalHT * tva / 100).toFixed(2) %></td>
-      </tr>
-      <tr>
-        <td>Totale en DH TTC</td>
-        <td><%= totalTTC.toFixed(2) %></td>
-      </tr>
-    </table>
+  <table class="totaux">
+    <tr><td><strong>Total HT :</strong></td><td><%= totalHT.toFixed(2) %> DH</td></tr>
+    <tr><td><strong>TVA :</strong></td><td><%= tva %> %</td></tr>
+    <tr><td><strong>Total TTC :</strong></td><td><%= totalTTC.toFixed(2) %> DH</td></tr>
+  </table>
 
-    <div class="signature">
-      <p class="montant-lettre"> Arrêtée la présente facture à la somme de :
-        <span><%= totalTTC.toFixed(2) %> Dirhams</span>
-      </p>
-      <p>Signature</p>
-    </div>
+  <div class="footer">
+    <p>Document généré automatiquement par le système de gestion — <%= new Date().toLocaleDateString('fr-FR') %></p>
   </div>
 </body>
 </html>

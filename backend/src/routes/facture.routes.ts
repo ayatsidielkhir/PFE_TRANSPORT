@@ -6,8 +6,10 @@ import {
   deleteFacture,
   updateFacture,
   getFactureById,
-  updateStatutFacture
+  updateStatutFacture,
+  generateAutoFacture 
 } from '../controllers/Facture.controller';
+
 
 const router = express.Router();
 
@@ -18,5 +20,7 @@ router.post('/manual', generateManualFacture);
 router.put('/:id', updateFacture);
 router.put('/:id/statut', updateStatutFacture);
 router.delete('/:id', deleteFacture);
+
+router.post('/auto', generateAutoFacture);
 
 export default router;

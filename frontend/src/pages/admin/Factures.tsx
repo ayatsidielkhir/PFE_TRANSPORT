@@ -1,4 +1,4 @@
-// ✅ Page Factures - Version stylisée, claire et moderne
+// ✅ FacturesPage.tsx (frontend complet avec génération auto + trajets)
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -13,9 +13,7 @@ import { saveAs } from 'file-saver';
 import axios from 'axios';
 import Layout from '../../components/Layout';
 
-
 const API = process.env.REACT_APP_API_URL;
-
 
 interface Partenaire {
   _id: string;
@@ -43,6 +41,14 @@ interface Facture {
   statut: 'payée' | 'impayée';
 }
 
+interface Trajet {
+  _id: string;
+  date: string;
+  depart: string;
+  arrivee: string;
+  totalHT: number;
+}
+
 const FacturesPage: React.FC = () => {
   const [date, setDate] = useState('');
   const [tracteur, setTracteur] = useState('');
@@ -55,22 +61,30 @@ const FacturesPage: React.FC = () => {
   const [moisFiltre, setMoisFiltre] = useState('');
   const [anneeFiltre, setAnneeFiltre] = useState('');
   const [archiveOpen, setArchiveOpen] = useState(false);
-  
-function TransitionUp(props: SlideProps) {
-  return <Slide {...props} direction="up" />;
-}
+  const [trajetsClient, setTrajetsClient] = useState<Trajet[]>([]);
 
-const [notifOpen, setNotifOpen] = useState(false);
-const [notifMessage, setNotifMessage] = useState('');
-const [notifSeverity, setNotifSeverity] = useState<'success' | 'error'>('success');
-const selectedClient = partenaires.find(p => p._id === client);
+  function TransitionUp(props: SlideProps) {
+    return <Slide {...props} direction="up" />;
+  }
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifMessage, setNotifMessage] = useState('');
+  const [notifSeverity, setNotifSeverity] = useState<'success' | 'error'>('success');
+  const selectedClient = partenaires.find(p => p._id === client);
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    axios.get('${API}/partenaires').then(res => setPartenaires(res.data));
-    axios.get('${API}/factures').then(res => setFactures(res.data));
+    axios.get(`${API}/partenaires`).then(res => setPartenaires(res.data));
+    axios.get(`${API}/factures`).then(res => setFactures(res.data));
     setDate(today);
   }, []);
+
+  useEffect(() => {
+    if (!client) return setTrajetsClient([]);
+    axios.get(`${API}/trajets/non-factures/${client}`)
+      .then(res => setTrajetsClient(res.data))
+      .catch(() => setTrajetsClient([]));
+  }, [client]);
 
   const totalHT = lignes.reduce((sum, l) => sum + (Number(l.totalHT) || 0), 0);
   const totalTVA = totalHT * (isNaN(tva) ? 0 : tva) / 100;
@@ -91,15 +105,36 @@ const selectedClient = partenaires.find(p => p._id === client);
   const handleSubmit = async () => {
     if (!isFormValid()) return alert("Merci de compléter tous les champs.");
     try {
-      const res = await axios.post('${API}/factures/manual', {
+      const res = await axios.post(`${API}/factures/manual`, {
         date, partenaire: client, ice: selectedClient?.ice || '', tracteur, lignes, tva,
         totalHT: parseFloat(totalHT.toFixed(2)), totalTTC: parseFloat(totalTTC.toFixed(2))
       });
       window.open(`https://mme-backend.onrender.com${res.data.fileUrl}`, '_blank');
-      const updated = await axios.get('${API}/factures');
+      const updated = await axios.get(`${API}/factures`);
       setFactures(updated.data); resetForm();
     } catch (err) {
       console.error(err); alert("Erreur lors de la génération de la facture.");
+    }
+  };
+
+  const handleAutoFacture = async () => {
+    if (!client) return alert("Veuillez choisir un client.");
+    const confirmGen = window.confirm(`Générer une facture pour ${trajetsClient.length} trajet(s) ?`);
+    if (!confirmGen) return;
+    try {
+      const res = await axios.post(`${API}/factures/auto`, { partenaireId: client });
+      window.open(`https://mme-backend.onrender.com${res.data.fileUrl}`, '_blank');
+      const updated = await axios.get(`${API}/factures`);
+      setFactures(updated.data);
+      setTrajetsClient([]);
+      setNotifMessage("Facture générée automatiquement");
+      setNotifSeverity("success");
+      setNotifOpen(true);
+    } catch (err) {
+      console.error(err);
+      setNotifMessage("Erreur lors de la génération automatique.");
+      setNotifSeverity("error");
+      setNotifOpen(true);
     }
   };
 
@@ -122,7 +157,7 @@ const selectedClient = partenaires.find(p => p._id === client);
   const toggleStatut = async (f: Facture) => {
     try {
       await axios.put(`${API}/factures/${f._id}/statut`);
-      const updated = await axios.get('${API}/factures');
+      const updated = await axios.get(`${API}/factures`);
       setFactures(updated.data);
     } catch { alert("Erreur statut."); }
   };
@@ -200,14 +235,39 @@ const selectedClient = partenaires.find(p => p._id === client);
             <Button variant="contained" onClick={handleSubmit} disabled={!isFormValid()}>Générer et enregistrer</Button>
             <Button variant="outlined" color="secondary" onClick={resetForm}>Réinitialiser</Button>
           </Stack>
-        </Paper>
 
-        <Paper elevation={1} sx={{ p: 3, borderRadius: 3 }}>
+          {trajetsClient.length > 0 && (
+            <Box mt={4}>
+              <Typography fontWeight="bold" mb={1}>Trajets à facturer automatiquement :</Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell><TableCell>Départ</TableCell><TableCell>Arrivée</TableCell><TableCell>Total HT</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {trajetsClient.map(t => (
+                    <TableRow key={t._id}>
+                      <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{t.depart}</TableCell>
+                      <TableCell>{t.arrivee}</TableCell>
+                      <TableCell>{t.totalHT?.toFixed(2)} DH</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Button variant="contained" color="success" onClick={handleAutoFacture} disabled={!client} sx={{ mt: 2 }}>
+                Génération automatique
+              </Button>
+            </Box>
+          )}
+        </Paper>
+           <Paper elevation={1} sx={{ p: 3, borderRadius: 3 }}>
           <Typography variant="h6" fontWeight={600}>Historique des factures</Typography>
           <Stack direction="row" spacing={2} my={2}>
             <Select value={moisFiltre} onChange={e => setMoisFiltre(e.target.value)} displayEmpty>
               <MenuItem value="">Tous les mois</MenuItem>
-              {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+              {["01","02","03","04","05","06","07","08","09","10","11","12"].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
             </Select>
             <Select value={anneeFiltre} onChange={e => setAnneeFiltre(e.target.value)} displayEmpty>
               <MenuItem value="">Toutes les années</MenuItem>
@@ -271,7 +331,7 @@ const selectedClient = partenaires.find(p => p._id === client);
           </DialogActions>
         </Dialog>
       </Box>
-    
+
       <Snackbar
         open={notifOpen}
         autoHideDuration={4000}
@@ -288,8 +348,8 @@ const selectedClient = partenaires.find(p => p._id === client);
           {notifMessage}
         </Alert>
       </Snackbar>
-</Layout>
+    </Layout>
   );
-};
+};  
 
 export default FacturesPage;

@@ -11,7 +11,10 @@ const trajetSchema = new mongoose.Schema({
   consommationMAD: { type: Number, required: false },
   partenaire: { type: mongoose.Schema.Types.ObjectId, ref: 'Partenaire', required: false },
   importExport: { type: String, enum: ['import', 'export'], required: false },
-  totalHT: { type: Number, required: false } // ✅ AJOUTÉ ICI
+  totalHT: { type: Number, required: false }, // ✅ AJOUTÉ ICI
+  facturee: { type: Boolean, default: false }
+
+
 }, { timestamps: true });
 
 export default mongoose.model('Trajet', trajetSchema);

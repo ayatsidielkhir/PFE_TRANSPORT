@@ -1,10 +1,16 @@
 import { RequestHandler } from 'express';
 import Facture from '../models/facture';
 import Partenaire from '../models/partenaire.model';
+import Trajet from '../models/trajet.model';
+
+
 import puppeteer from 'puppeteer';
 import path from 'path';
 import ejs from 'ejs';
 import fs from 'fs'; 
+
+import { generatePdfFacture } from '../utils/pdf'; 
+
 
 
 export const generateManualFacture: RequestHandler = async (req, res, next) => {
@@ -180,3 +186,61 @@ export const updateStatutFacture: RequestHandler = async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 };
+
+
+export const generateAutoFacture: RequestHandler = async (req, res, next) => {
+  try {
+    const { partenaireId } = req.body;
+
+    const partenaire = await Partenaire.findById(partenaireId);
+    if (!partenaire) {
+      res.status(404).json({ message: "Partenaire introuvable" });
+      return;
+    }
+
+    const trajets = await Trajet.find({ partenaire: partenaireId, facturee: false });
+    if (!trajets.length) {
+      res.status(400).json({ message: "Aucun trajet à facturer" });
+      return;
+    }
+
+    const lignes = trajets.map(t => ({
+      date: t.date.toISOString().split('T')[0],
+      remorque: t.vehicule?.toString(),
+      chargement: t.depart,
+      dechargement: t.arrivee,
+      totalHT: t.totalHT || 0
+    }));
+
+    const totalHT = lignes.reduce((sum, l) => sum + l.totalHT, 0);
+    const tva = 20;
+    const totalTTC = totalHT * (1 + tva / 100);
+
+    const count = await Facture.countDocuments();
+    const numero = `FCT-${String(count + 1).padStart(4, '0')}`;
+    const date = new Date().toISOString().split('T')[0];
+
+    const fileUrl = await generatePdfFacture({
+      numero, date, client: partenaire.nom, ice: partenaire.ice,
+      tracteur: '—', lignes, totalHT, tva, totalTTC
+    });
+
+    await Facture.create({
+      numero, date, client: { nom: partenaire.nom }, ice: partenaire.ice,
+      tracteur: '—', lignes, totalHT, tva, totalTTC,
+      fileUrl, statut: 'impayée'
+    });
+
+    await Trajet.updateMany(
+      { _id: { $in: trajets.map(t => t._id) } },
+      { $set: { facturee: true } }
+    );
+
+    res.status(201).json({ message: 'Facture générée automatiquement', fileUrl });
+
+  } catch (error) {
+    console.error("Erreur auto facture:", error);
+    next(error);
+  }
+};
+
