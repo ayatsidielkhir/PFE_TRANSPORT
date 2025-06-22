@@ -22,11 +22,11 @@ const sidebarItems = {
     { label: 'Véhicules', icon: <DirectionsBus />, path: '/admin/vehicules' },
     { label: 'Trajets', icon: <Public />, path: '/admin/trajets' },
     { label: 'Partenaires', icon: <BusinessCenter />, path: '/admin/partenaires' },
+    // { label: 'Factures', icon: <Payment />, path: '/admin/factures' },
     { label: 'Dossier Juridique', icon: <Gavel />, path: '/admin/dossier-juridique' },
     { label: 'Plateformes', icon: <Settings />, path: '/admin/plateformes' },
     { label: 'Charges', icon: <Paid />, path: '/admin/charges' },
     { label: 'Caisse', icon: <AttachMoneyIcon />, path: '/admin/caisse' },
-    { label: 'Factures', icon: <Payment />, path: '/admin/factures' },
   ]
 };
 
@@ -78,7 +78,7 @@ console.log("Rôle détecté :", role);
             if (isMobile) setOpen(false);
           }}
           sx={{
-            mb: 1.5,
+            mb: 0.8,
             px: 2,
             py: 1.5,
             borderRadius: 2,
