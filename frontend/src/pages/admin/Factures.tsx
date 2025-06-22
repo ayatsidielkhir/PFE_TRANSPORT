@@ -1,4 +1,4 @@
-// ✅ FacturesPage.tsx avec tableau, actions, filtres, export Excel et pagination
+// ✅ FacturesPage.tsx complet avec sélection de trajets, génération auto, tableau des factures, filtres, Excel, pagination
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -25,6 +25,7 @@ const FacturesPage: React.FC = () => {
   const [factures, setFactures] = useState<any[]>([]);
   const [factureToDelete, setFactureToDelete] = useState<any | null>(null);
   const [trajetsClient, setTrajetsClient] = useState<any[]>([]);
+  const [selectedTrajetId, setSelectedTrajetId] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifMessage, setNotifMessage] = useState('');
   const [notifSeverity, setNotifSeverity] = useState<'success' | 'error'>('success');
@@ -49,6 +50,14 @@ const FacturesPage: React.FC = () => {
       .catch(() => setTrajetsClient([]));
   }, [client]);
 
+  useEffect(() => {
+    if (!selectedTrajetId) return;
+    const trajet = trajetsClient.find(t => t._id === selectedTrajetId);
+    if (trajet) {
+      setLignes([{ date: trajet.date?.split('T')[0], remorque: trajet.vehicule, chargement: trajet.depart, dechargement: trajet.arrivee, totalHT: trajet.totalHT }]);
+    }
+  }, [selectedTrajetId]);
+
   const totalHT = lignes.reduce((sum, l) => sum + (Number(l.totalHT) || 0), 0);
   const totalTVA = totalHT * (isNaN(tva) ? 0 : tva) / 100;
   const totalTTC = totalHT + totalTVA;
@@ -64,7 +73,7 @@ const FacturesPage: React.FC = () => {
 
   const addLigne = () => setLignes([...lignes, { date: '', remorque: '', chargement: '', dechargement: '', totalHT: 0 }]);
   const removeLigne = (i: number) => setLignes(lignes.filter((_, idx) => idx !== i));
-  const resetForm = () => { setDate(today); setClient(''); setTracteur(''); setTva(0); setLignes([]); };
+  const resetForm = () => { setDate(today); setClient(''); setTracteur(''); setTva(0); setLignes([]); setSelectedTrajetId(''); };
 
   const handleSubmit = async () => {
     if (!isFormValid()) return alert("Merci de compléter tous les champs.");
@@ -78,27 +87,6 @@ const FacturesPage: React.FC = () => {
       setFactures(updated.data); resetForm();
     } catch (err) {
       console.error(err); alert("Erreur lors de la génération de la facture.");
-    }
-  };
-
-  const handleAutoFacture = async () => {
-    if (!client) return alert("Veuillez choisir un client.");
-    const confirmGen = window.confirm(`Générer une facture pour ${trajetsClient.length} trajet(s) ?`);
-    if (!confirmGen) return;
-    try {
-      const res = await axios.post(`${API}/factures/auto`, { partenaireId: client });
-      window.open(`${API}${res.data.fileUrl}`, '_blank');
-      const updated = await axios.get(`${API}/factures`);
-      setFactures(updated.data);
-      setTrajetsClient([]);
-      setNotifMessage("Facture générée automatiquement");
-      setNotifSeverity("success");
-      setNotifOpen(true);
-    } catch (err) {
-      console.error(err);
-      setNotifMessage("Erreur lors de la génération automatique.");
-      setNotifSeverity("error");
-      setNotifOpen(true);
     }
   };
 
@@ -157,8 +145,61 @@ const FacturesPage: React.FC = () => {
       <Box p={3}>
         <Typography variant="h4" fontWeight="bold" color="primary" gutterBottom>Gestion des Factures</Typography>
 
-        {/* Partie création inchangée, raccourcie ici pour clarté */}
+        <Paper elevation={3} sx={{ p: 3, borderRadius: 3, mb: 5 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>Créer une facture</Typography>
 
+          <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+            <TextField type="date" label="Date" value={date} onChange={e => setDate(e.target.value)} InputLabelProps={{ shrink: true }} />
+            <Select value={client} onChange={e => setClient(e.target.value)} displayEmpty>
+              <MenuItem value="">Choisir un client</MenuItem>
+              {partenaires.map(p => <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>)}
+            </Select>
+            <TextField label="ICE" value={selectedClient?.ice || ''} disabled />
+            <TextField label="Tracteur" value={tracteur} onChange={e => setTracteur(e.target.value)} />
+            <TextField label="TVA (%)" type="number" value={isNaN(tva) ? '' : tva} onChange={e => setTva(parseFloat(e.target.value))} />
+            {trajetsClient.length > 0 && (
+              <Select value={selectedTrajetId} onChange={e => setSelectedTrajetId(e.target.value)} displayEmpty>
+                <MenuItem value="">Sélectionner un trajet</MenuItem>
+                {trajetsClient.map(t => (
+                  <MenuItem key={t._id} value={t._id}>{`${t.date.split('T')[0]} | ${t.depart} → ${t.arrivee}`}</MenuItem>
+                ))}
+              </Select>
+            )}
+          </Box>
+
+          <Table size="small" sx={{ mb: 2 }}>
+            <TableHead><TableRow>
+              <TableCell>Date</TableCell><TableCell>Remorque</TableCell><TableCell>Chargement</TableCell>
+              <TableCell>Déchargement</TableCell><TableCell>Total HT</TableCell><TableCell>Actions</TableCell>
+            </TableRow></TableHead>
+            <TableBody>
+              {lignes.map((l, i) => (
+                <TableRow key={i}>
+                  <TableCell><TextField type="date" value={l.date} onChange={e => handleLigneChange(i, 'date', e.target.value)} /></TableCell>
+                  <TableCell><TextField value={l.remorque} onChange={e => handleLigneChange(i, 'remorque', e.target.value)} /></TableCell>
+                  <TableCell><TextField value={l.chargement} onChange={e => handleLigneChange(i, 'chargement', e.target.value)} /></TableCell>
+                  <TableCell><TextField value={l.dechargement} onChange={e => handleLigneChange(i, 'dechargement', e.target.value)} /></TableCell>
+                  <TableCell><TextField type="number" value={l.totalHT} onChange={e => handleLigneChange(i, 'totalHT', e.target.value)} /></TableCell>
+                  <TableCell><IconButton onClick={() => removeLigne(i)}><Delete /></IconButton></TableCell>
+                </TableRow>
+              ))}
+              <TableRow><TableCell colSpan={6}><Button onClick={addLigne} startIcon={<Add />}>Ajouter ligne</Button></TableCell></TableRow>
+            </TableBody>
+          </Table>
+
+          <Box display="flex" gap={2} mb={2} flexWrap="wrap">
+            <TextField label="Total HT" value={totalHT.toFixed(2)} disabled />
+            <TextField label="TVA" value={totalTVA.toFixed(2)} disabled />
+            <TextField label="Total TTC" value={totalTTC.toFixed(2)} disabled />
+          </Box>
+
+          <Stack direction="row" spacing={2}>
+            <Button variant="contained" onClick={handleSubmit} disabled={!isFormValid()}>Générer manuellement</Button>
+            <Button variant="outlined" onClick={resetForm}>Réinitialiser</Button>
+          </Stack>
+        </Paper>
+
+        {/* Tableau des factures avec actions, filtres, Excel, pagination */}
         <Box display="flex" alignItems="center" gap={2} mb={2}>
           <Select value={filterClient} onChange={e => setFilterClient(e.target.value)} displayEmpty>
             <MenuItem value="">Tous les clients</MenuItem>
