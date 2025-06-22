@@ -2,9 +2,11 @@ import { RequestHandler } from 'express';
 import Facture from '../models/facture';
 import Partenaire from '../models/partenaire.model';
 import Trajet from '../models/trajet.model';
+import chromium from 'chrome-aws-lambda'; 
 
 
-import puppeteer from 'puppeteer';
+
+
 import path from 'path';
 import ejs from 'ejs';
 import fs from 'fs'; 
@@ -53,11 +55,12 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
     });
 
 
-    // 🚀 Lancer Puppeteer pour créer le PDF
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+  
+      const browser = await chromium.puppeteer.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath,
+        headless: chromium.headless,
+      });
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
