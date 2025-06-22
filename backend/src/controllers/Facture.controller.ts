@@ -3,6 +3,7 @@ import Facture from '../models/facture';
 import Partenaire from '../models/partenaire.model';
 import Trajet from '../models/trajet.model';
 import chromium from 'chrome-aws-lambda'; 
+import puppeteer from 'puppeteer-core';
 
 
 
@@ -56,16 +57,15 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
 
 
   
-      const browser = await chromium.puppeteer.launch({
-        args: chromium.args,
-        executablePath: await chromium.executablePath,
-        headless: chromium.headless,
-      });
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless,
+    });
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
-
-    const pdfBuffer = await page.pdf({ format: 'A4' });
+    const pdfBuffer = await page.pdf({ format: 'a4' });
     await browser.close();
 
     // 📁 Créer le dossier de factures s'il n'existe pas
