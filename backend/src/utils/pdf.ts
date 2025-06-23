@@ -40,7 +40,8 @@ export async function generatePdfFacture({
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0' });
 
-  const pdfBuffer = await page.pdf({ format: 'A4' });
+  const pdfBuffer = await page.pdf({ format: 'a4' });
+
   await browser.close();
 
   const factureDir = path.resolve('/mnt/data/factures');
