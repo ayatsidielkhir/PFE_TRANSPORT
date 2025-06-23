@@ -2,8 +2,9 @@ import { RequestHandler } from 'express';
 import Facture from '../models/facture';
 import Partenaire from '../models/partenaire.model';
 import Trajet from '../models/trajet.model';
-import chromium from 'chrome-aws-lambda'; 
-import puppeteer from 'puppeteer-core';
+
+import puppeteer from 'puppeteer';
+
 
 
 
@@ -57,10 +58,9 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
 
 
   
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath,
-      headless: chromium.headless,
+   const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
 
