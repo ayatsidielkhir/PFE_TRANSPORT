@@ -78,7 +78,7 @@ console.log("Rôle détecté :", role);
             if (isMobile) setOpen(false);
           }}
           sx={{
-            mb: 0.7,
+            mb: 0.5,
             px: 2,
             py: 1.5,
             borderRadius: 2,

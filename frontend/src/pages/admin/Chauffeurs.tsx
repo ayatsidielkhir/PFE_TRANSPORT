@@ -304,7 +304,27 @@
           </Box>
 
           <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="lg" fullWidth>
-            <DialogTitle>Visualisation PDF</DialogTitle>
+         
+
+                  <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              Visualisation
+              <Tooltip title="Télécharger le document">
+                <IconButton
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = dialogImageSrc || '';
+                    link.download = dialogImageSrc.split('/').pop() || 'document';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  sx={{ color: '#001e61' }}
+                >
+                  <FileDownload />
+                </IconButton>
+              </Tooltip>
+            </DialogTitle>
+
             <DialogContent>
               <iframe
                 src={dialogImageSrc || ''}
@@ -312,16 +332,9 @@
                 height="600px"
                 style={{ border: 'none' }}
               />
-              <Box mt={2} textAlign="right">
-                <Button
-                  onClick={() => window.open(dialogImageSrc || '', '_blank')}
-                  variant="outlined"
-                  color="primary"
-                >
-                  Télécharger
-                </Button>
-              </Box>
             </DialogContent>
+
+
           </Dialog>
 
 
