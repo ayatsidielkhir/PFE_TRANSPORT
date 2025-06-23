@@ -48,10 +48,14 @@ export const createTrajet: RequestHandler = async (req, res) => {
       importExport
     } = req.body;
 
-    if (!depart || !arrivee || !date || !chauffeur || !vehicule || !distanceKm || !consommationL) {
-      res.status(400).json({ error: 'Les informations sont manquantes.' });
-      return;
-    }
+    if (
+  !depart || !arrivee || !date || !chauffeur || !vehicule ||
+  distanceKm === undefined || consommationL === undefined
+) {
+  res.status(400).json({ error: 'Les informations sont manquantes.' });
+  return;
+}
+
 
     const trajet = new Trajet({
       depart,

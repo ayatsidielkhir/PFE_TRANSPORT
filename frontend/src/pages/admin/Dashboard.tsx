@@ -11,6 +11,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import MapIcon from '@mui/icons-material/Map';
+import NotificationsList from './NotificationsList';
 
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState({
@@ -60,54 +61,59 @@ const DashboardPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box sx={{ p: 4 }}>
-        <Typography variant="h4" fontWeight={700} mb={4}>
-          Tableau de bord
-        </Typography>
+  <Box sx={{ p: 4 }}>
+    <Typography variant="h4" fontWeight={700} mb={4}>
+      Tableau de bord
+    </Typography>
 
-        <Box
-  display="flex"
-  flexWrap="wrap"
-  justifyContent="space-between"
-  gap={2}
->
-  {statItems.map((item, index) => (
+    {/* Cartes statistiques */}
     <Box
-      key={index}
-      sx={{
-        flex: '1 1 calc(25% - 16px)', // 4 cartes par ligne avec espacement
-        minWidth: 200,
-      }}
+      display="flex"
+      flexWrap="wrap"
+      justifyContent="space-between"
+      gap={2}
     >
-      <Card
-        sx={{
-          p: 2,
-          display: 'flex',
-          alignItems: 'center',
-          borderLeft: `6px solid ${item.color}`,
-          boxShadow: 3,
-          height: 110,
-        }}
-      >
-        <Avatar sx={{ bgcolor: item.color, width: 50, height: 50, mr: 2 }}>
-          {item.icon}
-        </Avatar>
-        <Box>
-          <Typography variant="subtitle2" color="text.secondary">
-            {item.label}
-          </Typography>
-          <Typography variant="h5" fontWeight={700}>
-            {item.value}
-          </Typography>
+      {statItems.map((item, index) => (
+        <Box
+          key={index}
+          sx={{
+            flex: '1 1 calc(25% - 16px)',
+            minWidth: 200,
+          }}
+        >
+          <Card
+            sx={{
+              p: 2,
+              display: 'flex',
+              alignItems: 'center',
+              borderLeft: `6px solid ${item.color}`,
+              boxShadow: 3,
+              height: 110,
+            }}
+          >
+            <Avatar sx={{ bgcolor: item.color, width: 50, height: 50, mr: 2 }}>
+              {item.icon}
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary">
+                {item.label}
+              </Typography>
+              <Typography variant="h5" fontWeight={700}>
+                {item.value}
+              </Typography>
+            </Box>
+          </Card>
         </Box>
-      </Card>
+      ))}
     </Box>
-  ))}
-</Box>
 
+    {/* Bloc des notifications */}
+    <Box mt={6}>
+      <NotificationsList />
+    </Box>
+  </Box>
+</AdminLayout>
 
-      </Box>
-    </AdminLayout>
   );
 };
 

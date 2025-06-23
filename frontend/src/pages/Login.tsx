@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ import ici
 import './login.css';
 import axios from '../utils/axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import logo from '../logoMme-.png'; // 🔁 assurez-vous que ce chemin est correct
+import logo from '../logoMme-.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate(); // ✅ Doit être ici, dans le composant
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,9 +18,10 @@ const Login = () => {
       const { token, user } = res.data;
 
       localStorage.setItem('token', token);
+      console.log('✅ Token à ce moment :', token);
 
       if (user.role === 'admin') {
-        window.location.href = '/admin/dashboard';
+        navigate('/admin/dashboard'); // ✅ redirection sans reload
       }
     } catch (err) {
       toast.error('Email ou mot de passe incorrect');
