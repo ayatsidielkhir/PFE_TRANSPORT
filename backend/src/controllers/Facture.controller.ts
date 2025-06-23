@@ -63,6 +63,7 @@ export const generateManualFacture: RequestHandler = async (req, res, next) => {
       headless: chromium.headless,
     });
 
+
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'a4' });
