@@ -1,256 +1,103 @@
-import { RequestHandler } from 'express';
+// backend/controllers/facture.controller.ts
+import { Request, Response } from 'express';
+import path from 'path';
+import fs from 'fs';
+import puppeteer from 'puppeteer-core';
+import chrome from 'chrome-aws-lambda';
+import ejs from 'ejs';
 import Facture from '../models/facture';
-import Partenaire from '../models/partenaire.model';
 import Trajet from '../models/trajet.model';
 
-import puppeteer from 'puppeteer';
-
-
-
-
-
-import path from 'path';
-import ejs from 'ejs';
-import fs from 'fs'; 
-
-import { generatePdfFacture } from '../utils/pdf'; 
-
-
-
-export const generateManualFacture: RequestHandler = async (req, res, next) => {
+export const generateManualFacture = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      client: clientId,
-      ice,
-      date,
-      numero,
-      lignes,
-      tracteur,
-      totalHT,
-      tva,
-      totalTTC,
-      mode
+      numeroFacture, client, ice, tracteur, date,
+      chargement, dechargement, totalHT, trajetId
+    }: {
+      numeroFacture: string,
+      client: string,
+      ice: string,
+      tracteur: string,
+      date: string,
+      chargement: string,
+      dechargement: string,
+      totalHT: number,
+      trajetId: string
     } = req.body;
 
-    const factureMode = mode || 'manual';
+    const trajet = await Trajet.findById(trajetId).populate('vehicule partenaire');
+    if (!trajet) {
+      res.status(404).json({ message: 'Trajet introuvable' });
+      return;
+    }
 
-    // 🔎 Chercher le nom du client
-    const partenaire = await Partenaire.findById(clientId);
-    const clientNom = partenaire?.nom || '—';
+    const tva = totalHT * 0.1;
+    const totalTTC = totalHT + tva;
 
-    // 📄 Générer le HTML à partir du template EJS
-    const templatePath = path.resolve(__dirname, '../templates/facture.ejs');
-    const template = fs.readFileSync(templatePath, 'utf8');
-
-    const html = ejs.render(template, {
-      client: clientNom,
+    const factureData = {
+      numeroFacture,
+      client,
       ice,
-      date,
-      numero,
-      lignes,
       tracteur,
+      date,
+      chargement,
+      dechargement,
       totalHT,
       tva,
       totalTTC,
-      mode: factureMode ?? 'manual'
+      trajet
+    };
 
+    const templatePath = path.join(__dirname, '../templates/facture.ejs');
+    const html = await ejs.renderFile(templatePath, { data: factureData });
+
+    const browser = await puppeteer.launch({
+      args: chrome.args,
+      executablePath: await chrome.executablePath,
+      headless: chrome.headless,
     });
-
-
-  
-   const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-
-
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({ format: 'a4' });
+
+    const fileName = `facture_${numeroFacture.replace('/', '-')}_${Date.now()}.pdf`;
+    const outputPath = path.join(__dirname, '../public/factures', fileName);
+    await page.pdf({ path: outputPath, format: 'a4' });
+
     await browser.close();
 
-    // 📁 Créer le dossier de factures s'il n'existe pas
-    const factureDir = path.resolve('/mnt/data/factures');
-    if (!fs.existsSync(factureDir)) {
-      fs.mkdirSync(factureDir, { recursive: true });
-    }
-
-    // 📝 Enregistrer le PDF dans le disque
-    const fileName = `facture-${numero}.pdf`;
-    const filePath = path.join(factureDir, fileName);
-    fs.writeFileSync(filePath, pdfBuffer);
-
-    const fileUrl = `/uploads/factures/${fileName}`;
-
-    // 💾 Enregistrer la facture dans MongoDB
-    const saved = await Facture.create({
-      numero,
-      date,
-      client: { nom: clientNom }, // pour affichage dans le frontend
+    const facture = new Facture({
+      numero: numeroFacture,
+      client,
       ice,
       tracteur,
-      lignes,
+      date,
+      chargement,
+      dechargement,
       totalHT,
       tva,
       totalTTC,
-      statut: 'impayée',
-      fileUrl
+      trajet: trajetId,
+      pdfPath: `/factures/${fileName}`
     });
+    await facture.save();
 
-    // 📤 Réponse avec lien PDF
-    res.status(201).json({ message: 'Facture générée', fileUrl });
-
-  } catch (error) {
-    console.error('❌ Erreur génération facture :', error);
-    next(error);
-  }
-};
-
-
-
-// ✅ Récupérer toutes les factures
-export const getAllFactures: RequestHandler = async (_req, res) => {
-  try {
-    const factures = await Facture.find().populate('partenaire', 'nom').sort({ createdAt: -1 });
-    res.json(factures);
+    res.status(201).json({ message: 'Facture générée', url: facture.pdfPath });
   } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
+    console.error('Erreur génération facture :', err);
+    res.status(500).json({ message: 'Erreur serveur' });
   }
 };
 
-// ✅ Dernière facture
-export const getLatestFacture: RequestHandler = async (_req, res) => {
+export const updateFacture = async (req: Request, res: Response): Promise<void> => {
   try {
-    const last = await Facture.findOne().sort({ createdAt: -1 });
-    if (!last) {
-      res.status(404).json({ message: 'Aucune facture trouvée.' });
-      return;
-    }
-    res.json(last);
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
-  }
-};
-
-// ✅ Supprimer une facture
-export const deleteFacture: RequestHandler = async (req, res) => {
-  try {
-    const deleted = await Facture.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      res.status(404).json({ message: 'Facture introuvable' });
-      return;
-    }
-    res.status(200).json({ message: 'Facture supprimée' });
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
-  }
-};
-
-// ✅ Modifier une facture
-export const updateFacture: RequestHandler = async (req, res) => {
-  try {
-    const updated = await Facture.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
+    const updated = await Facture.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updated) {
       res.status(404).json({ message: 'Facture non trouvée' });
       return;
     }
     res.status(200).json(updated);
   } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
+    console.error('Erreur mise à jour facture :', err);
+    res.status(500).json({ message: 'Erreur serveur' });
   }
 };
-
-// ✅ Récupérer une facture par ID
-export const getFactureById: RequestHandler = async (req, res) => {
-  try {
-    const facture = await Facture.findById(req.params.id).populate('partenaire', 'nom');
-    if (!facture) {
-      res.status(404).json({ message: 'Facture non trouvée' });
-      return;
-    }
-    res.json(facture);
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
-  }
-};
-
-// ✅ Modifier le statut (payée/impayée)
-export const updateStatutFacture: RequestHandler = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const facture = await Facture.findById(id);
-    if (!facture) {
-      res.status(404).json({ message: 'Facture introuvable' });
-      return;
-    }
-
-    facture.statut = facture.statut === 'payée' ? 'impayée' : 'payée';
-    await facture.save();
-
-    res.json({ message: 'Statut mis à jour', statut: facture.statut });
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err });
-  }
-};
-
-
-export const generateAutoFacture: RequestHandler = async (req, res, next) => {
-  try {
-    const { partenaireId } = req.body;
-
-    const partenaire = await Partenaire.findById(partenaireId);
-    if (!partenaire) {
-      res.status(404).json({ message: "Partenaire introuvable" });
-      return;
-    }
-
-    const trajets = await Trajet.find({ partenaire: partenaireId, facturee: false });
-    if (!trajets.length) {
-      res.status(400).json({ message: "Aucun trajet à facturer" });
-      return;
-    }
-
-    const lignes = trajets.map(t => ({
-      date: t.date.toISOString().split('T')[0],
-      remorque: t.vehicule?.toString(),
-      chargement: t.depart,
-      dechargement: t.arrivee,
-      totalHT: t.totalHT || 0
-    }));
-
-    const totalHT = lignes.reduce((sum, l) => sum + l.totalHT, 0);
-    const tva = 20;
-    const totalTTC = totalHT * (1 + tva / 100);
-
-    const count = await Facture.countDocuments();
-    const numero = `FCT-${String(count + 1).padStart(4, '0')}`;
-    const date = new Date().toISOString().split('T')[0];
-
-    const fileUrl = await generatePdfFacture({
-      numero, date, client: partenaire.nom, ice: partenaire.ice,
-      tracteur: '—', lignes, totalHT, tva, totalTTC
-    });
-
-    await Facture.create({
-      numero, date, client: { nom: partenaire.nom }, ice: partenaire.ice,
-      tracteur: '—', lignes, totalHT, tva, totalTTC,
-      fileUrl, statut: 'impayée'
-    });
-
-    await Trajet.updateMany(
-      { _id: { $in: trajets.map(t => t._id) } },
-      { $set: { facturee: true } }
-    );
-
-    res.status(201).json({ message: 'Facture générée automatiquement', fileUrl });
-
-  } catch (error) {
-    console.error("Erreur auto facture:", error);
-    next(error);
-  }
-};
-

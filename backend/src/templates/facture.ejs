@@ -1,64 +1,72 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Facture <%= numero %></title>
+  <meta charset="UTF-8">
+  <title>Facture <%= data.numeroFacture %></title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    h1 { text-align: center; }
+    body { font-family: Arial, sans-serif; font-size: 12px; padding: 40px; color: #000; }
+    .header, .footer { text-align: center; }
+    .header img { height: 60px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f5f5f5; }
-    .totaux { margin-top: 30px; float: right; width: 300px; }
-    .totaux td { border: none; }
-    .footer { margin-top: 50px; text-align: right; font-size: 12px; }
+    th, td { border: 1px solid #000; padding: 6px 10px; text-align: left; }
+    .right { text-align: right; }
+    .bold { font-weight: bold; }
+    .totals td { border: none; }
   </style>
 </head>
 <body>
-  <h1>Facture N° <%= numero %></h1>
-
-  <p><strong>Date :</strong> <%= date %></p>
-  <p><strong>Client :</strong> <%= client %></p>
-  <p><strong>ICE :</strong> <%= ice %></p>
-  <p><strong>Tracteur :</strong> <%= tracteur %></p>
-
-  <% if (mode === 'auto') { %>
-    <p style="color: #2a7; font-style: italic;">🛠️ Facture générée automatiquement à partir des trajets non facturés</p>
-  <% } else { %>
-    <p style="color: #888; font-style: italic;">✍️ Facture saisie manuellement</p>
-  <% } %>
+  <div class="header">
+    <img src="https://mme-backend.onrender.com/logo.png" alt="Logo MEXpress" />
+    <h2>Facture <%= data.numeroFacture %></h2>
+    <p><strong>CLIENT :</strong> <%= data.client %></p>
+    <p><strong>ICE :</strong> <%= data.ice %></p>
+    <p><strong>Tanger, le :</strong> <%= data.date %></p>
+  </div>
 
   <table>
     <thead>
       <tr>
         <th>Date</th>
-        <th>Remorque</th>
+        <th>Tracteur</th>
         <th>Chargement</th>
         <th>Déchargement</th>
-        <th>Total HT (DH)</th>
+        <th class="right">TOTAL HT (DH)</th>
       </tr>
     </thead>
     <tbody>
-      <% lignes.forEach(ligne => { %>
-        <tr>
-          <td><%= ligne.date %></td>
-          <td><%= ligne.remorque %></td>
-          <td><%= ligne.chargement %></td>
-          <td><%= ligne.dechargement %></td>
-          <td><%= ligne.totalHT.toFixed(2) %></td>
-        </tr>
-      <% }) %>
+      <tr>
+        <td><%= data.date %></td>
+        <td><%= data.tracteur %></td>
+        <td><%= data.chargement %></td>
+        <td><%= data.dechargement %></td>
+        <td class="right"><%= data.totalHT.toFixed(2) %></td>
+      </tr>
     </tbody>
   </table>
 
-  <table class="totaux">
-    <tr><td><strong>Total HT :</strong></td><td><%= totalHT.toFixed(2) %> DH</td></tr>
-    <tr><td><strong>TVA :</strong></td><td><%= tva %> %</td></tr>
-    <tr><td><strong>Total TTC :</strong></td><td><%= totalTTC.toFixed(2) %> DH</td></tr>
+  <table class="totals" style="margin-top: 20px;">
+    <tr>
+      <td class="right bold" colspan="4">Totale en DH HT :</td>
+      <td class="right"><%= data.totalHT.toFixed(2) %></td>
+    </tr>
+    <tr>
+      <td class="right bold" colspan="4">TVA 10% :</td>
+      <td class="right"><%= data.tva.toFixed(2) %></td>
+    </tr>
+    <tr>
+      <td class="right bold" colspan="4">Totale en DH TTC :</td>
+      <td class="right"><%= data.totalTTC.toFixed(2) %></td>
+    </tr>
   </table>
 
+  <p style="margin-top: 40px; font-style: italic;">
+    Arrêtée la présente facture à la somme de : <%= data.totalTTC.toFixed(2) %> Dirhams
+  </p>
+
   <div class="footer">
-    <p>Document généré automatiquement par le système de gestion — <%= new Date().toLocaleDateString('fr-FR') %></p>
+    <p><strong>Adresse :</strong> 127 AV HAFID IBN ABDEL BAR, Rés Al Andalouses, 3ème étage N°15, TANGER</p>
+    <p><strong>Tél :</strong> +212 607 473 166 – <strong>Email :</strong> direction@mme-express.com</p>
+    <p><strong>ICE :</strong> 002676324000081 – <strong>RC :</strong> 110337</p>
   </div>
 </body>
 </html>

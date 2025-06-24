@@ -1,32 +1,44 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-const ligneSchema = new mongoose.Schema({
-  date: { type: String, required: true },
-  remorque: { type: String, required: true },
-  chargement: { type: String, required: true },
-  dechargement: { type: String, required: true },
-  totalHT: { type: Number, required: true }
-});
+interface ILigne {
+  date: string;
+  chargement: string;
+  dechargement: string;
+  totalHT: number;
+  remorque: string;
+}
 
-const factureSchema = new mongoose.Schema(
+export interface IFacture extends Document {
+  numero: string;
+  client: string;
+  ice: string;
+  tracteur: string;
+  date: string;
+  chargement: string;
+  dechargement: string;
+  totalHT: number;
+  tva: number;
+  totalTTC: number;
+  trajet: mongoose.Types.ObjectId;
+  pdfPath?: string; // ✅ CHAMP MANQUANT À AJOUTER
+}
+
+const FactureSchema: Schema = new Schema<IFacture>(
   {
-    numero: { type: String, required: true, unique: true },
-    date: { type: String, required: true },
-    partenaireId: { type: mongoose.Schema.Types.ObjectId, ref: 'Partenaire' },
-    mois: { type: String }, // ex: 2025-06
-    client: {
-      nom: { type: String, required: true } // ✅ stocke directement le nom dans le document
-    },
-    ice: { type: String },
+    numero: { type: String, required: true },
+    client: { type: String, required: true },
+    ice: { type: String, required: true },
     tracteur: { type: String },
-    lignes: [ligneSchema],
-    tva: { type: Number, required: true },
+    date: { type: String, required: true },
+    chargement: { type: String, required: true },
+    dechargement: { type: String, required: true },
     totalHT: { type: Number, required: true },
+    tva: { type: Number, required: true },
     totalTTC: { type: Number, required: true },
-    fileUrl: { type: String, required: true },
-    statut: { type: String, enum: ['payée', 'impayée'], default: 'impayée' }
+    trajet: { type: Schema.Types.ObjectId, ref: 'Trajet' },
+    pdfPath: { type: String } // ✅ CHAMP AJOUTÉ ICI
   },
   { timestamps: true }
 );
 
-export default mongoose.model('Facture', factureSchema);
+export default mongoose.model<IFacture>('Facture', FactureSchema);
