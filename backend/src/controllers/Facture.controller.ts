@@ -1,4 +1,4 @@
-// backend/controllers/facture.controller.ts
+// backend/controllers/facture.controller.ts (ajout conversion totalHT)
 import { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -10,7 +10,7 @@ import Trajet from '../models/trajet.model';
 
 export const generateManualFacture = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {
+    let {
       numeroFacture, client, ice, tracteur, date,
       chargement, dechargement, totalHT, trajetId
     }: {
@@ -21,9 +21,11 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
       date: string,
       chargement: string,
       dechargement: string,
-      totalHT: number,
+      totalHT: any,
       trajetId: string
     } = req.body;
+
+    totalHT = Number(totalHT);
 
     const trajet = await Trajet.findById(trajetId).populate('vehicule partenaire');
     if (!trajet) {
@@ -77,7 +79,8 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
       tva,
       totalTTC,
       trajet: trajetId,
-      pdfPath: `/factures/${fileName}`
+      pdfPath: `/factures/${fileName}`,
+      payee: false
     });
     await facture.save();
 
