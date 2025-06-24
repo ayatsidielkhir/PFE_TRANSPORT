@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import { chromium } from 'playwright'; // ✅ utiliser playwright standard
+import { chromium } from 'playwright'; // ✅ utiliser seulement 'playwright'
 import ejs from 'ejs';
 import Facture from '../models/facture';
 import Trajet from '../models/trajet.model';
-
-const executablePath = '/opt/render/.cache/ms-playwright/chromium_headless_shell-1179/chrome-linux/headless_shell';
 
 export const generateManualFacture = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -43,9 +41,9 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
     const templatePath = path.join(__dirname, '../templates/facture.ejs');
     const html = await ejs.renderFile(templatePath, { data: factureData });
 
-      const browser = await chromium.launch({
+    // ✅ NE PAS FOURNIR DE executablePath — Render gère le chemin après `npx playwright install chromium`
+    const browser = await chromium.launch({
       headless: true,
-      executablePath,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -103,7 +101,7 @@ export const updateFacture = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getAllFactures = async (req: Request, res: Response): Promise<void> => {
+export const getAllFactures = async (_req: Request, res: Response): Promise<void> => {
   try {
     const factures = await Facture.find().sort({ date: -1 });
     res.status(200).json(factures);
