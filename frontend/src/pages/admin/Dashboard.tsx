@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
-  Box,
-  Card,
-  Typography,
-  Avatar
+  Box, Card, Typography, Avatar
 } from '@mui/material';
 import AdminLayout from '../../components/Layout';
 import PeopleIcon from '@mui/icons-material/People';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import MapIcon from '@mui/icons-material/Map';
+
+import CaisseChart from '../../components/Charts/CaisseChart';
+import ChargesPieChart from '../../components/Charts/ChargesPieChart';
+import ChiffreAffaireChart from '../../components/Charts/ChiffreAffaireChart';
 import NotificationsList from './NotificationsList';
 
 const DashboardPage: React.FC = () => {
@@ -21,15 +22,27 @@ const DashboardPage: React.FC = () => {
     trajets: 0,
   });
 
+  const [entrees, setEntrees] = useState<number[]>([]);
+  const [sorties, setSorties] = useState<number[]>([]);
+  const [labels, setLabels] = useState<string[]>([]);
+  const [revenuNetData, setRevenuNetData] = useState<{ mois: string; revenuNet: number }[]>([]);
+
   useEffect(() => {
     axios.get('http://localhost:5000/api/admin/dashboard')
+      .then(res => setStats(res.data))
+      .catch(err => console.error('Erreur dashboard stats:', err));
+
+    axios.get('http://localhost:5000/api/dashboard/caisse-mensuelle')
       .then(res => {
-        const { chauffeurs, vehicules, factures, trajets } = res.data;
-        setStats({ chauffeurs, vehicules, factures, trajets });
+        setEntrees(res.data.entreesMensuelles);
+        setSorties(res.data.sortiesMensuelles);
+        setLabels(res.data.mois);
       })
-      .catch(err => {
-        console.error('Erreur chargement dashboard:', err);
-      });
+      .catch(err => console.error('Erreur caisse:', err));
+
+    axios.get('http://localhost:5000/api/dashboard/chiffre-affaire-mensuel')
+      .then(res => setRevenuNetData(res.data))
+      .catch(err => console.error('Erreur CA:', err));
   }, []);
 
   const statItems = [
@@ -61,59 +74,68 @@ const DashboardPage: React.FC = () => {
 
   return (
     <AdminLayout>
-  <Box sx={{ p: 4 }}>
-    <Typography variant="h4" fontWeight={700} mb={4}>
-      Tableau de bord
-    </Typography>
+      <Box mt={4} px={4}>
+        <Typography variant="h4" fontWeight={700} mb={4}>
+          Tableau de bord
+        </Typography>
 
-    {/* Cartes statistiques */}
-    <Box
-      display="flex"
-      flexWrap="wrap"
-      justifyContent="space-between"
-      gap={2}
-    >
-      {statItems.map((item, index) => (
-        <Box
-          key={index}
-          sx={{
-            flex: '1 1 calc(25% - 16px)',
-            minWidth: 200,
-          }}
-        >
-          <Card
-            sx={{
-              p: 2,
-              display: 'flex',
-              alignItems: 'center',
-              borderLeft: `6px solid ${item.color}`,
-              boxShadow: 3,
-              height: 110,
-            }}
-          >
-            <Avatar sx={{ bgcolor: item.color, width: 50, height: 50, mr: 2 }}>
-              {item.icon}
-            </Avatar>
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary">
-                {item.label}
-              </Typography>
-              <Typography variant="h5" fontWeight={700}>
-                {item.value}
-              </Typography>
+        {/* Stat cards */}
+        <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
+          {statItems.map((item, index) => (
+            <Box
+              key={index}
+              sx={{
+                flex: '1 1 250px',
+                minWidth: 250,
+              }}
+            >
+              <Card
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderLeft: `6px solid ${item.color}`,
+                  boxShadow: 3,
+                }}
+              >
+                <Avatar sx={{ bgcolor: item.color, mr: 2 }}>
+                  {item.icon}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle2">{item.label}</Typography>
+                  <Typography variant="h5" fontWeight={700}>
+                    {item.value}
+                  </Typography>
+                </Box>
+              </Card>
             </Box>
-          </Card>
+          ))}
         </Box>
-      ))}
-    </Box>
 
-    {/* Bloc des notifications */}
-    <Box mt={6}>
-      <NotificationsList />
-    </Box>
-  </Box>
-</AdminLayout>
+        {/* Graphs: CA + Pie */}
+        <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
+          <Box flex="1 1 65%" minWidth={300}>
+            <ChiffreAffaireChart data={revenuNetData} />
+          </Box>
+          <Box flex="1 1 30%" minWidth={300}>
+            <ChargesPieChart />
+          </Box>
+        </Box>
 
+        {/* Caisse Chart */}
+        <Box mb={4}>
+          <CaisseChart entrees={entrees} sorties={sorties} labels={labels} />
+        </Box>
+
+        {/* Notifications */}
+        <Box mt={4}>
+          <Typography variant="h6" fontWeight={600} mb={2}>
+            🔔 Notifications du jour
+          </Typography>
+          <NotificationsList />
+        </Box>
+      </Box>
+    </AdminLayout>
   );
 };
 

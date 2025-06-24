@@ -69,6 +69,7 @@ app.use('/api/factures', factureRoutes);
 app.use('/api/charges', chargeRoutes);
 app.use('/api/caisse', caisseRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/dashboard', dashboardRoutes); // ✅
 
 // ✅ Fichiers statiques
 app.use('/uploads/caisse', express.static(path.join(__dirname, '../uploads/caisse')));
