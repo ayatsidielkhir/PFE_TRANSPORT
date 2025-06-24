@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer'; 
 import ejs from 'ejs';
 import path from 'path';
 import fs from 'fs';
