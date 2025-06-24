@@ -1,8 +1,7 @@
-// backend/controllers/facture.controller.ts (ajout conversion totalHT)
 import { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import puppeteer from 'puppeteer';
+import { chromium } from 'playwright'; // ✅ Playwright à la place de puppeteer
 import ejs from 'ejs';
 import Facture from '../models/facture';
 import Trajet from '../models/trajet.model';
@@ -25,7 +24,6 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
     } = req.body;
 
     totalHT = Number(totalHT);
-
     const trajet = await Trajet.findById(trajetId).populate('vehicule partenaire');
     if (!trajet) {
       res.status(404).json({ message: 'Trajet introuvable' });
@@ -52,15 +50,14 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
     const templatePath = path.join(__dirname, '../templates/facture.ejs');
     const html = await ejs.renderFile(templatePath, { data: factureData });
 
-    const browser = await puppeteer.launch({ headless: true });
-
-
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.setContent(html, { waitUntil: 'load' });
 
     const fileName = `facture_${numeroFacture.replace('/', '-')}_${Date.now()}.pdf`;
     const outputPath = path.join(__dirname, '../public/factures', fileName);
-    await page.pdf({ path: outputPath, format: 'a4' });
+    await page.pdf({ path: outputPath, format: 'A4' });
 
     await browser.close();
 
@@ -79,6 +76,7 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
       pdfPath: `/factures/${fileName}`,
       payee: false
     });
+
     await facture.save();
 
     res.status(201).json({ message: 'Facture générée', url: facture.pdfPath });
