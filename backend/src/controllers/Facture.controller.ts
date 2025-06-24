@@ -6,6 +6,8 @@ import ejs from 'ejs';
 import Facture from '../models/facture';
 import Trajet from '../models/trajet.model';
 
+const executablePath = '/opt/render/.cache/ms-playwright/chromium-1179/chrome-linux/chrome';
+
 export const generateManualFacture = async (req: Request, res: Response): Promise<void> => {
   try {
     let {
@@ -41,9 +43,10 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
     const templatePath = path.join(__dirname, '../templates/facture.ejs');
     const html = await ejs.renderFile(templatePath, { data: factureData });
 
-    const browser = await chromium.launch({
+      const browser = await chromium.launch({
       headless: true,
-      args: ['--no-sandbox']
+      executablePath,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     const context = await browser.newContext();
