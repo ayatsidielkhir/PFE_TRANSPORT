@@ -74,7 +74,7 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
       tva,
       totalTTC,
       trajet: trajetId,
-      pdfPath: `/factures/${fileName}`,
+      pdfPath: `/uploads/factures/${fileName}`,
       payee: false
     });
 
