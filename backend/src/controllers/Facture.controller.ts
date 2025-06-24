@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import { chromium } from 'playwright'; // ✅ Playwright à la place de puppeteer
+import { chromium } from 'playwright'; // ✅ utiliser playwright standard
 import ejs from 'ejs';
 import Facture from '../models/facture';
 import Trajet from '../models/trajet.model';
@@ -11,19 +11,10 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
     let {
       numeroFacture, client, ice, tracteur, date,
       chargement, dechargement, totalHT, trajetId
-    }: {
-      numeroFacture: string,
-      client: string,
-      ice: string,
-      tracteur: string,
-      date: string,
-      chargement: string,
-      dechargement: string,
-      totalHT: any,
-      trajetId: string
     } = req.body;
 
     totalHT = Number(totalHT);
+
     const trajet = await Trajet.findById(trajetId).populate('vehicule partenaire');
     if (!trajet) {
       res.status(404).json({ message: 'Trajet introuvable' });
@@ -50,15 +41,24 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
     const templatePath = path.join(__dirname, '../templates/facture.ejs');
     const html = await ejs.renderFile(templatePath, { data: factureData });
 
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox']
+    });
+
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.setContent(html, { waitUntil: 'load' });
 
     const fileName = `facture_${numeroFacture.replace('/', '-')}_${Date.now()}.pdf`;
-    const outputPath = path.join(__dirname, '../public/factures', fileName);
-    await page.pdf({ path: outputPath, format: 'A4' });
+    const outputDir = path.join(__dirname, '../public/factures');
+    const outputPath = path.join(outputDir, fileName);
 
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    await page.pdf({ path: outputPath, format: 'A4' });
     await browser.close();
 
     const facture = new Facture({

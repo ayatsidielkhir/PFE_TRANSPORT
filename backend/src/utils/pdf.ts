@@ -1,7 +1,7 @@
-import { chromium } from 'playwright'; // ✅ Utilise Playwright
 import ejs from 'ejs';
 import path from 'path';
 import fs from 'fs';
+import { chromium } from 'playwright-core';
 
 interface FactureParams {
   numero: string;
