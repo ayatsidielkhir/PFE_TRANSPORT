@@ -113,3 +113,13 @@ export const updateFacture = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ message: 'Erreur serveur' });
   }
 };
+
+export const getAllFactures = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const factures = await Facture.find().sort({ date: -1 });
+    res.status(200).json(factures);
+  } catch (err) {
+    console.error('Erreur récupération factures :', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
