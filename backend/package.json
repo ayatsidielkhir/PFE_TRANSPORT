@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "build": "npx playwright install --with-deps && tsc",
+    "build": "npx playwright install chromium && tsc",
     "postbuild": "cpx \"src/templates/**/*\" dist/templates",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
@@ -30,7 +30,6 @@
     "mongoose": "^8.13.2",
     "multer": "^1.4.5-lts.2",
     "playwright": "^1.53.1",
-    "playwright-core": "^1.53.1",
     "tesseract.js": "^6.0.1",
     "xlsx": "^0.18.5"
   },
