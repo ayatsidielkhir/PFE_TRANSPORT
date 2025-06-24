@@ -6,7 +6,7 @@ import ejs from 'ejs';
 import Facture from '../models/facture';
 import Trajet from '../models/trajet.model';
 
-const executablePath = '/opt/render/.cache/ms-playwright/chromium-1179/chrome-linux/chrome';
+const executablePath = '/opt/render/.cache/ms-playwright/chromium_headless_shell-1179/chrome-linux/headless_shell';
 
 export const generateManualFacture = async (req: Request, res: Response): Promise<void> => {
   try {
