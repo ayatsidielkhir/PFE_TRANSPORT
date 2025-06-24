@@ -2,7 +2,7 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer';
 import chrome from 'chrome-aws-lambda';
 import ejs from 'ejs';
 import Facture from '../models/facture';
