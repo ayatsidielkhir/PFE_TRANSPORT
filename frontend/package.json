@@ -58,6 +58,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/file-saver": "^2.0.7",
-    "@types/xlsx": "^0.0.35"
+    "@types/xlsx": "^0.0.35",
+    "cpx": "^1.5.0"
   }
 }
