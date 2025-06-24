@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer'; 
+import { chromium } from 'playwright'; // ✅ Utilise Playwright
 import ejs from 'ejs';
 import path from 'path';
 import fs from 'fs';
@@ -36,18 +36,18 @@ export async function generatePdfFacture({
   const template = fs.readFileSync(templatePath, 'utf8');
   const html = ejs.render(template, { numero, date, client, ice, tracteur, lignes, totalHT, tva, totalTTC });
 
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+  const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'networkidle0' });
+  await page.setContent(html, { waitUntil: 'load' });
 
-  const pdfBuffer = await page.pdf({ format: 'a4' });
+  const pdfBuffer = await page.pdf({ format: 'A4' });
 
   await browser.close();
 
   const factureDir = path.resolve('/mnt/data/factures');
   if (!fs.existsSync(factureDir)) fs.mkdirSync(factureDir, { recursive: true });
 
-  const fileName = `facture-${numero}.pdf`;
+  const fileName = `facture-${numero.replace('/', '-')}.pdf`;
   const filePath = path.join(factureDir, fileName);
   fs.writeFileSync(filePath, pdfBuffer);
 
