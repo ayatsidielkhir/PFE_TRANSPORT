@@ -53,11 +53,20 @@ export const generateManualFacture = async (req: Request, res: Response): Promis
     const templatePath = path.join(__dirname, '../templates/facture.ejs');
     const html = await ejs.renderFile(templatePath, { data: factureData });
 
-    const browser = await puppeteer.launch({
-      args: chrome.args,
-      executablePath: await chrome.executablePath,
-      headless: chrome.headless,
-    });
+    const isProduction = process.env.AWS_EXECUTION_ENV === 'AWS_Lambda_nodejs18.x' || process.env.NODE_ENV === 'production';
+
+    const browser = await puppeteer.launch(
+      isProduction
+        ? {
+            args: chrome.args,
+            executablePath: await chrome.executablePath,
+            headless: chrome.headless,
+          }
+        : {
+            headless: true,
+          }
+    );
+
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
