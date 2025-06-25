@@ -1,9 +1,13 @@
-// ✅ FacturesPage.tsx – Génération de factures, liste avec filtre et statut payé
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, TextField, Typography, Paper, MenuItem, Select, Table, TableHead, TableBody, TableRow, TableCell
+  Box, Button, TextField, Typography, Paper, MenuItem, Select, Table, TableHead,
+  TableBody, TableRow, TableCell, InputAdornment, Pagination, useMediaQuery,
+  Dialog, DialogTitle, DialogContent
 } from '@mui/material';
+import { Add, PictureAsPdf, Search } from '@mui/icons-material';
 import axios from 'axios';
+import AdminLayout from '../../components/Layout';
+import * as XLSX from 'xlsx';
 
 interface Trajet {
   _id: string;
@@ -29,35 +33,26 @@ const FacturesPage: React.FC = () => {
   const [factures, setFactures] = useState<Facture[]>([]);
   const [selectedTrajet, setSelectedTrajet] = useState<Trajet | null>(null);
   const [formData, setFormData] = useState({
-    numeroFacture: '',
-    client: '',
-    ice: '',
-    tracteur: '',
-    date: '',
-    chargement: '',
-    dechargement: '',
-    totalHT: 0
+    numeroFacture: '', client: '', ice: '', tracteur: '', date: '', chargement: '', dechargement: '', totalHT: 0
   });
-  const [filters, setFilters] = useState({ client: '', date: '' });
+  const [filters, setFilters] = useState({ client: '', date: '', status: '' });
+  const [page, setPage] = useState(1);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const perPage = 5;
+  const isMobile = useMediaQuery('(max-width:600px)');
 
   useEffect(() => {
     axios.get(`${process.env.REACT_APP_API_URL}/trajets`).then(res => setTrajets(res.data));
     axios.get(`${process.env.REACT_APP_API_URL}/factures`).then(res => setFactures(res.data));
   }, []);
 
-  const handleTrajetSelect = (trajetId: string) => {
-    const t = trajets.find(t => t._id === trajetId);
+  const handleTrajetSelect = (id: string) => {
+    const t = trajets.find(t => t._id === id);
     if (t) {
       setSelectedTrajet(t);
       setFormData({
-        numeroFacture: '001/2025',
-        client: '',
-        ice: '',
-        tracteur: '',
-        date: t.date,
-        chargement: t.depart,
-        dechargement: t.arrivee,
-        totalHT: 0
+        numeroFacture: '001/2025', client: '', ice: '', tracteur: '', date: t.date,
+        chargement: t.depart, dechargement: t.arrivee, totalHT: 0
       });
     }
   };
@@ -88,39 +83,34 @@ const FacturesPage: React.FC = () => {
     setFactures(factures.map(f => f._id === facture._id ? updated : f));
   };
 
-  const filteredFactures = factures.filter(f =>
+  const handleExportExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(factures);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Factures");
+    XLSX.writeFile(workbook, "factures.xlsx");
+  };
+
+  const filtered = factures.filter(f =>
     f.client.toLowerCase().includes(filters.client.toLowerCase()) &&
-    f.date.includes(filters.date)
+    f.date.includes(filters.date) &&
+    (filters.status ? f.payee === (filters.status === 'payee') : true)
   );
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
-    <Box p={3}>
-      <Typography variant="h5" mb={3}>Génération de Factures</Typography>
-      <Box display="flex" gap={4} flexWrap="wrap">
-        <Paper elevation={2} sx={{ p: 2, width: '300px' }}>
-          <Typography variant="subtitle1" mb={2}>Sélectionner un trajet</Typography>
-          <Select fullWidth value={selectedTrajet?._id || ''} onChange={(e) => handleTrajetSelect(e.target.value)}>
-            {trajets.map(t => (
-              <MenuItem key={t._id} value={t._id}>{`${t.depart} – ${t.arrivee} (${t.date})`}</MenuItem>
-            ))}
-          </Select>
-          <TextField label="Facture N°" name="numeroFacture" value={formData.numeroFacture} onChange={handleChange} fullWidth sx={{ mt: 2 }} />
-          <TextField label="Client" name="client" value={formData.client} onChange={handleChange} fullWidth sx={{ mt: 2 }} />
-          <TextField label="ICE" name="ice" value={formData.ice} onChange={handleChange} fullWidth sx={{ mt: 2 }} />
-          <TextField label="Tracteur" name="tracteur" value={formData.tracteur} onChange={handleChange} fullWidth sx={{ mt: 2 }} />
-          <TextField label="Total HT (DH)" name="totalHT" value={formData.totalHT} onChange={handleChange} type="number" fullWidth sx={{ mt: 2 }} />
-          <Button variant="contained" fullWidth sx={{ mt: 3 }} onClick={handleGeneratePDF}>Générer PDF</Button>
-        </Paper>
+    <AdminLayout>
+      <Box p={3} maxWidth="1400px" mx="auto">
+        <Typography variant="h5" fontWeight="bold" color="#001447" mb={3}>Gestion des Factures</Typography>
 
-        <Paper elevation={2} sx={{ p: 2, flex: 1 }}>
-          <Typography variant="h6" mb={2}>Factures générées</Typography>
-
-          <Box display="flex" gap={2} mb={2}>
+        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
+          <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} alignItems="center">
             <TextField
-              label="Filtrer par client"
+              placeholder="Rechercher un client..."
               size="small"
               value={filters.client}
               onChange={(e) => setFilters({ ...filters, client: e.target.value })}
+              InputProps={{ startAdornment: (<InputAdornment position="start"><Search /></InputAdornment>) }}
+              sx={{ flex: 1, backgroundColor: 'white', borderRadius: 1 }}
             />
             <TextField
               label="Filtrer par date"
@@ -129,12 +119,41 @@ const FacturesPage: React.FC = () => {
               value={filters.date}
               onChange={(e) => setFilters({ ...filters, date: e.target.value })}
               InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, backgroundColor: 'white', borderRadius: 1 }}
             />
+            <Select
+              value={filters.status}
+              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              size="small"
+              displayEmpty
+              sx={{ flex: 1, backgroundColor: 'white', borderRadius: 1 }}
+            >
+              <MenuItem value="">Tous</MenuItem>
+              <MenuItem value="payee">Payées</MenuItem>
+              <MenuItem value="impayee">Impayées</MenuItem>
+            </Select>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleGeneratePDF}
+              sx={{ backgroundColor: '#001e61', textTransform: 'none', fontWeight: 'bold', borderRadius: 3 }}
+            >
+              Générer Facture
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleExportExcel}
+              sx={{ borderRadius: 3 }}
+            >
+              Exporter Excel
+            </Button>
           </Box>
+        </Paper>
 
+        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
           <Table size="small">
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
                 <TableCell>Facture</TableCell>
                 <TableCell>Client</TableCell>
                 <TableCell>Date</TableCell>
@@ -144,7 +163,7 @@ const FacturesPage: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredFactures.map(f => (
+              {paginated.map(f => (
                 <TableRow key={f._id || f.numero}>
                   <TableCell>{f.numero}</TableCell>
                   <TableCell>{f.client}</TableCell>
@@ -160,18 +179,33 @@ const FacturesPage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Button
+                      startIcon={<PictureAsPdf />}
                       variant="outlined"
                       size="small"
-                      onClick={() => window.open(`${process.env.REACT_APP_API_URL}${f.pdfPath}`, '_blank')}
+                      onClick={() => setPdfUrl(`${process.env.REACT_APP_API_URL!.replace('/api', '')}${f.pdfPath}`)}
                     >PDF</Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
+          <Box display="flex" justifyContent="center" mt={2}>
+            <Pagination count={Math.ceil(filtered.length / perPage)} page={page} onChange={(_, val) => setPage(val)} />
+          </Box>
         </Paper>
+
+        <Dialog open={!!pdfUrl} onClose={() => setPdfUrl(null)} maxWidth="lg" fullWidth>
+          <DialogTitle>Visualisation Facture</DialogTitle>
+          <DialogContent>
+            <iframe src={pdfUrl || ''} width="100%" height="600px" style={{ border: 'none' }} />
+            <Box mt={2} textAlign="right">
+              <Button onClick={() => window.open(pdfUrl || '', '_blank')} variant="outlined">Télécharger</Button>
+            </Box>
+          </DialogContent>
+        </Dialog>
       </Box>
-    </Box>
+    </AdminLayout>
   );
 };
 
