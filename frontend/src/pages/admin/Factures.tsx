@@ -104,7 +104,7 @@ const FacturesPage: React.FC = () => {
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3}>Gestion des Factures</Typography>
 
         <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
-          <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} alignItems="center">
+          <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} alignItems="center" flexWrap="wrap">
             <Select fullWidth value={selectedTrajet?._id || ''} onChange={(e) => handleTrajetSelect(e.target.value)}>
               <MenuItem value="">Sélectionner un trajet</MenuItem>
               {trajets.map(t => (
@@ -112,9 +112,12 @@ const FacturesPage: React.FC = () => {
               ))}
             </Select>
             <TextField label="Facture N°" name="numeroFacture" value={formData.numeroFacture} onChange={handleChange} fullWidth />
-            <TextField label="Client" name="client" value={formData.client} disabled fullWidth />
-            <TextField label="ICE" name="ice" value={formData.ice} disabled fullWidth />
-            <TextField label="Tracteur" name="tracteur" value={formData.tracteur} onChange={handleChange} fullWidth />
+            <TextField label="Client (Partenaire)" name="client" value={formData.client} fullWidth disabled />
+            <TextField label="ICE" name="ice" value={formData.ice} fullWidth disabled />
+            <TextField label="Date Facture" name="date" value={formData.date} fullWidth disabled />
+            <TextField label="Ville de Chargement" name="chargement" value={formData.chargement} fullWidth disabled />
+            <TextField label="Ville de Déchargement" name="dechargement" value={formData.dechargement} fullWidth disabled />
+            <TextField label="Remorque (Tracteur)" name="tracteur" value={formData.tracteur} onChange={handleChange} fullWidth />
             <TextField label="Total HT (DH)" name="totalHT" value={formData.totalHT} onChange={handleChange} type="number" fullWidth />
             <Button variant="contained" onClick={handleGeneratePDF}>Générer PDF</Button>
           </Box>
