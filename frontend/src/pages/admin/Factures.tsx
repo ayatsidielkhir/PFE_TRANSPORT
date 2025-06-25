@@ -61,7 +61,11 @@ const FacturesPage: React.FC = () => {
       }));
       setTrajets(data);
     });
-    axios.get(`${API}/factures`).then(res => setFactures(res.data));
+    axios.get(`${API}/factures`).then(res => {
+      setFactures(res.data);
+      const latestNumber = res.data.length ? parseInt(res.data[0].numero?.split('/')?.[0] || '0') + 1 : 1;
+      setFormData(prev => ({ ...prev, numeroFacture: `${latestNumber.toString().padStart(3, '0')}/2025` }));
+    });
   }, []);
 
   const handleMultipleTrajetSelect = (ids: string[]) => {
@@ -71,7 +75,6 @@ const FacturesPage: React.FC = () => {
       const t = selected[0];
       setFormData(prev => ({
         ...prev,
-        numeroFacture: '001/2025',
         client: t.partenaire.nom,
         ice: t.partenaire.ice,
         tracteur: t.vehicule.matricule,
@@ -79,6 +82,8 @@ const FacturesPage: React.FC = () => {
         montantsHT: selected.map(() => 0),
         remorques: selected.map(() => '')
       }));
+    } else {
+      setFormData(prev => ({ ...prev, client: '', ice: '', tracteur: '', date: '', montantsHT: [], remorques: [] }));
     }
   };
 
@@ -86,6 +91,20 @@ const FacturesPage: React.FC = () => {
     const updated = [...formData[field]];
     updated[index] = value;
     setFormData(prev => ({ ...prev, [field]: updated }));
+  };
+
+  const handleRemoveTrajet = (index: number) => {
+    const updatedTrajets = [...selectedTrajets];
+    updatedTrajets.splice(index, 1);
+    setSelectedTrajets(updatedTrajets);
+
+    const updatedMontants = [...formData.montantsHT];
+    updatedMontants.splice(index, 1);
+
+    const updatedRemorques = [...formData.remorques];
+    updatedRemorques.splice(index, 1);
+
+    setFormData(prev => ({ ...prev, montantsHT: updatedMontants, remorques: updatedRemorques }));
   };
 
   const handleGeneratePDF = async () => {
@@ -134,7 +153,7 @@ const FacturesPage: React.FC = () => {
         <Paper elevation={2} sx={{ p: 3, mb: 5, borderRadius: 3, backgroundColor: '#f3f6f9' }}>
           <Typography variant="h6" fontWeight="bold" color="#001447" mb={2}>➕ Ajouter une nouvelle facture</Typography>
 
-          <Box display="flex" flexWrap="wrap" gap={2}>
+          <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
             <Select
               fullWidth
               multiple
@@ -153,20 +172,16 @@ const FacturesPage: React.FC = () => {
               ))}
             </Select>
 
-            <TextField label="Facture N°" name="numeroFacture" value={formData.numeroFacture} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
-            <TextField label="Client" name="client" value={formData.client} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
-            <TextField label="ICE" name="ice" value={formData.ice} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
-            <TextField label="Tracteur" name="tracteur" value={formData.tracteur} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
-            <TextField label="Date" name="date" value={formData.date} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
+            <TextField label="Facture N°" name="numeroFacture" value={formData.numeroFacture} fullWidth sx={{ flex: '1 1 30%' }} InputProps={{ readOnly: true }} />
+            <TextField label="Client" name="client" value={formData.client} fullWidth sx={{ flex: '1 1 30%' }} InputProps={{ readOnly: true }} />
+            <TextField label="ICE" name="ice" value={formData.ice} fullWidth sx={{ flex: '1 1 30%' }} InputProps={{ readOnly: true }} />
+            <TextField label="Tracteur" name="tracteur" value={formData.tracteur} fullWidth sx={{ flex: '1 1 30%' }} InputProps={{ readOnly: true }} />
+            <TextField label="Date" name="date" value={formData.date} fullWidth sx={{ flex: '1 1 30%' }} InputProps={{ readOnly: true }} />
             <TextField label="TVA (%)" name="tva" type="number" value={formData.tva} fullWidth sx={{ flex: '1 1 30%' }} onChange={(e) => setFormData(prev => ({ ...prev, tva: parseFloat(e.target.value) }))} />
-
-            <Button variant="contained" onClick={handleGeneratePDF} sx={{ flex: '1 1 100%', mt: 1, fontWeight: 'bold' }}>
-              Générer PDF
-            </Button>
           </Box>
 
           {selectedTrajets.length > 0 && (
-            <Box mt={3}>
+            <Box>
               <Typography variant="subtitle1" fontWeight="bold" mb={1}>Trajets sélectionnés</Typography>
               <Table size="small">
                 <TableHead>
@@ -176,6 +191,7 @@ const FacturesPage: React.FC = () => {
                     <TableCell>Déchargement</TableCell>
                     <TableCell>Remorque</TableCell>
                     <TableCell>Montant HT</TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -190,10 +206,18 @@ const FacturesPage: React.FC = () => {
                       <TableCell>
                         <TextField type="number" value={formData.montantsHT[i] || ''} onChange={(e) => handleFormDataChange(i, 'montantsHT', parseFloat(e.target.value))} />
                       </TableCell>
+                      <TableCell>
+                        <Button variant="outlined" color="error" onClick={() => handleRemoveTrajet(i)}>Supprimer</Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
+              <Box mt={2}>
+                <Button variant="contained" onClick={handleGeneratePDF} sx={{ fontWeight: 'bold' }}>
+                  Générer PDF
+                </Button>
+              </Box>
             </Box>
           )}
 
