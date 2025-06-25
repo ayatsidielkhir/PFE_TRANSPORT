@@ -22,7 +22,7 @@ export const getAllTrajets: RequestHandler = async (req, res) => {
     const trajets = await Trajet.find(filter)
       .populate('chauffeur', 'nom prenom')
       .populate('vehicule', 'nom matricule type')
-      .populate('partenaire', 'nom');
+      .populate('partenaire', 'nom ice');
 
     console.log('Filtres appliqués:', filter);
     res.json(trajets);

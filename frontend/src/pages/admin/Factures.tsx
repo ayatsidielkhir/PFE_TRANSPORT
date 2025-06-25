@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Typography, Paper, MenuItem, Select, Table, TableHead,
-  TableBody, TableRow, TableCell, Pagination, useMediaQuery
+  TableBody, TableRow, TableCell, Pagination, useMediaQuery, Divider
 } from '@mui/material';
-import { Add, PictureAsPdf } from '@mui/icons-material';
+import { PictureAsPdf } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
@@ -14,7 +14,7 @@ interface Trajet {
   depart: string;
   arrivee: string;
   date: string;
-  vehicule: string;
+  vehicule: any;
   partenaire: {
     _id: string;
     nom: string;
@@ -37,15 +37,21 @@ const FacturesPage: React.FC = () => {
   const [factures, setFactures] = useState<Facture[]>([]);
   const [selectedTrajet, setSelectedTrajet] = useState<Trajet | null>(null);
   const [formData, setFormData] = useState({
-    numeroFacture: '', client: '', ice: '', tracteur: '', date: '', chargement: '', dechargement: '', totalHT: 0, tva: 0
+    numeroFacture: '', client: '', ice: '', tracteur: '', date: '', chargement: '', dechargement: '', totalHT: 0
   });
   const [filters, setFilters] = useState({ client: '', date: '' });
   const [page, setPage] = useState(1);
   const perPage = 5;
-  const isMobile = useMediaQuery('(max-width:600px)');
 
   useEffect(() => {
-    axios.get(`${API}/trajets`).then(res => setTrajets(res.data));
+    axios.get(`${API}/trajets`).then(res => {
+      const data = res.data.map((t: any) => ({
+        ...t,
+        partenaire: t.partenaire || {},
+        vehicule: typeof t.vehicule === 'object' ? t.vehicule : { matricule: t.vehicule }
+      }));
+      setTrajets(data);
+    });
     axios.get(`${API}/factures`).then(res => setFactures(res.data));
   }, []);
 
@@ -57,18 +63,17 @@ const FacturesPage: React.FC = () => {
         numeroFacture: '001/2025',
         client: t.partenaire?.nom || '',
         ice: t.partenaire?.ice || '',
-        tracteur: t.vehicule,
+        tracteur: t.vehicule?.matricule || '',
         date: t.date,
         chargement: t.depart,
         dechargement: t.arrivee,
-        totalHT: 0,
-        tva: 0
+        totalHT: 0
       });
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.type === 'number' ? Number(e.target.value) : e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleGeneratePDF = async () => {
@@ -80,7 +85,7 @@ const FacturesPage: React.FC = () => {
     setFactures(prev => [...prev, {
       ...formData,
       _id: '',
-      totalTTC: formData.totalHT + formData.tva,
+      totalTTC: formData.totalHT * 1.1,
       pdfPath: res.data.url,
       numero: formData.numeroFacture,
       payee: false
@@ -104,43 +109,47 @@ const FacturesPage: React.FC = () => {
       <Box p={3} maxWidth="1400px" mx="auto">
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3}>Gestion des Factures</Typography>
 
-        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
+        <Paper elevation={2} sx={{ p: 3, mb: 5, borderRadius: 3, backgroundColor: '#f3f6f9' }}>
+          <Typography variant="h6" fontWeight="bold" color="#001447" mb={2}>➕ Ajouter une nouvelle facture</Typography>
+
           <Box display="flex" flexWrap="wrap" gap={2}>
-            <Select fullWidth value={selectedTrajet?._id || ''} onChange={(e) => handleTrajetSelect(e.target.value)}>
+            <Select fullWidth value={selectedTrajet?._id || ''} onChange={(e) => handleTrajetSelect(e.target.value)} sx={{ flex: '1 1 100%' }}>
               <MenuItem value="">Sélectionner un trajet</MenuItem>
               {trajets.map(t => (
                 <MenuItem key={t._id} value={t._id}>{`${t.depart} – ${t.arrivee} (${t.date})`}</MenuItem>
               ))}
             </Select>
-            <TextField label="Facture N°" name="numeroFacture" value={formData.numeroFacture} onChange={handleChange} fullWidth />
-            <TextField label="Client (Partenaire)" name="client" value={formData.client} fullWidth disabled />
-            <TextField label="ICE" name="ice" value={formData.ice} fullWidth disabled />
-            <TextField label="Date Facture" name="date" value={formData.date} fullWidth disabled />
-            <TextField label="Ville de Chargement" name="chargement" value={formData.chargement} fullWidth disabled />
-            <TextField label="Ville de Déchargement" name="dechargement" value={formData.dechargement} fullWidth disabled />
-            <TextField label="Remorque (Tracteur)" name="tracteur" value={formData.tracteur} onChange={handleChange} fullWidth />
-            <TextField label="Total HT (DH)" name="totalHT" value={formData.totalHT} onChange={handleChange} type="number" fullWidth />
-            <TextField label="TVA 10% (DH)" name="tva" value={formData.tva} onChange={handleChange} type="number" fullWidth />
-            <Button variant="contained" onClick={handleGeneratePDF} fullWidth>Générer PDF</Button>
+
+            {["numeroFacture", "client", "ice", "date", "chargement", "dechargement", "tracteur", "totalHT"].map((field) => (
+              <TextField
+                key={field}
+                label={field === "numeroFacture" ? "Facture N°" : field.charAt(0).toUpperCase() + field.slice(1)}
+                name={field}
+                value={(formData as any)[field]}
+                onChange={handleChange}
+                disabled={["client", "ice", "date", "chargement", "dechargement"].includes(field)}
+                fullWidth
+                sx={{ flex: '1 1 30%' }}
+              />
+            ))}
+
+            <Button variant="contained" onClick={handleGeneratePDF} sx={{ flex: '1 1 100%', mt: 1, fontWeight: 'bold' }}>Générer PDF</Button>
           </Box>
 
-          <Paper sx={{ mt: 2, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
-            <Box display="flex" justifyContent="space-between" my={1}>
-              <Typography>Totale en DH HT</Typography>
-              <Typography fontWeight="bold">{formData.totalHT.toFixed(2)} DH</Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between" my={1}>
-              <Typography>TVA</Typography>
-              <Typography fontWeight="bold">{formData.tva.toFixed(2)} DH</Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between" my={1}>
-              <Typography>Totale en DH TTC</Typography>
-              <Typography fontWeight="bold">{(formData.totalHT + formData.tva).toFixed(2)} DH</Typography>
+          <Paper sx={{ mt: 3, p: 2, backgroundColor: '#ffffff', borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight="bold" mb={2}>Récapitulatif Montants</Typography>
+            <Box display="flex" flexWrap="wrap" gap={2}>
+              <Box flex="1 1 30%"><Typography>Totale HT</Typography><Typography fontWeight="bold">{formData.totalHT.toFixed(2)} DH</Typography></Box>
+              <Box flex="1 1 30%"><Typography>TVA 10%</Typography><Typography fontWeight="bold">{(formData.totalHT * 0.1).toFixed(2)} DH</Typography></Box>
+              <Box flex="1 1 30%"><Typography>Total TTC</Typography><Typography fontWeight="bold">{(formData.totalHT * 1.1).toFixed(2)} DH</Typography></Box>
             </Box>
           </Paper>
         </Paper>
 
-        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
+        <Divider sx={{ mb: 3 }} />
+
+        <Paper elevation={3} sx={{ borderRadius: 3, p: 3, backgroundColor: 'white' }}>
+          <Typography variant="h6" fontWeight="bold" color="#001447" mb={2}>📜 Historique des Factures</Typography>
           <Table size="small">
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
