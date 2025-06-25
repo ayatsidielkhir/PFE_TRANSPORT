@@ -152,7 +152,9 @@ const FacturesPage: React.FC = () => {
                 type={["totalHT", "tva"].includes(field) ? "number" : "text"}
                 value={(formData as any)[field]}
                 onChange={handleChange}
-                disabled={["client", "ice", "date", "chargement", "dechargement"].includes(field)}
+                InputProps={{
+                  readOnly: ["client", "ice", "date", "chargement", "dechargement"].includes(field)
+                }}
                 fullWidth
                 sx={{ flex: '1 1 30%' }}
               />

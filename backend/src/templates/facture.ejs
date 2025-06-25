@@ -1,72 +1,110 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Facture <%= data.numeroFacture %></title>
   <style>
-    body { font-family: Arial, sans-serif; font-size: 12px; padding: 40px; color: #000; }
-    .header, .footer { text-align: center; }
-    .header img { height: 60px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #000; padding: 6px 10px; text-align: left; }
-    .right { text-align: right; }
-    .bold { font-weight: bold; }
-    .totals td { border: none; }
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      padding: 40px;
+      color: #000;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .header-left {
+      max-width: 65%;
+    }
+    .header-right {
+      text-align: right;
+      font-weight: bold;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+      margin-bottom: 15px;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    .summary {
+      margin-top: 25px;
+    }
+    .summary p {
+      margin: 4px 0;
+    }
+    .footer {
+      margin-top: 60px;
+      font-size: 12px;
+      text-align: center;
+      border-top: 1px solid #000;
+      padding-top: 10px;
+    }
   </style>
 </head>
 <body>
+
   <div class="header">
-    <img src="https://mme-backend.onrender.com/logo.png" alt="Logo MEXpress" />
-    <h2>Facture <%= data.numeroFacture %></h2>
-    <p><strong>CLIENT :</strong> <%= data.client %></p>
-    <p><strong>ICE :</strong> <%= data.ice %></p>
-    <p><strong>Tanger, le :</strong> <%= data.date %></p>
+    <div class="header-left">
+      <div class="title">Facture N° : <%= data.numeroFacture %></div>
+      <p><strong>CLIENT :</strong> <%= data.client %></p>
+      <p><strong>ICE N° :</strong> <%= data.ice %></p>
+      <p><strong>Tracteur :</strong> <%= data.tracteur %></p>
+      <p><strong>Tanger le :</strong> <%= new Date(data.date).toLocaleDateString('fr-FR') %></p>
+    </div>
+    <div class="header-right">
+      <img src="https://mme-backend.onrender.com/uploads/partenaires/logo-mexpress.png" alt="Logo MEXpress" width="140" />
+    </div>
   </div>
 
   <table>
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Tracteur</th>
+        <th>DATE</th>
+        <th>REMORQUE</th>
         <th>Chargement</th>
         <th>Déchargement</th>
-        <th class="right">TOTAL HT (DH)</th>
+        <th>TOTAL HT (DH)</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><%= data.date %></td>
-        <td><%= data.tracteur %></td>
+        <td><%= new Date(data.date).toLocaleDateString('fr-FR') %></td>
+        <td>R1111</td> <!-- Remorque si dispo un jour -->
         <td><%= data.chargement %></td>
         <td><%= data.dechargement %></td>
-        <td class="right"><%= data.totalHT.toFixed(2) %></td>
+        <td><%= data.totalHT.toFixed(2) %></td>
       </tr>
     </tbody>
   </table>
 
-  <table class="totals" style="margin-top: 20px;">
-    <tr>
-      <td class="right bold" colspan="4">Totale en DH HT :</td>
-      <td class="right"><%= data.totalHT.toFixed(2) %></td>
-    </tr>
-    <tr>
-      <td class="right bold" colspan="4">TVA 10% :</td>
-      <td class="right"><%= data.tva.toFixed(2) %></td>
-    </tr>
-    <tr>
-      <td class="right bold" colspan="4">Totale en DH TTC :</td>
-      <td class="right"><%= data.totalTTC.toFixed(2) %></td>
-    </tr>
-  </table>
+  <div class="summary">
+    <p><strong>Totale en DH HT :</strong> <%= data.totalHT.toFixed(2) %></p>
+    <p><strong>TVA <%= data.tva.toFixed(0) %>% :</strong> <%= (data.totalHT * data.tva / 100).toFixed(2) %></p>
+    <p><strong>Totale en DH TTC :</strong> <%= data.totalTTC.toFixed(2) %></p>
+  </div>
 
-  <p style="margin-top: 40px; font-style: italic;">
-    Arrêtée la présente facture à la somme de : <%= data.totalTTC.toFixed(2) %> Dirhams
+  <p style="margin-top: 30px;">
+    Arrêtée la présente facture à la somme de : <strong><%= data.totalTTC.toFixed(2) %></strong> Dirhams
   </p>
 
-  <div class="footer">
-    <p><strong>Adresse :</strong> 127 AV HAFID IBN ABDEL BAR, Rés Al Andalouses, 3ème étage N°15, TANGER</p>
-    <p><strong>Tél :</strong> +212 607 473 166 – <strong>Email :</strong> direction@mme-express.com</p>
-    <p><strong>ICE :</strong> 002676324000081 – <strong>RC :</strong> 110337</p>
-  </div>
+  <p style="margin-top: 60px;">Signature</p>
+
+
 </body>
 </html>
