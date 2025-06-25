@@ -7,6 +7,7 @@ import {
 import { Delete, Edit, Search as SearchIcon, Add } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
+import Tesseract from 'tesseract.js';
 
 interface Chauffeur {
   _id: string;
@@ -21,6 +22,12 @@ interface Chauffeur {
   scanVisa?: string;
   certificatBonneConduite?: string;
 }
+const extractTextFromImage = async (file: File): Promise<string> => {
+  const result = await Tesseract.recognize(file, 'eng', {
+    logger: m => console.log(m)
+  });
+  return result.data.text;
+};
 
 const ChauffeursPage: React.FC = () => {
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
@@ -35,7 +42,7 @@ const ChauffeursPage: React.FC = () => {
 
   const [form, setForm] = useState<Record<string, string | Blob | null>>({
     nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-    photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null
+    photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null, dateExpirationCIN: ''
   });
 
   const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
@@ -63,16 +70,31 @@ const ChauffeursPage: React.FC = () => {
     setPage(1);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, files } = e.target;
-    if (files) {
-      const file = files[0];
-      if (name === 'photo') setPreviewPhoto(URL.createObjectURL(file));
-      setForm(prev => ({ ...prev, [name]: file }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value, files } = e.target;
+  if (files) {
+    const file = files[0];
+    if (name === 'photo') setPreviewPhoto(URL.createObjectURL(file));
+    setForm(prev => ({ ...prev, [name]: file }));
+
+    // OCR automatique si c'est un scan de CIN
+    if (name === 'scanCIN') {
+      const text = await extractTextFromImage(file);
+      const extractedNom = /Nom\s*:\s*(\w+)/i.exec(text)?.[1] || '';
+      const extractedPrenom = /Pr[eé]nom\s*:\s*(\w+)/i.exec(text)?.[1] || '';
+      const extractedCin = /[A-Z]{1,2}[0-9]{5,8}/i.exec(text)?.[0] || '';
+
+      setForm(prev => ({
+        ...prev,
+        nom: extractedNom,
+        prenom: extractedPrenom,
+        cin: extractedCin
+      }));
     }
-  };
+  } else {
+    setForm(prev => ({ ...prev, [name]: value }));
+  }
+};
 
   const handleSubmit = async () => {
   if (!form.nom || !form.prenom || !form.telephone || !form.cin) {
@@ -299,6 +321,25 @@ const ChauffeursPage: React.FC = () => {
           }
         }}
       />
+      {/* Date d’expiration CIN */}
+      <TextField
+        label="Date d’expiration CIN"
+        type="date"
+        name="dateExpirationCIN"
+        value={form.dateExpirationCIN as string}
+        onChange={handleInputChange}
+        fullWidth
+        InputLabelProps={{ shrink: true }}
+        sx={{
+          mb: 2,
+          backgroundColor: '#f8f9fa',
+          borderRadius: 2,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2
+          }
+        }}
+      />
+
 
       {/* Fichiers */}
       <Box display="flex" flexWrap="wrap" gap={2}>

@@ -4,6 +4,49 @@ import Vehicule from '../models/Vehicule';
 import Trajet from '../models/trajet.model';
 import Caisse from '../models/caisse.model';
 import Charge from '../models/charge.model';
+import { isBefore, isAfter, addDays } from 'date-fns';
+
+
+
+ export const getNotifications = async (_: Request, res: Response) => {
+  try {
+    const now = new Date();
+    const inSevenDays = addDays(now, 7);
+
+    const chauffeurs = await Chauffeur.find({
+      $or: [
+        { dateExpirationCIN: { $exists: true } },
+        { dateExpirationPermis: { $exists: true } },
+        { dateExpirationVisa: { $exists: true } },
+        { dateExpirationCasier: { $exists: true } }
+      ]
+    });
+
+    const notifications: string[] = [];
+
+    chauffeurs.forEach((c) => {
+      const docs = [
+        { label: 'CIN', date: c.dateExpirationCIN },
+      ];
+
+      docs.forEach(({ label, date }) => {
+        if (!date) return;
+
+        if (isBefore(date, now)) {
+          notifications.push(`❗ Le ${label} de ${c.nom} ${c.prenom} est expiré !`);
+        } else if (isBefore(date, inSevenDays)) {
+          notifications.push(`⚠️ Le ${label} de ${c.nom} ${c.prenom} expire bientôt (${date.toLocaleDateString()})`);
+        }
+      });
+    });
+
+    res.json({ notifications });
+  } catch (err) {
+    console.error('Erreur notifications documents:', err);
+    res.status(500).json({ error: 'Erreur serveur notifications' });
+  }
+};
+
 
 // 📊 Statistiques globales
 export const getDashboardStats = async (_: Request, res: Response) => {

@@ -26,6 +26,7 @@ const DashboardPage: React.FC = () => {
   const [sorties, setSorties] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
   const [revenuNetData, setRevenuNetData] = useState<{ mois: string; revenuNet: number }[]>([]);
+  const [notifications, setNotifications] = useState<string[]>([]); // 🆕 Notifications
 
   useEffect(() => {
     axios.get('http://localhost:5000/api/admin/dashboard')
@@ -43,6 +44,11 @@ const DashboardPage: React.FC = () => {
     axios.get('http://localhost:5000/api/dashboard/chiffre-affaire-mensuel')
       .then(res => setRevenuNetData(res.data))
       .catch(err => console.error('Erreur CA:', err));
+
+    // 🆕 Récupération des notifications
+    axios.get('http://localhost:5000/api/dashboard/notifications')
+      .then(res => setNotifications(res.data.notifications))
+      .catch(err => console.error('Erreur chargement notifications:', err));
   }, []);
 
   const statItems = [
@@ -79,6 +85,17 @@ const DashboardPage: React.FC = () => {
           Tableau de bord
         </Typography>
 
+        {/* 🔔 Notifications importantes */}
+        {notifications.length > 0 && (
+          <Box mb={4}>
+            {notifications.map((note, index) => (
+              <Typography key={index} color="error" fontWeight={500}>
+                ⚠️ {note}
+              </Typography>
+            ))}
+          </Box>
+        )}
+
         {/* Stat cards */}
         <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
           {statItems.map((item, index) => (
@@ -112,7 +129,7 @@ const DashboardPage: React.FC = () => {
           ))}
         </Box>
 
-        {/* Graphs: CA + Pie */}
+        {/* Graphs */}
         <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
           <Box flex="1 1 65%" minWidth={300}>
             <ChiffreAffaireChart data={revenuNetData} />
@@ -122,12 +139,12 @@ const DashboardPage: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Caisse Chart */}
+        {/* Caisse */}
         <Box mb={4}>
           <CaisseChart entrees={entrees} sorties={sorties} labels={labels} />
         </Box>
 
-        {/* Notifications */}
+        {/* 🔔 Notifications générales */}
         <Box mt={4}>
           <Typography variant="h6" fontWeight={600} mb={2}>
             🔔 Notifications du jour
