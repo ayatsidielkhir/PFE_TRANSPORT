@@ -8,20 +8,6 @@ import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
 const API = process.env.REACT_APP_API_URL;
-
-interface Trajet {
-  _id: string;
-  depart: string;
-  arrivee: string;
-  date: string;
-  vehicule: any;
-  partenaire: {
-    _id: string;
-    nom: string;
-    ice?: string;
-  };
-}
-
 interface Facture {
   _id: string;
   numero: string;
@@ -32,12 +18,36 @@ interface Facture {
   payee?: boolean;
 }
 
+interface Trajet {
+  _id: string;
+  depart: string;
+  arrivee: string;
+  date: string;
+  vehicule: {
+    matricule: string;
+  };
+  partenaire: {
+    _id: string;
+    nom: string;
+    ice: string;
+  };
+}
+
+
 const FacturesPage: React.FC = () => {
   const [trajets, setTrajets] = useState<Trajet[]>([]);
   const [factures, setFactures] = useState<Facture[]>([]);
   const [selectedTrajet, setSelectedTrajet] = useState<Trajet | null>(null);
   const [formData, setFormData] = useState({
-    numeroFacture: '', client: '', ice: '', tracteur: '', date: '', chargement: '', dechargement: '', totalHT: 0
+    numeroFacture: '',
+    client: '',
+    ice: '',
+    tracteur: '',
+    date: '',
+    chargement: '',
+    dechargement: '',
+    totalHT: 0,
+    tva: 10,
   });
   const [filters, setFilters] = useState({ client: '', date: '' });
   const [page, setPage] = useState(1);
@@ -47,7 +57,7 @@ const FacturesPage: React.FC = () => {
     axios.get(`${API}/trajets`).then(res => {
       const data = res.data.map((t: any) => ({
         ...t,
-        partenaire: t.partenaire || {},
+        partenaire: t.partenaire || { nom: '', ice: '' },
         vehicule: typeof t.vehicule === 'object' ? t.vehicule : { matricule: t.vehicule }
       }));
       setTrajets(data);
@@ -59,37 +69,46 @@ const FacturesPage: React.FC = () => {
     const t = trajets.find(t => t._id === id);
     if (t) {
       setSelectedTrajet(t);
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         numeroFacture: '001/2025',
-        client: t.partenaire?.nom || '',
-        ice: t.partenaire?.ice || '',
-        tracteur: t.vehicule?.matricule || '',
+        client: t.partenaire.nom,
+        ice: t.partenaire.ice, // ✅ Récupération correcte de l'ICE
+        tracteur: t.vehicule.matricule,
         date: t.date,
         chargement: t.depart,
         dechargement: t.arrivee,
-        totalHT: 0
-      });
+      }));
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'totalHT' || name === 'tva' ? parseFloat(value) || 0 : value,
+    }));
   };
 
   const handleGeneratePDF = async () => {
+    const totalTTC = formData.totalHT * (1 + formData.tva / 100);
     const res = await axios.post(`${API}/factures/manual`, {
       ...formData,
-      trajetId: selectedTrajet?._id
+      trajetId: selectedTrajet?._id,
+      totalTTC,
     });
     alert("Facture générée avec succès");
-    setFactures(prev => [...prev, {
-      ...formData,
-      _id: '',
-      totalTTC: formData.totalHT * 1.1,
-      pdfPath: res.data.url,
-      numero: formData.numeroFacture,
-      payee: false
-    }]);
+    setFactures(prev => [
+      ...prev,
+      {
+        ...formData,
+        _id: '',
+        totalTTC,
+        pdfPath: res.data.url,
+        numero: formData.numeroFacture,
+        payee: false
+      }
+    ]);
   };
 
   const toggleStatutPayee = async (facture: Facture) => {
@@ -120,11 +139,17 @@ const FacturesPage: React.FC = () => {
               ))}
             </Select>
 
-            {["numeroFacture", "client", "ice", "date", "chargement", "dechargement", "tracteur", "totalHT"].map((field) => (
+            {["numeroFacture", "client", "ice", "date", "chargement", "dechargement", "tracteur", "totalHT", "tva"].map((field) => (
               <TextField
                 key={field}
-                label={field === "numeroFacture" ? "Facture N°" : field.charAt(0).toUpperCase() + field.slice(1)}
+                label={
+                  field === "numeroFacture" ? "Facture N°" :
+                  field === "totalHT" ? "Total HT" :
+                  field === "tva" ? "TVA (%)" :
+                  field.charAt(0).toUpperCase() + field.slice(1)
+                }
                 name={field}
+                type={["totalHT", "tva"].includes(field) ? "number" : "text"}
                 value={(formData as any)[field]}
                 onChange={handleChange}
                 disabled={["client", "ice", "date", "chargement", "dechargement"].includes(field)}
@@ -133,15 +158,17 @@ const FacturesPage: React.FC = () => {
               />
             ))}
 
-            <Button variant="contained" onClick={handleGeneratePDF} sx={{ flex: '1 1 100%', mt: 1, fontWeight: 'bold' }}>Générer PDF</Button>
+            <Button variant="contained" onClick={handleGeneratePDF} sx={{ flex: '1 1 100%', mt: 1, fontWeight: 'bold' }}>
+              Générer PDF
+            </Button>
           </Box>
 
           <Paper sx={{ mt: 3, p: 2, backgroundColor: '#ffffff', borderRadius: 2 }}>
             <Typography variant="subtitle1" fontWeight="bold" mb={2}>Récapitulatif Montants</Typography>
             <Box display="flex" flexWrap="wrap" gap={2}>
-              <Box flex="1 1 30%"><Typography>Totale HT</Typography><Typography fontWeight="bold">{formData.totalHT.toFixed(2)} DH</Typography></Box>
-              <Box flex="1 1 30%"><Typography>TVA 10%</Typography><Typography fontWeight="bold">{(formData.totalHT * 0.1).toFixed(2)} DH</Typography></Box>
-              <Box flex="1 1 30%"><Typography>Total TTC</Typography><Typography fontWeight="bold">{(formData.totalHT * 1.1).toFixed(2)} DH</Typography></Box>
+              <Box flex="1 1 30%"><Typography>Total HT</Typography><Typography fontWeight="bold">{formData.totalHT.toFixed(2)} DH</Typography></Box>
+              <Box flex="1 1 30%"><Typography>TVA {formData.tva}%</Typography><Typography fontWeight="bold">{(formData.totalHT * (formData.tva / 100)).toFixed(2)} DH</Typography></Box>
+              <Box flex="1 1 30%"><Typography>Total TTC</Typography><Typography fontWeight="bold">{(formData.totalHT * (1 + formData.tva / 100)).toFixed(2)} DH</Typography></Box>
             </Box>
           </Paper>
         </Paper>
