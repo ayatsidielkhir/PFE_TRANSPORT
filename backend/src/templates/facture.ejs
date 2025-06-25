@@ -1,110 +1,82 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Facture <%= data.numeroFacture %></title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      padding: 40px;
-      color: #000;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
-    .header-left {
-      max-width: 65%;
-    }
-    .header-right {
-      text-align: right;
-      font-weight: bold;
-    }
-    .title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1, h2 { text-align: center; }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 25px;
-      margin-bottom: 15px;
+      margin-top: 30px;
     }
     th, td {
-      border: 1px solid #000;
+      border: 1px solid #333;
       padding: 8px;
       text-align: center;
     }
     th {
-      background-color: #f0f0f0;
+      background-color: #f2f2f2;
     }
-    .summary {
-      margin-top: 25px;
+    .totaux {
+      margin-top: 30px;
+      width: 100%;
     }
-    .summary p {
-      margin: 4px 0;
+    .totaux td {
+      padding: 10px;
+      font-weight: bold;
     }
-    .footer {
-      margin-top: 60px;
-      font-size: 12px;
-      text-align: center;
-      border-top: 1px solid #000;
-      padding-top: 10px;
+    .totaux td:last-child {
+      text-align: right;
     }
   </style>
 </head>
 <body>
+  <h1>FACTURE</h1>
+  <h2>Numéro : <%= data.numeroFacture %></h2>
 
-  <div class="header">
-    <div class="header-left">
-      <div class="title">Facture N° : <%= data.numeroFacture %></div>
-      <p><strong>CLIENT :</strong> <%= data.client %></p>
-      <p><strong>ICE N° :</strong> <%= data.ice %></p>
-      <p><strong>Tracteur :</strong> <%= data.tracteur %></p>
-      <p><strong>Tanger le :</strong> <%= new Date(data.date).toLocaleDateString('fr-FR') %></p>
-    </div>
-    <div class="header-right">
-      <img src="https://mme-backend.onrender.com/uploads/partenaires/logo-mexpress.png" alt="Logo MEXpress" width="140" />
-    </div>
-  </div>
+  <p><strong>Client :</strong> <%= data.client %></p>
+  <p><strong>ICE :</strong> <%= data.ice %></p>
+  <p><strong>Date :</strong> <%= data.date %></p>
+  <p><strong>Tracteur :</strong> <%= data.tracteur %></p>
 
   <table>
     <thead>
       <tr>
-        <th>DATE</th>
-        <th>REMORQUE</th>
+        <th>Date</th>
         <th>Chargement</th>
         <th>Déchargement</th>
-        <th>TOTAL HT (DH)</th>
+        <th>Remorque</th>
+        <th>Montant HT</th>
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td><%= new Date(data.date).toLocaleDateString('fr-FR') %></td>
-        <td>R1111</td> <!-- Remorque si dispo un jour -->
-        <td><%= data.chargement %></td>
-        <td><%= data.dechargement %></td>
-        <td><%= data.totalHT.toFixed(2) %></td>
-      </tr>
+      <% data.lignes.forEach(ligne => { %>
+        <tr>
+          <td><%= new Date(ligne.date).toLocaleDateString() %></td>
+          <td><%= ligne.chargement %></td>
+          <td><%= ligne.dechargement %></td>
+          <td><%= ligne.remorque %></td>
+          <td><%= ligne.totalHT.toFixed(2) %> DH</td>
+        </tr>
+      <% }); %>
     </tbody>
   </table>
 
-  <div class="summary">
-    <p><strong>Totale en DH HT :</strong> <%= data.totalHT.toFixed(2) %></p>
-    <p><strong>TVA <%= data.tva.toFixed(0) %>% :</strong> <%= (data.totalHT * data.tva / 100).toFixed(2) %></p>
-    <p><strong>Totale en DH TTC :</strong> <%= data.totalTTC.toFixed(2) %></p>
-  </div>
-
-  <p style="margin-top: 30px;">
-    Arrêtée la présente facture à la somme de : <strong><%= data.totalTTC.toFixed(2) %></strong> Dirhams
-  </p>
-
-  <p style="margin-top: 60px;">Signature</p>
-
-
+  <table class="totaux">
+    <tr>
+      <td>Total HT</td>
+      <td><%= data.totalHT.toFixed(2) %> DH</td>
+    </tr>
+    <tr>
+      <td>TVA (10%)</td>
+      <td><%= data.tva.toFixed(2) %> DH</td>
+    </tr>
+    <tr>
+      <td>Total TTC</td>
+      <td><%= data.totalTTC.toFixed(2) %> DH</td>
+    </tr>
+  </table>
 </body>
 </html>

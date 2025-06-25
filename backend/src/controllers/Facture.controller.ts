@@ -16,16 +16,13 @@ export const requestHandler = (
 
 export const generateManualFacture = requestHandler(async (req: Request, res: Response): Promise<Response> => {
   let {
-    numeroFacture, client, ice, tracteur, date,
-    chargement, dechargement, totalHT, trajetId
+    numeroFacture, client, ice, tracteur, date, trajetIds, remorques, montantsHT
   } = req.body;
 
-  totalHT = Number(totalHT);
+  const trajets = await Trajet.find({ _id: { $in: trajetIds } }).populate('vehicule partenaire');
+  if (!trajets.length) return res.status(404).json({ message: 'Aucun trajet trouvé' });
 
-  const trajet = await Trajet.findById(trajetId).populate('vehicule partenaire');
-  if (!trajet) return res.status(404).json({ message: 'Trajet introuvable' });
-
-  const partenaire = trajet.partenaire as unknown as { ice?: string; nom?: string };
+  const partenaire = trajets[0].partenaire as unknown as { ice?: string; nom?: string };
   if (!ice && partenaire?.ice) ice = partenaire.ice;
   if (!client && partenaire?.nom) client = partenaire.nom;
 
@@ -33,12 +30,25 @@ export const generateManualFacture = requestHandler(async (req: Request, res: Re
     return res.status(400).json({ message: 'Le champ ICE ou Client est manquant.' });
   }
 
+  let totalHT = 0;
+  const lignes = trajets.map((trajet, index) => {
+    const montant = Number(montantsHT?.[index] || 0);
+    totalHT += montant;
+    return {
+      date: trajet.date,
+      chargement: trajet.depart,
+      dechargement: trajet.arrivee,
+      totalHT: montant,
+      remorque: remorques?.[index] || ''
+    };
+  });
+
   const tva = totalHT * 0.1;
   const totalTTC = totalHT + tva;
 
   const factureData = {
-    numeroFacture, client, ice, tracteur,
-    date, chargement, dechargement, totalHT, tva, totalTTC, trajet
+    numeroFacture, client, ice, tracteur, date,
+    totalHT, tva, totalTTC, lignes
   };
 
   const templatePath = path.join(__dirname, '../templates/facture.ejs');
@@ -54,7 +64,7 @@ export const generateManualFacture = requestHandler(async (req: Request, res: Re
   await page.setContent(html, { waitUntil: 'load' });
 
   const fileName = `facture_${numeroFacture.replace('/', '-')}_${Date.now()}.pdf`;
-  const outputDir = '/mnt/data/uploads/factures'; // ✅ chemin déjà exposé par Express
+  const outputDir = '/mnt/data/uploads/factures';
   const outputPath = path.join(outputDir, fileName);
 
   if (!fs.existsSync(outputDir)) {
@@ -70,12 +80,10 @@ export const generateManualFacture = requestHandler(async (req: Request, res: Re
     ice,
     tracteur,
     date,
-    chargement,
-    dechargement,
     totalHT,
     tva,
     totalTTC,
-    trajet: trajetId,
+    trajet: trajets[0]._id,
     pdfPath: `/uploads/factures/${fileName}`,
     payee: false
   });
