@@ -54,7 +54,7 @@ export const generateManualFacture = requestHandler(async (req: Request, res: Re
   await page.setContent(html, { waitUntil: 'load' });
 
   const fileName = `facture_${numeroFacture.replace('/', '-')}_${Date.now()}.pdf`;
-  const outputDir = path.join(__dirname, '../public/factures');
+  const outputDir = '/mnt/data/uploads/factures'; // ✅ chemin déjà exposé par Express
   const outputPath = path.join(outputDir, fileName);
 
   if (!fs.existsSync(outputDir)) {
