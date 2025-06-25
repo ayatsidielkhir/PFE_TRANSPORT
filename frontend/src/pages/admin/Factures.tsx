@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Typography, Paper, MenuItem, Select, Table, TableHead,
-  TableBody, TableRow, TableCell, Pagination, useMediaQuery, Divider
+  TableBody, TableRow, TableCell, Pagination, Divider
 } from '@mui/material';
 import { PictureAsPdf } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
 const API = process.env.REACT_APP_API_URL;
+
 interface Facture {
   _id: string;
   numero: string;
@@ -33,21 +34,19 @@ interface Trajet {
   };
 }
 
-
 const FacturesPage: React.FC = () => {
   const [trajets, setTrajets] = useState<Trajet[]>([]);
   const [factures, setFactures] = useState<Facture[]>([]);
-  const [selectedTrajet, setSelectedTrajet] = useState<Trajet | null>(null);
+  const [selectedTrajets, setSelectedTrajets] = useState<Trajet[]>([]);
   const [formData, setFormData] = useState({
     numeroFacture: '',
     client: '',
     ice: '',
     tracteur: '',
     date: '',
-    chargement: '',
-    dechargement: '',
-    totalHT: 0,
     tva: 10,
+    montantsHT: [] as number[],
+    remorques: [] as string[]
   });
   const [filters, setFilters] = useState({ client: '', date: '' });
   const [page, setPage] = useState(1);
@@ -65,38 +64,42 @@ const FacturesPage: React.FC = () => {
     axios.get(`${API}/factures`).then(res => setFactures(res.data));
   }, []);
 
-  const handleTrajetSelect = (id: string) => {
-    const t = trajets.find(t => t._id === id);
-    if (t) {
-      setSelectedTrajet(t);
+  const handleMultipleTrajetSelect = (ids: string[]) => {
+    const selected = trajets.filter(t => ids.includes(t._id));
+    setSelectedTrajets(selected);
+    if (selected.length > 0) {
+      const t = selected[0];
       setFormData(prev => ({
         ...prev,
         numeroFacture: '001/2025',
         client: t.partenaire.nom,
-        ice: t.partenaire.ice, // ✅ Récupération correcte de l'ICE
+        ice: t.partenaire.ice,
         tracteur: t.vehicule.matricule,
         date: t.date,
-        chargement: t.depart,
-        dechargement: t.arrivee,
+        montantsHT: selected.map(() => 0),
+        remorques: selected.map(() => '')
       }));
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'totalHT' || name === 'tva' ? parseFloat(value) || 0 : value,
-    }));
+  const handleFormDataChange = (index: number, field: 'montantsHT' | 'remorques', value: string | number) => {
+    const updated = [...formData[field]];
+    updated[index] = value;
+    setFormData(prev => ({ ...prev, [field]: updated }));
   };
 
   const handleGeneratePDF = async () => {
-    const totalTTC = formData.totalHT * (1 + formData.tva / 100);
+    const totalHT = formData.montantsHT.reduce((sum, m) => sum + m, 0);
+    const tva = totalHT * (formData.tva / 100);
+    const totalTTC = totalHT + tva;
+
     const res = await axios.post(`${API}/factures/manual`, {
       ...formData,
-      trajetId: selectedTrajet?._id,
+      totalHT,
       totalTTC,
+      trajetIds: selectedTrajets.map(t => t._id),
     });
+
     alert("Facture générée avec succès");
     setFactures(prev => [
       ...prev,
@@ -132,45 +135,74 @@ const FacturesPage: React.FC = () => {
           <Typography variant="h6" fontWeight="bold" color="#001447" mb={2}>➕ Ajouter une nouvelle facture</Typography>
 
           <Box display="flex" flexWrap="wrap" gap={2}>
-            <Select fullWidth value={selectedTrajet?._id || ''} onChange={(e) => handleTrajetSelect(e.target.value)} sx={{ flex: '1 1 100%' }}>
-              <MenuItem value="">Sélectionner un trajet</MenuItem>
+            <Select
+              fullWidth
+              multiple
+              value={selectedTrajets.map(t => t._id)}
+              onChange={(e) => handleMultipleTrajetSelect(e.target.value as string[])}
+              sx={{ flex: '1 1 100%' }}
+              renderValue={(selected) =>
+                trajets
+                  .filter((t) => selected.includes(t._id))
+                  .map((t) => `${t.depart} – ${t.arrivee}`)
+                  .join(', ')
+              }
+            >
               {trajets.map(t => (
                 <MenuItem key={t._id} value={t._id}>{`${t.depart} – ${t.arrivee} (${t.date})`}</MenuItem>
               ))}
             </Select>
 
-            {["numeroFacture", "client", "ice", "date", "chargement", "dechargement", "tracteur", "totalHT", "tva"].map((field) => (
-              <TextField
-                key={field}
-                label={
-                  field === "numeroFacture" ? "Facture N°" :
-                  field === "totalHT" ? "Total HT" :
-                  field === "tva" ? "TVA (%)" :
-                  field.charAt(0).toUpperCase() + field.slice(1)
-                }
-                name={field}
-                type={["totalHT", "tva"].includes(field) ? "number" : "text"}
-                value={(formData as any)[field]}
-                onChange={handleChange}
-                InputProps={{
-                  readOnly: ["client", "ice", "date", "chargement", "dechargement"].includes(field)
-                }}
-                fullWidth
-                sx={{ flex: '1 1 30%' }}
-              />
-            ))}
+            <TextField label="Facture N°" name="numeroFacture" value={formData.numeroFacture} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
+            <TextField label="Client" name="client" value={formData.client} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
+            <TextField label="ICE" name="ice" value={formData.ice} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
+            <TextField label="Tracteur" name="tracteur" value={formData.tracteur} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
+            <TextField label="Date" name="date" value={formData.date} fullWidth sx={{ flex: '1 1 30%' }}  InputProps={{ readOnly: true }} />
+            <TextField label="TVA (%)" name="tva" type="number" value={formData.tva} fullWidth sx={{ flex: '1 1 30%' }} onChange={(e) => setFormData(prev => ({ ...prev, tva: parseFloat(e.target.value) }))} />
 
             <Button variant="contained" onClick={handleGeneratePDF} sx={{ flex: '1 1 100%', mt: 1, fontWeight: 'bold' }}>
               Générer PDF
             </Button>
           </Box>
 
+          {selectedTrajets.length > 0 && (
+            <Box mt={3}>
+              <Typography variant="subtitle1" fontWeight="bold" mb={1}>Trajets sélectionnés</Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Chargement</TableCell>
+                    <TableCell>Déchargement</TableCell>
+                    <TableCell>Remorque</TableCell>
+                    <TableCell>Montant HT</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedTrajets.map((t, i) => (
+                    <TableRow key={t._id}>
+                      <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{t.depart}</TableCell>
+                      <TableCell>{t.arrivee}</TableCell>
+                      <TableCell>
+                        <TextField value={formData.remorques[i] || ''} onChange={(e) => handleFormDataChange(i, 'remorques', e.target.value)} />
+                      </TableCell>
+                      <TableCell>
+                        <TextField type="number" value={formData.montantsHT[i] || ''} onChange={(e) => handleFormDataChange(i, 'montantsHT', parseFloat(e.target.value))} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          )}
+
           <Paper sx={{ mt: 3, p: 2, backgroundColor: '#ffffff', borderRadius: 2 }}>
             <Typography variant="subtitle1" fontWeight="bold" mb={2}>Récapitulatif Montants</Typography>
             <Box display="flex" flexWrap="wrap" gap={2}>
-              <Box flex="1 1 30%"><Typography>Total HT</Typography><Typography fontWeight="bold">{formData.totalHT.toFixed(2)} DH</Typography></Box>
-              <Box flex="1 1 30%"><Typography>TVA {formData.tva}%</Typography><Typography fontWeight="bold">{(formData.totalHT * (formData.tva / 100)).toFixed(2)} DH</Typography></Box>
-              <Box flex="1 1 30%"><Typography>Total TTC</Typography><Typography fontWeight="bold">{(formData.totalHT * (1 + formData.tva / 100)).toFixed(2)} DH</Typography></Box>
+              <Box flex="1 1 30%"><Typography>Total HT</Typography><Typography fontWeight="bold">{formData.montantsHT.reduce((sum, m) => sum + m, 0).toFixed(2)} DH</Typography></Box>
+              <Box flex="1 1 30%"><Typography>TVA {formData.tva}%</Typography><Typography fontWeight="bold">{(formData.montantsHT.reduce((sum, m) => sum + m, 0) * (formData.tva / 100)).toFixed(2)} DH</Typography></Box>
+              <Box flex="1 1 30%"><Typography>Total TTC</Typography><Typography fontWeight="bold">{(formData.montantsHT.reduce((sum, m) => sum + m, 0) * (1 + formData.tva / 100)).toFixed(2)} DH</Typography></Box>
             </Box>
           </Paper>
         </Paper>
