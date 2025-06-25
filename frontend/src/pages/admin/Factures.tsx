@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, TextField, Typography, Paper, MenuItem, Select, Table, TableHead,
-  TableBody, TableRow, TableCell, InputAdornment, Pagination, useMediaQuery
+  TableBody, TableRow, TableCell, Pagination, useMediaQuery
 } from '@mui/material';
-import { Add, PictureAsPdf, Search } from '@mui/icons-material';
+import { Add, PictureAsPdf } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 
@@ -37,7 +37,7 @@ const FacturesPage: React.FC = () => {
   const [factures, setFactures] = useState<Facture[]>([]);
   const [selectedTrajet, setSelectedTrajet] = useState<Trajet | null>(null);
   const [formData, setFormData] = useState({
-    numeroFacture: '', client: '', ice: '', tracteur: '', date: '', chargement: '', dechargement: '', totalHT: 0
+    numeroFacture: '', client: '', ice: '', tracteur: '', date: '', chargement: '', dechargement: '', totalHT: 0, tva: 0
   });
   const [filters, setFilters] = useState({ client: '', date: '' });
   const [page, setPage] = useState(1);
@@ -61,13 +61,14 @@ const FacturesPage: React.FC = () => {
         date: t.date,
         chargement: t.depart,
         dechargement: t.arrivee,
-        totalHT: 0
+        totalHT: 0,
+        tva: 0
       });
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.type === 'number' ? Number(e.target.value) : e.target.value });
   };
 
   const handleGeneratePDF = async () => {
@@ -79,7 +80,7 @@ const FacturesPage: React.FC = () => {
     setFactures(prev => [...prev, {
       ...formData,
       _id: '',
-      totalTTC: formData.totalHT * 1.1,
+      totalTTC: formData.totalHT + formData.tva,
       pdfPath: res.data.url,
       numero: formData.numeroFacture,
       payee: false
@@ -104,7 +105,7 @@ const FacturesPage: React.FC = () => {
         <Typography variant="h5" fontWeight="bold" color="#001447" mb={3}>Gestion des Factures</Typography>
 
         <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
-          <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} alignItems="center" flexWrap="wrap">
+          <Box display="flex" flexWrap="wrap" gap={2}>
             <Select fullWidth value={selectedTrajet?._id || ''} onChange={(e) => handleTrajetSelect(e.target.value)}>
               <MenuItem value="">Sélectionner un trajet</MenuItem>
               {trajets.map(t => (
@@ -119,8 +120,24 @@ const FacturesPage: React.FC = () => {
             <TextField label="Ville de Déchargement" name="dechargement" value={formData.dechargement} fullWidth disabled />
             <TextField label="Remorque (Tracteur)" name="tracteur" value={formData.tracteur} onChange={handleChange} fullWidth />
             <TextField label="Total HT (DH)" name="totalHT" value={formData.totalHT} onChange={handleChange} type="number" fullWidth />
-            <Button variant="contained" onClick={handleGeneratePDF}>Générer PDF</Button>
+            <TextField label="TVA 10% (DH)" name="tva" value={formData.tva} onChange={handleChange} type="number" fullWidth />
+            <Button variant="contained" onClick={handleGeneratePDF} fullWidth>Générer PDF</Button>
           </Box>
+
+          <Paper sx={{ mt: 2, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
+            <Box display="flex" justifyContent="space-between" my={1}>
+              <Typography>Totale en DH HT</Typography>
+              <Typography fontWeight="bold">{formData.totalHT.toFixed(2)} DH</Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" my={1}>
+              <Typography>TVA</Typography>
+              <Typography fontWeight="bold">{formData.tva.toFixed(2)} DH</Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" my={1}>
+              <Typography>Totale en DH TTC</Typography>
+              <Typography fontWeight="bold">{(formData.totalHT + formData.tva).toFixed(2)} DH</Typography>
+            </Box>
+          </Paper>
         </Paper>
 
         <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
