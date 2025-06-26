@@ -8,6 +8,8 @@ import { Delete, Edit, Search as SearchIcon, Add } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 import Tesseract from 'tesseract.js';
+import * as pdfjsLib from 'pdfjs-dist';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js`;
 
 interface Chauffeur {
   _id: string;
@@ -22,12 +24,87 @@ interface Chauffeur {
   scanVisa?: string;
   certificatBonneConduite?: string;
 }
-const extractTextFromImage = async (file: File): Promise<string> => {
-  const result = await Tesseract.recognize(file, 'eng', {
-    logger: m => console.log(m)
-  });
-  return result.data.text;
+
+const extractTextFromImage = async (file: File): Promise<Partial<Record<string, string>>> => {
+  let pageTexts: string[] = [];
+
+  if (file.type === 'application/pdf') {
+    const pdfData = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      const page = await pdf.getPage(pageNumber);
+      const viewport = page.getViewport({ scale: 2 });
+
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error("Impossible de créer un contexte canvas.");
+
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({ canvasContext: context, viewport }).promise;
+      const imageSource = canvas.toDataURL();
+
+      const result = await Tesseract.recognize(imageSource, 'fra', {
+        logger: m => console.log(`Page ${pageNumber}:`, m),
+      });
+
+      console.log(`===== PAGE ${pageNumber} OCR TEXT =====`);
+      console.log(result.data.text);
+
+      pageTexts.push(result.data.text);
+    }
+  }
+
+  const fullText = pageTexts.join('\n');
+  const page2 = pageTexts[1] || '';
+
+  // === Extraire nom/prénom depuis ligne MRZ (type passeport)
+  let nom = '', prenom = '';
+
+// Recherche d'une ligne MRZ avec <<
+const mrzLine = fullText.split('\n').find(l => l.includes('<<'));
+
+if (mrzLine) {
+  const parts = mrzLine.trim().split('<<');
+  nom = parts[0]?.replace(/</g, ' ').trim() || '';
+  prenom = parts[1]?.replace(/</g, ' ').trim() || '';
+}
+
+
+
+  // === CIN
+  const cinMatch = fullText.match(/[A-Z]{1,2}\d{5,8}/i);
+  const cin = cinMatch?.[0] || '';
+
+  // === Date d’expiration CIN
+  const dateMatches = Array.from(fullText.matchAll(/(\d{2})[.\-\/](\d{2})[.\-\/](\d{4})/g));
+  let expirationDate = '';
+  if (dateMatches.length >= 2) {
+    const [_, d, m, y] = dateMatches[1];
+    expirationDate = `${y}-${m}-${d}`;
+  }
+
+  // === Adresse (aucune ligne fiable, donc vide ou ligne personnalisée possible)
+  let adresse = '';
+  const adresseLigne = page2.split('\n').find(l => /(hay|bloc|résidence|appt|rue)/i.test(l));
+  if (adresseLigne) adresse = adresseLigne;
+
+  return {
+    nom,
+    prenom,
+    cin,
+    dateExpirationCIN: expirationDate,
+    adresse
+  };
 };
+
+
+
+
+
+
 
 const ChauffeursPage: React.FC = () => {
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
@@ -40,10 +117,20 @@ const ChauffeursPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const perPage = 5;
 
-  const [form, setForm] = useState<Record<string, string | Blob | null>>({
-    nom: '', prenom: '', telephone: '', cin: '', adresse: '',
-    photo: null, scanCIN: null, scanPermis: null, scanVisa: null, certificatBonneConduite: null, dateExpirationCIN: ''
-  });
+  const [form, setForm] = useState({
+  nom: '',
+  prenom: '',
+  telephone: '',
+  cin: '',
+  adresse: '',
+  dateExpirationCIN: '',
+  photo: null,
+  scanCIN: null,
+  scanPermis: null,
+  scanVisa: null,
+  certificatBonneConduite: null
+} as Record<string, string | Blob | null>);
+
 
   const isImageFile = (filename: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
   const renderDocumentAvatar = (file: string | undefined) => {
@@ -70,28 +157,35 @@ const ChauffeursPage: React.FC = () => {
     setPage(1);
   };
 
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const { name, value, files } = e.target;
+
   if (files) {
     const file = files[0];
-    if (name === 'photo') setPreviewPhoto(URL.createObjectURL(file));
+
+    // Prévisualisation si c’est une photo
+    if (name === 'photo') {
+      setPreviewPhoto(URL.createObjectURL(file));
+    }
+
+    // On met à jour le champ fichier dans le form
     setForm(prev => ({ ...prev, [name]: file }));
 
-    // OCR automatique si c'est un scan de CIN
+    // Si c'est un scan de CIN, on lance l'extraction OCR
     if (name === 'scanCIN') {
-      const text = await extractTextFromImage(file);
-      const extractedNom = /Nom\s*:\s*(\w+)/i.exec(text)?.[1] || '';
-      const extractedPrenom = /Pr[eé]nom\s*:\s*(\w+)/i.exec(text)?.[1] || '';
-      const extractedCin = /[A-Z]{1,2}[0-9]{5,8}/i.exec(text)?.[0] || '';
+      const extractedData = await extractTextFromImage(file);
+
+      console.log("✅ Données extraites OCR :", extractedData); // 🔍 Ajoute ça si pas déjà fait
 
       setForm(prev => ({
         ...prev,
-        nom: extractedNom,
-        prenom: extractedPrenom,
-        cin: extractedCin
+        ...Object.fromEntries(
+          Object.entries(extractedData).map(([k, v]) => [k, v ?? '']) // ✅ important : jamais null
+        )
       }));
     }
   } else {
+    // Mise à jour des champs texte manuellement tapés
     setForm(prev => ({ ...prev, [name]: value }));
   }
 };
@@ -289,7 +383,7 @@ const ChauffeursPage: React.FC = () => {
           <Box key={field} flex="1 1 45%">
             <TextField
               name={field}
-              value={form[field] as string}
+              value={(form[field] || '') as string}
               onChange={handleInputChange}
               placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
               fullWidth
@@ -308,7 +402,7 @@ const ChauffeursPage: React.FC = () => {
       {/* Adresse pleine largeur */}
       <TextField
         name="adresse"
-        value={form.adresse}
+        value={form.adresse || ''}
         onChange={handleInputChange}
         placeholder="Adresse"
         fullWidth
@@ -326,7 +420,7 @@ const ChauffeursPage: React.FC = () => {
         label="Date d’expiration CIN"
         type="date"
         name="dateExpirationCIN"
-        value={form.dateExpirationCIN as string}
+        value={form.dateExpirationCIN || ''}
         onChange={handleInputChange}
         fullWidth
         InputLabelProps={{ shrink: true }}
