@@ -51,7 +51,7 @@ useEffect(() => {
   };
 
   const handlePreview = (fileName: string) => {
-  setPreviewFile(`http://localhost:5000/uploads/juridique/${fileName}`);
+  setPreviewFile(`http://localhost:5001/uploads/juridique/${fileName}`);
 };
 
   const filtered = Object.entries(dossier).filter(([key]) =>

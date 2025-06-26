@@ -42,7 +42,7 @@ const CaissePage: React.FC = () => {
   const [dialogTitle, setDialogTitle] = useState('');
 
   const fetchData = async () => {
-    const res = await axios.get('http://localhost:5000/api/caisse');
+    const res = await axios.get('http://localhost:5001/api/caisse');
     setOperations(res.data);
   };
 
@@ -120,7 +120,7 @@ const CaissePage: React.FC = () => {
     if (file) formData.append('justificatif', file);
 
     const method = selected ? axios.put : axios.post;
-    const url = selected ? `http://localhost:5000/api/caisse/${selected._id}` : 'http://localhost:5000/api/caisse';
+    const url = selected ? `http://localhost:5001/api/caisse/${selected._id}` : 'http://localhost:5001/api/caisse';
 
     await method(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
     fetchData();
@@ -132,7 +132,7 @@ const CaissePage: React.FC = () => {
 
  const handleDelete = async (id: string) => {
   if (window.confirm('Supprimer cette opération ?')) {
-    await axios.delete(`http://localhost:5000/api/caisse/${id}`);
+    await axios.delete(`http://localhost:5001/api/caisse/${id}`);
     fetchData(); // recharge les données correctement
   }
 };
@@ -226,7 +226,7 @@ const CaissePage: React.FC = () => {
                     {op.justificatif && (
                       <Tooltip title="Voir justificatif">
                         <IconButton onClick={() => {
-                          setDialogImageSrc(`http://localhost:5000/uploads/caisse/${op.justificatif}`);
+                          setDialogImageSrc(`http://localhost:5001/uploads/caisse/${op.justificatif}`);
                           setDialogTitle(op.justificatif || '');
                           setOpenDialog(true);
                         }}>

@@ -36,7 +36,7 @@ const PartenairesPage: React.FC = () => {
   const perPage = 5;
 
   const fetchPartenaires = async () => {
-    const res = await axios.get('http://localhost:5000/api/partenaires');
+    const res = await axios.get('http://localhost:5001/api/partenaires');
     setPartenaires(res.data);
   };
 
@@ -63,9 +63,9 @@ const PartenairesPage: React.FC = () => {
     if (form.logo) formData.append('logo', form.logo);
 
     if (editData) {
-      await axios.put(`http://localhost:5000/api/partenaires/${editData._id}`, formData);
+      await axios.put(`http://localhost:5001/api/partenaires/${editData._id}`, formData);
     } else {
-      await axios.post('http://localhost:5000/api/partenaires', formData);
+      await axios.post('http://localhost:5001/api/partenaires', formData);
     }
 
     setDrawerOpen(false);
@@ -75,7 +75,7 @@ const PartenairesPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await axios.delete(`http://localhost:5000/api/partenaires/${id}`);
+    await axios.delete(`http://localhost:5001/api/partenaires/${id}`);
     fetchPartenaires();
   };
 
@@ -171,7 +171,7 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
                     {p.logo ? (
                       <Box
                         component="img"
-                        src={`http://localhost:5000/uploads/partenaires/${p.logo}`}
+                        src={`http://localhost:5001/uploads/partenaires/${p.logo}`}
                         alt="logo partenaire"
                         sx={{ width: 70, height: 70, objectFit: 'contain', borderRadius: 2, boxShadow: 1 }}
                       />
@@ -210,7 +210,7 @@ const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
             form.logo instanceof File
               ? URL.createObjectURL(form.logo)
               : editData?.logo
-              ? `http://localhost:5000/uploads/partenaires/${editData.logo}`
+              ? `http://localhost:5001/uploads/partenaires/${editData.logo}`
               : undefined
           }
           sx={{

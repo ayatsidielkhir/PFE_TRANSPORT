@@ -71,10 +71,10 @@ const TrajetsPage: React.FC = () => {
     if (filters.partenaire) query.append('partenaire', filters.partenaire);
 
     const [trajetRes, chaufRes, vehicRes, partRes] = await Promise.all([
-      axios.get(`http://localhost:5000/api/trajets?${query.toString()}`),
-      axios.get('http://localhost:5000/api/chauffeurs'),
-      axios.get('http://localhost:5000/api/vehicules'),
-      axios.get('http://localhost:5000/api/partenaires')
+      axios.get(`http://localhost:5001/api/trajets?${query.toString()}`),
+      axios.get('http://localhost:5001/api/chauffeurs'),
+      axios.get('http://localhost:5001/api/vehicules'),
+      axios.get('http://localhost:5001/api/partenaires')
     ]);
 
     const trajets = trajetRes.data.map((t: any) => ({
@@ -102,8 +102,8 @@ const TrajetsPage: React.FC = () => {
 
   const handleSubmit = async () => {
     const url = form._id
-      ? `http://localhost:5000/api/trajets/${form._id}`
-      : 'http://localhost:5000/api/trajets';
+      ? `http://localhost:5001/api/trajets/${form._id}`
+      : 'http://localhost:5001/api/trajets';
     const method = form._id ? 'put' : 'post';
 
     await axios[method](url, form);
@@ -192,7 +192,7 @@ const TrajetsPage: React.FC = () => {
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={1}>
                         {part?.logo && (
-                          <Avatar src={`http://localhost:5000/uploads/partenaires/${part.logo}`} sx={{ width: 28, height: 28 }} />
+                          <Avatar src={`http://localhost:5001/uploads/partenaires/${part.logo}`} sx={{ width: 28, height: 28 }} />
                         )}
                         <Typography variant="body2">{part?.nom}</Typography>
                       </Box>
@@ -228,7 +228,7 @@ const TrajetsPage: React.FC = () => {
                       <Tooltip title="Supprimer">
                         <IconButton onClick={async () => {
                           if (window.confirm('Supprimer ce trajet ?')) {
-                            await axios.delete(`http://localhost:5000/api/trajets/${t._id}`);
+                            await axios.delete(`http://localhost:5001/api/trajets/${t._id}`);
                             fetchData();
                           }
                         }} sx={{ color: '#d32f2f' }}>

@@ -18,7 +18,7 @@ const ChargesPieChart: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/dashboard/charges-par-type');
+        const res = await axios.get('http://localhost:5001/api/dashboard/charges-par-type');
         const types = res.data.map((item: any) => item.type);
         const values = res.data.map((item: any) => item.total);
         setLabels(types);

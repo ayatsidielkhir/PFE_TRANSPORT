@@ -118,7 +118,7 @@
       setPhotoVehiculeFile(null);
       setPreviewPhotoVehicule(
         vehicule.photoVehicule
-          ? `http://localhost:5000/uploads/vehicules/${vehicule.photoVehicule}`
+          ? `http://localhost:5001/uploads/vehicules/${vehicule.photoVehicule}`
           : null
       );
 
@@ -180,7 +180,7 @@
 
     const renderFileAvatar = (file?: string) => {
     if (!file) return 'N/A';
-    const url = `http://localhost:5000/uploads/vehicules/${file}`;
+    const url = `http://localhost:5001/uploads/vehicules/${file}`;
     return (
       <Tooltip title="Voir le PDF">
         <IconButton onClick={() => setModalUrl(url)}>
@@ -280,7 +280,7 @@
                     <TableCell>
                       {v.photoVehicule ? (
                         <Avatar
-                          src={`http://localhost:5000/uploads/vehicules/${v.photoVehicule}`}
+                          src={`http://localhost:5001/uploads/vehicules/${v.photoVehicule}`}
                           variant="rounded"
                           sx={{ width: 40, height: 40 }}
                         />
@@ -325,7 +325,7 @@
                       src={
                         previewPhotoVehicule
                           || (form.photoVehicule
-                              ? `http://localhost:5000/uploads/vehicules/${form.photoVehicule}`
+                              ? `http://localhost:5001/uploads/vehicules/${form.photoVehicule}`
                               : '')
                       }
                     sx={{

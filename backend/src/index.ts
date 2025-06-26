@@ -30,11 +30,12 @@ const httpServer = createServer(app);
 // ✅ Étape 2 : Créer une instance de socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:3000', // ton front
-    methods: ['GET', 'POST'],
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // ✅ important
     credentials: true,
   },
 });
+
 
 // ✅ Étape 3 : Stocker l'instance dans app.locals pour l'utiliser ailleurs
 app.locals.io = io;
@@ -51,7 +52,10 @@ io.on('connection', (socket) => {
 app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // ✅ important
 }));
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -80,7 +84,7 @@ app.get('/', (_req, res) => {
 });
 
 // ✅ Démarrage avec le serveur HTTP (et non app.listen)
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI!;
 
 mongoose.connect(MONGO_URI)

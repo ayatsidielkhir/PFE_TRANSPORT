@@ -63,8 +63,8 @@ const selectedClient = partenaires.find(p => p._id === client);
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/partenaires').then(res => setPartenaires(res.data));
-    axios.get('http://localhost:5000/api/factures').then(res => setFactures(res.data));
+    axios.get('http://localhost:5001/api/partenaires').then(res => setPartenaires(res.data));
+    axios.get('http://localhost:5001/api/factures').then(res => setFactures(res.data));
     setDate(today);
   }, []);
 
@@ -87,12 +87,12 @@ const selectedClient = partenaires.find(p => p._id === client);
   const handleSubmit = async () => {
     if (!isFormValid()) return alert("Merci de compléter tous les champs.");
     try {
-      const res = await axios.post('http://localhost:5000/api/factures/manual', {
+      const res = await axios.post('http://localhost:5001/api/factures/manual', {
         date, partenaire: client, ice: selectedClient?.ice || '', tracteur, lignes, tva,
         totalHT: parseFloat(totalHT.toFixed(2)), totalTTC: parseFloat(totalTTC.toFixed(2))
       });
-      window.open(`http://localhost:5000${res.data.fileUrl}`, '_blank');
-      const updated = await axios.get('http://localhost:5000/api/factures');
+      window.open(`http://localhost:5001${res.data.fileUrl}`, '_blank');
+      const updated = await axios.get('http://localhost:5001/api/factures');
       setFactures(updated.data); resetForm();
     } catch (err) {
       console.error(err); alert("Erreur lors de la génération de la facture.");
@@ -101,7 +101,7 @@ const selectedClient = partenaires.find(p => p._id === client);
 
   const handleEdit = async (f: Facture) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/factures/${f._id}`);
+      const res = await axios.get(`http://localhost:5001/api/factures/${f._id}`);
       const data = res.data;
       setDate(data.date); setClient(data.partenaire._id); setTracteur(data.tracteur); setLignes(data.lignes);
     } catch { console.error("Erreur chargement facture"); }
@@ -110,15 +110,15 @@ const selectedClient = partenaires.find(p => p._id === client);
   const handleDelete = async () => {
     if (!factureToDelete) return;
     try {
-      await axios.delete(`http://localhost:5000/api/factures/${factureToDelete._id}`);
+      await axios.delete(`http://localhost:5001/api/factures/${factureToDelete._id}`);
       setFactures(prev => prev.filter(f => f._id !== factureToDelete._id)); setFactureToDelete(null);
     } catch { alert("Erreur lors de la suppression."); }
   };
 
   const toggleStatut = async (f: Facture) => {
     try {
-      await axios.put(`http://localhost:5000/api/factures/${f._id}/statut`);
-      const updated = await axios.get('http://localhost:5000/api/factures');
+      await axios.put(`http://localhost:5001/api/factures/${f._id}/statut`);
+      const updated = await axios.get('http://localhost:5001/api/factures');
       setFactures(updated.data);
     } catch { alert("Erreur statut."); }
   };
@@ -238,7 +238,7 @@ const selectedClient = partenaires.find(p => p._id === client);
                           </Button>
                         </TableCell>
                         <TableCell>
-                          <Button size="small" onClick={() => window.open(`http://localhost:5000${f.fileUrl}`, '_blank')}>Voir PDF</Button>
+                          <Button size="small" onClick={() => window.open(`http://localhost:5001${f.fileUrl}`, '_blank')}>Voir PDF</Button>
                         </TableCell>
                         <TableCell>
                           <Button size="small" color="warning" onClick={() => handleEdit(f)}>Modifier</Button>

@@ -29,11 +29,11 @@ const DashboardPage: React.FC = () => {
   const [notifications, setNotifications] = useState<string[]>([]); // 🆕 Notifications
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/admin/dashboard')
+    axios.get('http://localhost:5001/api/admin/dashboard')
       .then(res => setStats(res.data))
       .catch(err => console.error('Erreur dashboard stats:', err));
 
-    axios.get('http://localhost:5000/api/dashboard/caisse-mensuelle')
+    axios.get('http://localhost:5001/api/dashboard/caisse-mensuelle')
       .then(res => {
         setEntrees(res.data.entreesMensuelles);
         setSorties(res.data.sortiesMensuelles);
@@ -41,12 +41,12 @@ const DashboardPage: React.FC = () => {
       })
       .catch(err => console.error('Erreur caisse:', err));
 
-    axios.get('http://localhost:5000/api/dashboard/chiffre-affaire-mensuel')
+    axios.get('http://localhost:5001/api/dashboard/chiffre-affaire-mensuel')
       .then(res => setRevenuNetData(res.data))
       .catch(err => console.error('Erreur CA:', err));
 
     // 🆕 Récupération des notifications
-    axios.get('http://localhost:5000/api/dashboard/notifications')
+    axios.get('http://localhost:5001/api/dashboard/notifications')
       .then(res => setNotifications(res.data.notifications))
       .catch(err => console.error('Erreur chargement notifications:', err));
   }, []);

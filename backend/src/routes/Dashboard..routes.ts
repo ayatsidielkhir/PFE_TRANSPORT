@@ -1,4 +1,3 @@
-// src/routes/dashboard.routes.ts
 import express from 'express';
 import { getDashboardStats, getCaisseMensuelle, getChargesParType,getChiffreAffaireMensuel } from '../controllers/Dashboard.controller';
 import { getNotifications } from '../controllers/Dashboard.controller';

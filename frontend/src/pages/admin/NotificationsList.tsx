@@ -36,9 +36,9 @@ const NotificationsList: React.FC = () => {
     const fetchAllNotifications = async () => {
       try {
         const [trajets, caisse, charges] = await Promise.all([
-          axios.get('http://localhost:5000/api/notifications/trajets'),
-          axios.get('http://localhost:5000/api/notifications/caisse'),
-          axios.get('http://localhost:5000/api/notifications/charges'),
+          axios.get('http://localhost:5001/api/notifications/trajets'),
+          axios.get('http://localhost:5001/api/notifications/caisse'),
+          axios.get('http://localhost:5001/api/notifications/charges'),
         ]);
 
         const all = [...trajets.data, ...caisse.data, ...charges.data];

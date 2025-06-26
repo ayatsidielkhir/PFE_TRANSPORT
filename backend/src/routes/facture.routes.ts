@@ -13,10 +13,11 @@ const router = express.Router();
 
 router.get('/', getAllFactures);
 router.get('/latest', getLatestFacture);
+router.put('/:id/statut', updateStatutFacture); // ✅ doit être AVANT /:id
 router.get('/:id', getFactureById);
 router.post('/manual', generateManualFacture);
 router.put('/:id', updateFacture);
-router.put('/:id/statut', updateStatutFacture);
 router.delete('/:id', deleteFacture);
+
 
 export default router;
