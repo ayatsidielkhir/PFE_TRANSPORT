@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { chromium } from 'playwright';
@@ -6,15 +6,21 @@ import ejs from 'ejs';
 import Facture from '../models/facture';
 import Trajet from '../models/trajet.model';
 
-export const requestHandler = (
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<Response | void>
-) => (req: Request, res: Response, next: NextFunction) => fn(req, res, next).catch(next);
 
-// ✅ Générer une facture
-export const generateManualFacture = requestHandler(async (req: Request, res: Response): Promise<Response> => {
+
+export const requestHandler = (
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    fn(req, res, next).catch(next);
+  };
+};
+
+// ✅ Générer une facture manuellement
+const generate = async (req: Request, res: Response): Promise<Response> => {
   let {
-    numeroFacture, client, ice, tracteur, date, trajetIds,
-    remorques, montantsHT
+    numeroFacture, client, ice, tracteur, date,
+    trajetIds, remorques, montantsHT
   } = req.body;
 
   const trajets = await Trajet.find({ _id: { $in: trajetIds } }).populate('vehicule partenaire');
@@ -49,9 +55,10 @@ export const generateManualFacture = requestHandler(async (req: Request, res: Re
     totalHT, tva, totalTTC, lignes
   };
 
-  const html = await ejs.renderFile(path.join(__dirname, '../templates/facture.ejs'), {
-    data: factureData
-  });
+  const html = await ejs.renderFile(
+    path.join(__dirname, '../templates/facture.ejs'),
+    { data: factureData }
+  );
 
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await (await browser.newContext()).newPage();
@@ -91,23 +98,23 @@ export const generateManualFacture = requestHandler(async (req: Request, res: Re
     _id: facture._id,
     payee: facture.payee
   });
-});
+};
 
-// ✅ Mettre à jour une facture
-export const updateFacture = requestHandler(async (req: Request, res: Response): Promise<Response> => {
+// ✅ Exporté avec le handler
+export const generateManualFacture = requestHandler(generate);
+
+export const updateFacture = requestHandler(async (req, res) => {
   const updated = await Facture.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!updated) return res.status(404).json({ message: 'Facture non trouvée' });
   return res.status(200).json(updated);
 });
 
-// ✅ Obtenir toutes les factures
-export const getAllFactures = requestHandler(async (_req: Request, res: Response): Promise<Response> => {
+export const getAllFactures = requestHandler(async (_req, res) => {
   const factures = await Facture.find().sort({ date: -1 });
   return res.status(200).json(factures);
 });
 
-// ✅ Supprimer une facture
-export const deleteFacture = requestHandler(async (req: Request, res: Response): Promise<Response> => {
+export const deleteFacture = requestHandler(async (req, res) => {
   const facture = await Facture.findById(req.params.id);
   if (!facture) return res.status(404).json({ message: 'Facture non trouvée' });
 

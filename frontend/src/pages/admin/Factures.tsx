@@ -12,6 +12,9 @@ import {
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../../components/Layout';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 
 const API = process.env.REACT_APP_API_URL;
 
@@ -38,6 +41,10 @@ interface Trajet {
   vehicule: { matricule: string };
   partenaire: { _id: string; nom: string; ice: string };
 }
+
+const theme = useTheme();
+const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
 
 const FacturesPage: React.FC = () => {
   const [trajets, setTrajets] = useState<Trajet[]>([]);
@@ -296,20 +303,33 @@ return (
       </Paper>
 
       {/* ✅ Tableau */}
-      <Table size="small">
-        <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: '#f5f5f5', zIndex: 1 }}>
+      <Table size={isMobile ? 'small' : 'medium'}>
+        <TableHead>
           <TableRow>
-            <TableCell>Facture</TableCell>
-            <TableCell>Client</TableCell>
-            <TableCell>Date</TableCell>
-            <TableCell>Total TTC</TableCell>
-            <TableCell>Statut</TableCell>
-            <TableCell>Actions</TableCell>
+            {['Facture', 'Client', 'Date', 'Total TTC', 'Statut', 'Actions'].map(h => (
+              <TableCell
+                key={h}
+                sx={{
+                  fontWeight: 'bold',
+                  backgroundColor: '#e3f2fd',
+                  color: '#001e61',
+                }}
+              >
+                {h}
+              </TableCell>
+            ))}
           </TableRow>
         </TableHead>
+
         <TableBody>
-          {paginated.map(f => (
-            <TableRow key={f._id}>
+          {paginated.map((f, i) => (
+            <TableRow
+              key={f._id}
+              sx={{
+                backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd',
+                '&:hover': { backgroundColor: '#e3f2fd' },
+              }}
+            >
               <TableCell>{f.numero}</TableCell>
               <TableCell>{f.client}</TableCell>
               <TableCell>{formatDate(f.date)}</TableCell>
@@ -325,7 +345,12 @@ return (
               </TableCell>
               <TableCell>
                 <Tooltip title="Voir PDF">
-                  <IconButton color="primary" onClick={() => window.open(`${API!.replace('/api', '')}${f.pdfPath}`, '_blank')}>
+                  <IconButton
+                    color="primary"
+                    onClick={() =>
+                      window.open(`${API!.replace('/api', '')}${f.pdfPath}`, '_blank')
+                    }
+                  >
                     <PictureAsPdf />
                   </IconButton>
                 </Tooltip>
