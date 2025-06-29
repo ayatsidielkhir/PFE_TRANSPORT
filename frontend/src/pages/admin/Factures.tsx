@@ -103,30 +103,38 @@ const FacturesPage: React.FC = () => {
   };
 
   const handleGeneratePDF = async () => {
-    const totalHT = formData.montantsHT.reduce((sum, m) => sum + m, 0);
-    const tva = totalHT * (formData.tva / 100);
-    const totalTTC = totalHT + tva;
+    try {
+      const totalHT = formData.montantsHT.reduce((sum, m) => sum + m, 0);
+      const tva = totalHT * (formData.tva / 100);
+      const totalTTC = totalHT + tva;
 
-    const res = await axios.post(`${API}/factures/manual`, {
-      ...formData,
-      totalHT,
-      totalTTC,
-      trajetIds: selectedTrajets.map(t => t._id),
-    });
-
-    alert("Facture générée avec succès");
-    setFactures(prev => [
-      ...prev,
-      {
+      const res = await axios.post(`${API}/factures/manual`, {
         ...formData,
-        _id: '',
+        totalHT,
         totalTTC,
-        pdfPath: res.data.url,
-        numero: formData.numeroFacture,
-        payee: false
-      }
-    ]);
+        trajetIds: selectedTrajets.map(t => t._id),
+        remorques: formData.remorques,
+        montantsHT: formData.montantsHT
+      });
+
+      alert("Facture générée avec succès");
+      setFactures(prev => [
+        ...prev,
+        {
+          ...formData,
+          _id: '',
+          totalTTC,
+          pdfPath: res.data.url,
+          numero: formData.numeroFacture,
+          payee: false
+        }
+      ]);
+    } catch (err: any) {
+      console.error("Erreur génération facture :", err.response?.data || err.message);
+      alert("Erreur lors de la génération de la facture !");
+    }
   };
+
 
   const toggleStatutPayee = async (facture: Facture) => {
     const updated = { ...facture, payee: !facture.payee };

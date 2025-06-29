@@ -74,19 +74,22 @@ export const generateManualFacture = requestHandler(async (req: Request, res: Re
   await page.pdf({ path: outputPath, format: 'A4' });
   await browser.close();
 
-  const facture = new Facture({
-    numero: numeroFacture,
-    client,
-    ice,
-    tracteur,
-    date,
-    totalHT,
-    tva,
-    totalTTC,
-    trajet: trajets[0]._id,
-    pdfPath: `/uploads/factures/${fileName}`,
-    payee: false
-  });
+const facture = new Facture({
+  numero: numeroFacture,
+  client,
+  ice,
+  tracteur,
+  date,
+  totalHT,
+  tva,
+  totalTTC,
+  trajet: trajets[0]._id,
+  pdfPath: `/uploads/factures/${fileName}`,
+  payee: false,
+  chargement: trajets[0].depart,
+  dechargement: trajets[0].arrivee
+});
+  
 
   await facture.save();
 
