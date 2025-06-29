@@ -106,3 +106,17 @@ export const getAllFactures = requestHandler(async (_req: Request, res: Response
   const factures = await Facture.find().sort({ date: -1 });
   return res.status(200).json(factures);
 });
+
+export const deleteFacture = requestHandler(async (req: Request, res: Response): Promise<Response> => {
+  const facture = await Facture.findById(req.params.id);
+  if (!facture) return res.status(404).json({ message: 'Facture non trouvée' });
+
+  // Supprimer le fichier PDF associé s’il existe
+  const filePath = path.join('/mnt/data', facture.pdfPath || '');
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+
+  await Facture.findByIdAndDelete(req.params.id);
+  return res.status(200).json({ message: 'Facture supprimée avec succès' });
+});

@@ -1,6 +1,6 @@
 // backend/routes/facture.route.ts
 import express from 'express';
-import { generateManualFacture, updateFacture, getAllFactures } from '../controllers/Facture.controller';
+import { generateManualFacture, updateFacture, getAllFactures , deleteFacture } from '../controllers/Facture.controller';
 
 const router = express.Router();
 
@@ -11,5 +11,6 @@ router.get('/', getAllFactures); // ✅ cette ligne manquait
 router.post('/manual', generateManualFacture);
 // Mettre à jour une facture (ex: statut payé)
 router.put('/:id', updateFacture);
+router.delete('/:id', deleteFacture);
 
 export default router;
