@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
-  Box,
-  Card,
-  Typography,
-  Avatar
+  Box, Card, Typography, Avatar
 } from '@mui/material';
 import AdminLayout from '../../components/Layout';
 import PeopleIcon from '@mui/icons-material/People';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import MapIcon from '@mui/icons-material/Map';
+
+import CaisseChart from '../../components/charts/CaisseChart';
+import ChargesPieChart from '../../components/charts/ChargesPieChart';
+import ChiffreAffaireChart from '../../components/charts/ChiffreAffaireChart';
+import NotificationsList from './NotificationsList';
 
 const API = process.env.REACT_APP_API_URL;
 
@@ -23,15 +25,33 @@ const DashboardPage: React.FC = () => {
     trajets: 0,
   });
 
+  const [entrees, setEntrees] = useState<number[]>([]);
+  const [sorties, setSorties] = useState<number[]>([]);
+  const [labels, setLabels] = useState<string[]>([]);
+  const [revenuNetData, setRevenuNetData] = useState<{ mois: string; revenuNet: number }[]>([]);
+  const [notifications, setNotifications] = useState<string[]>([]); // 🆕 Notifications
+
   useEffect(() => {
-        axios.get(`${API}/admin/dashboard`)
+    axios.get('${API}/admin/dashboard')
+      .then(res => setStats(res.data))
+      .catch(err => console.error('Erreur dashboard stats:', err));
+
+    axios.get('${API}/dashboard/caisse-mensuelle')
       .then(res => {
-        const { chauffeurs, vehicules, factures, trajets } = res.data;
-        setStats({ chauffeurs, vehicules, factures, trajets });
+        setEntrees(res.data.entreesMensuelles);
+        setSorties(res.data.sortiesMensuelles);
+        setLabels(res.data.mois);
       })
-      .catch(err => {
-        console.error('Erreur chargement dashboard:', err);
-      });
+      .catch(err => console.error('Erreur caisse:', err));
+
+    axios.get('${API}/dashboard/chiffre-affaire-mensuel')
+      .then(res => setRevenuNetData(res.data))
+      .catch(err => console.error('Erreur CA:', err));
+
+    // 🆕 Récupération des notifications
+    axios.get('${API}/dashboard/notifications')
+      .then(res => setNotifications(res.data.notifications))
+      .catch(err => console.error('Erreur chargement notifications:', err));
   }, []);
 
   const statItems = [
@@ -63,52 +83,77 @@ const DashboardPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Box sx={{ p: 4 }}>
+      <Box mt={4} px={4}>
         <Typography variant="h4" fontWeight={700} mb={4}>
           Tableau de bord
         </Typography>
 
-        <Box
-  display="flex"
-  flexWrap="wrap"
-  justifyContent="space-between"
-  gap={2}
->
-  {statItems.map((item, index) => (
-    <Box
-      key={index}
-      sx={{
-        flex: '1 1 calc(25% - 16px)', // 4 cartes par ligne avec espacement
-        minWidth: 200,
-      }}
-    >
-      <Card
-        sx={{
-          p: 2,
-          display: 'flex',
-          alignItems: 'center',
-          borderLeft: `6px solid ${item.color}`,
-          boxShadow: 3,
-          height: 110,
-        }}
-      >
-        <Avatar sx={{ bgcolor: item.color, width: 50, height: 50, mr: 2 }}>
-          {item.icon}
-        </Avatar>
-        <Box>
-          <Typography variant="subtitle2" color="text.secondary">
-            {item.label}
-          </Typography>
-          <Typography variant="h5" fontWeight={700}>
-            {item.value}
-          </Typography>
+        {/* 🔔 Notifications importantes */}
+        {notifications.length > 0 && (
+          <Box mb={4}>
+            {notifications.map((note, index) => (
+              <Typography key={index} color="error" fontWeight={500}>
+                ⚠️ {note}
+              </Typography>
+            ))}
+          </Box>
+        )}
+
+        {/* Stat cards */}
+        <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
+          {statItems.map((item, index) => (
+            <Box
+              key={index}
+              sx={{
+                flex: '1 1 250px',
+                minWidth: 250,
+              }}
+            >
+              <Card
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderLeft: `6px solid ${item.color}`,
+                  boxShadow: 3,
+                }}
+              >
+                <Avatar sx={{ bgcolor: item.color, mr: 2 }}>
+                  {item.icon}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle2">{item.label}</Typography>
+                  <Typography variant="h5" fontWeight={700}>
+                    {item.value}
+                  </Typography>
+                </Box>
+              </Card>
+            </Box>
+          ))}
         </Box>
-      </Card>
-    </Box>
-  ))}
-</Box>
 
+        {/* Graphs */}
+        <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
+          <Box flex="1 1 65%" minWidth={300}>
+            <ChiffreAffaireChart data={revenuNetData} />
+          </Box>
+          <Box flex="1 1 30%" minWidth={300}>
+            <ChargesPieChart />
+          </Box>
+        </Box>
 
+        {/* Caisse */}
+        <Box mb={4}>
+          <CaisseChart entrees={entrees} sorties={sorties} labels={labels} />
+        </Box>
+
+        {/* 🔔 Notifications générales */}
+        <Box mt={4}>
+          <Typography variant="h6" fontWeight={600} mb={2}>
+            🔔 Notifications du jour
+          </Typography>
+          <NotificationsList />
+        </Box>
       </Box>
     </AdminLayout>
   );

@@ -18,6 +18,10 @@ const chauffeurSchema = new mongoose.Schema({
     actif: { type: Boolean },
     date_expiration: { type: Date }
   },
+   dateExpirationCIN: {
+  type: Date,
+  required: false
+},
   scanPermis: { type: String },
   scanVisa: { type: String },
   scanCIN: { type: String },
