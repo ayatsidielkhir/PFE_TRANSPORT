@@ -33,9 +33,8 @@ export const addChauffeur: RequestHandler = async (req, res) => {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     const getFile = (field: string) =>
-      files?.[field]?.[0]?.filename || '';
+      files?.[field]?.[0]?.filename || undefined; // ✅ retourne undefined au lieu de ''
 
-    // ✅ Gérer les autres documents dynamiques
     const autresDocs: { nom: string; fichier: string }[] = [];
 
     Object.keys(req.body).forEach(key => {

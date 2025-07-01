@@ -80,7 +80,11 @@ const handleSubmit = async () => {
   Object.entries(form).forEach(([key, value]) => {
     if (typeof value === 'object' && value !== null && 'name' in value) {
       formData.append(key, value as File);
-    } else if (typeof value === 'string' && !/\.(jpg|jpeg|png|pdf|webp)$/i.test(value)) {
+    } else if (
+      typeof value === 'string' &&
+      value.trim() !== '' &&
+      !/\.(jpg|jpeg|png|pdf|webp)$/i.test(value) // on ignore les anciens noms de fichiers
+    ) {
       formData.append(key, value);
     }
   });
@@ -105,6 +109,7 @@ const handleSubmit = async () => {
     console.error('Erreur lors de la soumission', err);
   }
 };
+
 
 
   const handleDelete = async (id: string) => {
