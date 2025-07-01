@@ -56,7 +56,7 @@ mongoose.connect(MONGO_URI)
     app.use('/api/chauffeurs', chauffeurRoutes);
     app.use('/api/vehicules', vehiculeRoutes);
     app.use('/api/trajets', trajetRoutes);
-    app.use('/api/admin/dashboard', dashboardRoutes);
+    app.use('/api/dashboard', dashboardRoutes);
     app.use('/api/ocr', ocrRoutes);
     app.use('/api/partenaires', partenaireRoutes);
     app.use('/api/dossier-juridique', dossierJuridiqueRoutes);

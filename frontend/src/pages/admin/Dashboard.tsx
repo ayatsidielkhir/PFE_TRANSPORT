@@ -93,9 +93,6 @@
     return (
       <AdminLayout>
         <Box p={3}>
-          <Typography variant="h5" fontWeight={700} mb={3} textAlign="center">
-            MME – Système de Management du Transport
-          </Typography>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" mb={2}>
             <FormControl sx={{ minWidth: 200 }} size="small">
