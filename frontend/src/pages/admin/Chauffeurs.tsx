@@ -27,8 +27,9 @@ interface Chauffeur {
   scanPermis?: string;
   scanVisa?: string;
   certificatBonneConduite?: string;
-  autresDocs?: { name: string; file: string }[];
+  autresDocs?: { nom: string; fichier: string }[]; // ✅ correction ici
 }
+
 
 const ChauffeursPage: React.FC = () => {
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
@@ -43,7 +44,7 @@ const ChauffeursPage: React.FC = () => {
   const [sortAsc, setSortAsc] = useState(true);
   const [page, setPage] = useState(1);
   const [form, setForm] = useState<Record<string, string | File>>({});
-  const [autresDocs, setAutresDocs] = useState<{ name: string; file?: File }[]>([]);
+    const [autresDocs, setAutresDocs] = useState<{ name: string; file?: File }[]>([]);
 
   const perPage = 5;
   const theme = useTheme();
@@ -73,37 +74,38 @@ const ChauffeursPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (typeof value === 'object' && value !== null && 'name' in value) {
-        formData.append(key, value as File);
-      } else if (typeof value === 'string') {
-        formData.append(key, value);
-      }
-    });
+const handleSubmit = async () => {
+  const formData = new FormData();
 
-    autresDocs.forEach((doc, index) => {
-      if (doc.file && doc.name) {
-        formData.append(`autresDocs[${index}][name]`, doc.name);
-        formData.append(`autresDocs[${index}][file]`, doc.file);
-      }
-    });
-
-    try {
-      const config = { headers: { 'Content-Type': 'multipart/form-data' } };
-      if (selectedChauffeur) {
-        await axios.put(`/chauffeurs/${selectedChauffeur._id}`, formData, config);
-        fetchChauffeurs();
-      } else {
-        await axios.post('/chauffeurs', formData, config);
-        setTimeout(() => fetchChauffeurs(), 500);
-      }
-      setDrawerOpen(false);
-    } catch (err) {
-      console.error('Erreur lors de la soumission', err);
+  Object.entries(form).forEach(([key, value]) => {
+    if (typeof value === 'object' && value !== null && 'name' in value) {
+      formData.append(key, value as File);
+    } else if (typeof value === 'string' && !/\.(jpg|jpeg|png|pdf|webp)$/i.test(value)) {
+      formData.append(key, value);
     }
-  };
+  });
+
+  autresDocs.forEach((doc, index) => {
+    if (doc.file && doc.name) {
+      formData.append(`autresDocs[${index}][name]`, doc.name);
+      formData.append(`autresDocs[${index}][file]`, doc.file);
+    }
+  });
+
+  try {
+    const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+    if (selectedChauffeur) {
+      await axios.put(`/chauffeurs/${selectedChauffeur._id}`, formData, config);
+    } else {
+      await axios.post('/chauffeurs', formData, config);
+    }
+    fetchChauffeurs();
+    setDrawerOpen(false);
+  } catch (err) {
+    console.error('Erreur lors de la soumission', err);
+  }
+};
+
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Confirmer la suppression ?')) return;
@@ -116,24 +118,40 @@ const ChauffeursPage: React.FC = () => {
   };
 
   const handleEdit = (chauffeur: Chauffeur) => {
-    setSelectedChauffeur(chauffeur);
-    const formatted: Record<string, string> = {
-      nom: chauffeur.nom || '',
-      prenom: chauffeur.prenom || '',
-      telephone: chauffeur.telephone || '',
-      cin: chauffeur.cin || '',
-      adresse: chauffeur.adresse || '',
-      photo: chauffeur.photo || '',
-      scanCIN: chauffeur.scanCIN || '',
-      scanPermis: chauffeur.scanPermis || '',
-      scanVisa: chauffeur.scanVisa || '',
-      certificatBonneConduite: chauffeur.certificatBonneConduite || ''
-    };
-    setForm(formatted);
-    setPreviewPhoto(`https://mme-backend.onrender.com/uploads/chauffeurs/${chauffeur.photo}`);
-    setAutresDocs(chauffeur.autresDocs?.map(d => ({ name: d.name })) || []);
-    setDrawerOpen(true);
+  setSelectedChauffeur(chauffeur);
+
+  // Préparer les champs texte et les fichiers existants
+  const formatted: Record<string, string> = {
+    nom: chauffeur.nom || '',
+    prenom: chauffeur.prenom || '',
+    telephone: chauffeur.telephone || '',
+    cin: chauffeur.cin || '',
+    adresse: chauffeur.adresse || '',
+    photo: chauffeur.photo || '',
+    scanCIN: chauffeur.scanCIN || '',
+    scanPermis: chauffeur.scanPermis || '',
+    scanVisa: chauffeur.scanVisa || '',
+    certificatBonneConduite: chauffeur.certificatBonneConduite || ''
   };
+
+  setForm(formatted);
+
+  // Prévisualisation de la photo si disponible
+  if (chauffeur.photo) {
+    setPreviewPhoto(`https://mme-backend.onrender.com/uploads/chauffeurs/${chauffeur.photo}`);
+  } else {
+    setPreviewPhoto(null);
+  }
+
+  // Convertir les documents enregistrés (nom + fichier) vers format temporaire (name seulement)
+  setAutresDocs(
+    chauffeur.autresDocs?.map(d => ({ name: d.nom })) || []
+  );
+
+  // Ouvrir le drawer
+  setDrawerOpen(true);
+  };
+
 
   const resetForm = () => {
     setForm({});
@@ -158,6 +176,7 @@ const ChauffeursPage: React.FC = () => {
       </Tooltip>
     );
   };
+
 
   const exportExcel = () => {
     const data = chauffeurs.map(c => ({
@@ -479,12 +498,20 @@ const ChauffeursPage: React.FC = () => {
                 <Box width="100%" mt={2}>
                   <Typography fontWeight={600} mb={1}>Autres Documents</Typography>
                   <Box display="flex" flexWrap="wrap" gap={2}>
-                    {docsChauffeur!.autresDocs.map((doc, i) => (
-                      <Box key={i} textAlign="center">
-                        <Typography fontSize={14} fontWeight={500}>{doc.name}</Typography>
-                        {renderDocumentAvatar(doc.file)}
-                      </Box>
-                    ))}
+                    {docsChauffeur?.autresDocs?.length > 0 && (
+                            <Box width="100%" mt={2}>
+                              <Typography fontWeight={600} mb={1}>Autres Documents</Typography>
+                              <Box display="flex" flexWrap="wrap" gap={2}>
+                                {docsChauffeur.autresDocs.map((doc, i) => (
+                                  <Box key={i} textAlign="center">
+                                    <Typography fontSize={14} fontWeight={500}>{doc.nom}</Typography>
+                                    {renderDocumentAvatar(doc.fichier)}
+                                  </Box>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+
                   </Box>
                 </Box>
               )}

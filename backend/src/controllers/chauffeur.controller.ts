@@ -35,16 +35,16 @@ export const addChauffeur: RequestHandler = async (req, res) => {
     const getFile = (field: string) =>
       files?.[field]?.[0]?.filename || '';
 
-    // ✅ Gérer les autres documents
+    // ✅ Gérer les autres documents dynamiques
     const autresDocs: { nom: string; fichier: string }[] = [];
 
     Object.keys(req.body).forEach(key => {
-      const match = key.match(/^autresDocs\[(\d+)]\[(nom|file)]$/);
+      const match = key.match(/^autresDocs\[(\d+)]\[(nom|name|file)]$/);
       if (match) {
         const index = parseInt(match[1], 10);
         const prop = match[2];
         if (!autresDocs[index]) autresDocs[index] = { nom: '', fichier: '' };
-        if (prop === 'nom') autresDocs[index].nom = req.body[key];
+        if (prop === 'nom' || prop === 'name') autresDocs[index].nom = req.body[key];
         if (prop === 'file' && files?.[key]) autresDocs[index].fichier = files[key][0].filename;
       }
     });
@@ -58,7 +58,10 @@ export const addChauffeur: RequestHandler = async (req, res) => {
       observations,
       permis: { date_expiration: permis_date_expiration },
       contrat: { type: contrat_type, date_expiration: contrat_date_expiration },
-      visa: { actif: visa_actif === 'true' || visa_actif === true, date_expiration: visa_date_expiration },
+      visa: {
+        actif: visa_actif === 'true' || visa_actif === true,
+        date_expiration: visa_date_expiration
+      },
       scanPermis: getFile('scanPermis'),
       scanVisa: getFile('scanVisa'),
       scanCIN: getFile('scanCIN'),
@@ -79,12 +82,14 @@ export const addChauffeur: RequestHandler = async (req, res) => {
   }
 };
 
+
 // ✅ Modifier un chauffeur
 export const updateChauffeur: RequestHandler = async (req, res) => {
   try {
     const updates: any = req.body;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
+    // ✅ Mises à jour des fichiers simples
     if (files) {
       if (files['scanPermis']) updates.scanPermis = files['scanPermis'][0].filename;
       if (files['scanVisa']) updates.scanVisa = files['scanVisa'][0].filename;
@@ -93,7 +98,7 @@ export const updateChauffeur: RequestHandler = async (req, res) => {
       if (files['certificatBonneConduite']) updates.certificatBonneConduite = files['certificatBonneConduite'][0].filename;
     }
 
-    // 🔁 Champs imbriqués
+    // ✅ Mise à jour des champs imbriqués
     if ('visa_actif' in updates) {
       updates['visa.actif'] = updates.visa_actif === 'true' || updates.visa_actif === true;
       delete updates.visa_actif;
@@ -103,26 +108,27 @@ export const updateChauffeur: RequestHandler = async (req, res) => {
     if (updates.contrat_date_expiration) updates['contrat.date_expiration'] = updates.contrat_date_expiration;
     if (updates.visa_date_expiration) updates['visa.date_expiration'] = updates.visa_date_expiration;
 
-    // ✅ Gérer les autresDocs dynamiques
+    // ✅ Mise à jour des autresDocs dynamiques
     const autresDocs: { nom: string; fichier: string }[] = [];
 
     Object.keys(req.body).forEach(key => {
-      const match = key.match(/^autresDocs\[(\d+)]\[(nom|file)]$/);
+      const match = key.match(/^autresDocs\[(\d+)]\[(nom|name|file)]$/);
       if (match) {
         const index = parseInt(match[1], 10);
         const prop = match[2];
         if (!autresDocs[index]) autresDocs[index] = { nom: '', fichier: '' };
-        if (prop === 'nom') autresDocs[index].nom = req.body[key];
+        if (prop === 'nom' || prop === 'name') autresDocs[index].nom = req.body[key];
         if (prop === 'file' && files?.[key]) autresDocs[index].fichier = files[key][0].filename;
       }
     });
 
     updates.autresDocs = autresDocs;
 
-    await Chauffeur.findByIdAndUpdate(req.params.id, updates, { new: true });
-    res.json({ message: 'Chauffeur modifié avec succès.' });
+    const updated = await Chauffeur.findByIdAndUpdate(req.params.id, updates, { new: true });
+    res.json(updated);
   } catch (err) {
     console.error('❌ Erreur modification chauffeur :', err);
     res.status(500).json({ message: 'Erreur lors de la modification.' });
   }
 };
+
