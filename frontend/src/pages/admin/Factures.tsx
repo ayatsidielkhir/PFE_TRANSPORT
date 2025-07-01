@@ -300,7 +300,7 @@
         }}>
           <TextField
             size="small"
-            label="🔍 Client"
+            label="Chercher partenaire ..."
             value={filters.client}
             onChange={(e) => setFilters({ ...filters, client: e.target.value })}
             sx={{ minWidth: 220 }}

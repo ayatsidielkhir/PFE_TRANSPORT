@@ -230,8 +230,35 @@ const handleUpload = async () => {
         <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
           <DialogTitle>Prévisualisation</DialogTitle>
           <DialogContent>
-            {previewFile && previewFile.match(/\.(pdf)$/i) ? (
-              <Box component="iframe" src={previewFile} width="100%" height="700px" />
+           {previewFile && previewFile.match(/\.pdf$/i) ? (
+              <Box>
+                <Box
+                  component="iframe"
+                  src={previewFile}
+                  width="100%"
+                  height="600px"
+                  style={{ border: 'none' }}
+                />
+                <Box mt={2} textAlign="center">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    href={previewFile}
+                    download
+                    target="_blank"
+                    fullWidth
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                      fontSize: 15,
+                      maxWidth: 300,
+                      mx: 'auto'
+                    }}
+                  >
+                    Télécharger le fichier
+                  </Button>
+                </Box>
+              </Box>
             ) : (
               <Box display="flex" flexDirection="column" alignItems="center">
                 <Box
@@ -258,6 +285,7 @@ const handleUpload = async () => {
                 </Button>
               </Box>
             )}
+
           </DialogContent>
         </Dialog>
       </Box>
