@@ -9,7 +9,8 @@ import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 import Tesseract from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js`;
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js`
 
 interface Chauffeur {
   _id: string;
@@ -57,22 +58,34 @@ const extractTextFromImage = async (file: File): Promise<Partial<Record<string, 
     }
   }
 
-  const fullText = pageTexts.join('\n');
+  const page1 = pageTexts[0] || '';
   const page2 = pageTexts[1] || '';
+  const fullText = pageTexts.join('\n');
 
-  // === Extraire nom/prénom depuis ligne MRZ (type passeport)
+  // === NOM & PRÉNOM depuis les lignes majuscules (essai 1)
   let nom = '', prenom = '';
+  const lines = page1.split('\n').map(l => l.trim()).filter(Boolean);
 
-// Recherche d'une ligne MRZ avec <<
-const mrzLine = fullText.split('\n').find(l => l.includes('<<'));
+  const majuscules = lines.filter(
+    l => /^[A-ZÉÈÀÂÙÎÔÛ\s]{3,}$/.test(l) && l.length <= 30
+  );
 
-if (mrzLine) {
-  const parts = mrzLine.trim().split('<<');
-  nom = parts[0]?.replace(/</g, ' ').trim() || '';
-  prenom = parts[1]?.replace(/</g, ' ').trim() || '';
-}
+  if (majuscules.length >= 2) {
+    nom = majuscules[0].trim();
+    prenom = majuscules[1].trim();
+  }
 
-
+  // === Fallback : depuis MRZ (CHEMLAL<<IMANE)
+  if (!nom || !prenom) {
+    const mrzLine = fullText.split('\n').find(l => /<<[A-Z]+</.test(l));
+    if (mrzLine) {
+      const match = mrzLine.match(/^([A-Z]+)<<([A-Z]+)/);
+      if (match) {
+        nom = match[1].trim();
+        prenom = match[2].trim();
+      }
+    }
+  }
 
   // === CIN
   const cinMatch = fullText.match(/[A-Z]{1,2}\d{5,8}/i);
@@ -86,10 +99,12 @@ if (mrzLine) {
     expirationDate = `${y}-${m}-${d}`;
   }
 
-  // === Adresse (aucune ligne fiable, donc vide ou ligne personnalisée possible)
+  // === Adresse (page 2)
   let adresse = '';
-  const adresseLigne = page2.split('\n').find(l => /(hay|bloc|résidence|appt|rue)/i.test(l));
-  if (adresseLigne) adresse = adresseLigne;
+  const adresseLigne = page2.split('\n').find(l =>
+    /(hay|bloc|résidence|appartement|appt|rue|lot|immeuble|num[ée]ro)/i.test(l)
+  );
+  if (adresseLigne) adresse = adresseLigne.trim();
 
   return {
     nom,
@@ -99,6 +114,153 @@ if (mrzLine) {
     adresse
   };
 };
+
+
+const extractExpirationDateFromFile = async (file: File): Promise<string> => {
+  const extractDatesFromText = (text: string): string => {
+    const dateRegex = /(\d{2})[\/\-\.](\d{2})[\/\-\.](\d{4})/g;
+    const dates: Date[] = [];
+
+    const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // On capture TOUTES les dates, peu importe la ligne
+      let match;
+      while ((match = dateRegex.exec(line)) !== null) {
+        const [_, d, m, y] = match;
+        const parsedDate = new Date(`${y}-${m}-${d}`);
+        if (!isNaN(parsedDate.getTime())) {
+          dates.push(parsedDate);
+        }
+      }
+
+      // Pour debug : afficher les lignes avec mots-clés
+      if (/validité|valable jusqu/i.test(line)) {
+        console.log("🔍 Ligne avec 'validité' détectée :", line);
+        console.log("👉 Ligne suivante :", lines[i + 1]);
+      }
+    }
+
+    // Pour debug : afficher toutes les dates trouvées
+    console.log("📅 Toutes les dates détectées :", dates.map(d => d.toISOString()));
+
+    // Retourner la plus récente
+    if (dates.length > 0) {
+      const latestDate = dates.sort((a, b) => b.getTime() - a.getTime())[0];
+      return latestDate.toLocaleDateString('fr-CA'); // YYYY-MM-DD
+    }
+
+    return '';
+  };
+
+  if (file.type === 'application/pdf') {
+    const pdfData = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+    let allText = '';
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 3 }); // meilleure qualité OCR
+
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error("Impossible de créer le contexte canvas.");
+
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: context, viewport }).promise;
+
+      const imageSrc = canvas.toDataURL();
+      const result = await Tesseract.recognize(imageSrc, 'fra', {
+        logger: m => console.log(`📈 OCR [page ${pageNum}] :`, m.progress),
+      });
+
+      console.log(`📝 Texte extrait [page ${pageNum}]:\n`, result.data.text);
+      allText += result.data.text + '\n';
+    }
+
+    return extractDatesFromText(allText);
+  }
+
+  // Si c'est une image (png, jpg, etc.)
+  if (file.type.startsWith('image/')) {
+    const imageSrc = URL.createObjectURL(file);
+    const result = await Tesseract.recognize(imageSrc, 'fra', {
+      logger: m => console.log(`📈 OCR progress (image) :`, m.progress),
+    });
+
+    return extractDatesFromText(result.data.text);
+  }
+
+  return '';
+};
+
+const extractExpirationDateVisa = async (file: File): Promise<string> => {
+  const extractVisaDate = (text: string): string => {
+    const untilRegex = /\b(?:AU|UNTIL)\b\s*(\d{2})[\/\-](\d{2})[\/\-](\d{2})/i;
+    const match = text.match(untilRegex);
+    if (match) {
+      const [_, day, month, year] = match;
+      return `20${year}-${month}-${day}`; // yyyy-mm-dd
+    }
+
+    // fallback : chercher toutes les dates normales (ex: 17-02-25)
+    const allDates = Array.from(text.matchAll(/(\d{2})[\/\-](\d{2})[\/\-](\d{2})/g))
+      .map(([_, d, m, y]) => new Date(`20${y}-${m}-${d}`))
+      .filter(d => !isNaN(d.getTime()));
+
+    if (allDates.length > 0) {
+      const latest = allDates.sort((a, b) => b.getTime() - a.getTime())[0];
+      return latest.toISOString().slice(0, 10); // yyyy-mm-dd
+    }
+
+    // fallback final : 6 chiffres collés (ex: 160825, 170225)
+    const compactMatch = text.match(/\b(\d{2})[^\d]?(\d{2})[^\d]?(\d{2})\b/);
+    if (compactMatch) {
+      const [_, d, m, y] = compactMatch;
+      const bruteDate = `20${y}-${m}-${d}`;
+      console.log("📛 Date brute fallback détectée :", bruteDate);
+      return bruteDate;
+    }
+
+    return '';
+  };
+
+  if (file.type === 'application/pdf') {
+    const pdfData = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    let allText = '';
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      const viewport = page.getViewport({ scale: 2 });
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      if (!context) continue;
+      await page.render({ canvasContext: context, viewport }).promise;
+      const dataUrl = canvas.toDataURL();
+
+      const result = await Tesseract.recognize(dataUrl, 'eng', {
+        logger: m => console.log(`OCR VISA Page ${i}:`, m),
+      });
+
+      allText += result.data.text + '\n';
+    }
+
+    console.log("📝 Texte complet VISA OCR :", allText);
+    return extractVisaDate(allText);
+  }
+
+  return '';
+};
+
+
+
 
 
 
@@ -124,6 +286,8 @@ const ChauffeursPage: React.FC = () => {
   cin: '',
   adresse: '',
   dateExpirationCIN: '',
+  dateExpirationPermis: '',
+  dateExpirationVisa: '',
   photo: null,
   scanCIN: null,
   scanPermis: null,
@@ -157,38 +321,52 @@ const ChauffeursPage: React.FC = () => {
     setPage(1);
   };
 
-const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const { name, value, files } = e.target;
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, files } = e.target;
 
-  if (files) {
-    const file = files[0];
+    if (files) {
+      const file = files[0];
 
-    // Prévisualisation si c’est une photo
-    if (name === 'photo') {
-      setPreviewPhoto(URL.createObjectURL(file));
+      // Prévisualisation si c’est une photo
+      if (name === 'photo') {
+        setPreviewPhoto(URL.createObjectURL(file));
+      }
+
+      // On met à jour le champ fichier dans le form
+      setForm(prev => ({ ...prev, [name]: file }));
+
+      // === Analyse OCR pour CIN ===
+      if (name === 'scanCIN') {
+        const extractedData = await extractTextFromImage(file);
+        console.log("✅ Données extraites OCR :", extractedData);
+
+        setForm(prev => ({
+          ...prev,
+          ...Object.fromEntries(
+            Object.entries(extractedData).map(([k, v]) => [k, v ?? ''])
+          )
+        }));
+      }
+
+      // === Analyse OCR pour Permis ===
+      if (name === 'scanPermis') {
+        const expirationDate = await extractExpirationDateFromFile(file);
+        console.log("🕒 Date expiration permis :", expirationDate);
+        setForm(prev => ({ ...prev, dateExpirationPermis: expirationDate }));
+      }
+
+      // === Analyse OCR pour Visa ===
+      if (name === 'scanVisa') {
+  const expirationDate = await extractExpirationDateVisa(file);
+  console.log("🕒 Date expiration visa :", expirationDate);
+  setForm(prev => ({ ...prev, dateExpirationVisa: expirationDate }));
+}
+    } else {
+      // Mise à jour des champs texte manuellement tapés
+      setForm(prev => ({ ...prev, [name]: value }));
     }
+  };
 
-    // On met à jour le champ fichier dans le form
-    setForm(prev => ({ ...prev, [name]: file }));
-
-    // Si c'est un scan de CIN, on lance l'extraction OCR
-    if (name === 'scanCIN') {
-      const extractedData = await extractTextFromImage(file);
-
-      console.log("✅ Données extraites OCR :", extractedData); // 🔍 Ajoute ça si pas déjà fait
-
-      setForm(prev => ({
-        ...prev,
-        ...Object.fromEntries(
-          Object.entries(extractedData).map(([k, v]) => [k, v ?? '']) // ✅ important : jamais null
-        )
-      }));
-    }
-  } else {
-    // Mise à jour des champs texte manuellement tapés
-    setForm(prev => ({ ...prev, [name]: value }));
-  }
-};
 
   const handleSubmit = async () => {
   if (!form.nom || !form.prenom || !form.telephone || !form.cin) {
@@ -434,6 +612,40 @@ const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         }}
       />
 
+<TextField
+        label="Date d’expiration  PERMIS"
+        type="date"
+        name="dateExpirationPermis"
+        value={form.dateExpirationPermis || ''}
+        onChange={handleInputChange}
+        fullWidth
+        InputLabelProps={{ shrink: true }}
+        sx={{
+          mb: 2,
+          backgroundColor: '#f8f9fa',
+          borderRadius: 2,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2
+          }
+        }}
+      />
+      <TextField
+        label="Date d’expiration VISA"
+        type="date"
+        name="dateExpirationVisa"
+        value={form.dateExpirationVisa || ''}
+        onChange={handleInputChange}
+        fullWidth
+        InputLabelProps={{ shrink: true }}
+        sx={{
+          mb: 2,
+          backgroundColor: '#f8f9fa',
+          borderRadius: 2,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2
+          }
+        }}
+      />
 
       {/* Fichiers */}
       <Box display="flex" flexWrap="wrap" gap={2}>
