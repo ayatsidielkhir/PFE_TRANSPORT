@@ -1,9 +1,10 @@
+// ✅ Page partenaires complète avec upload contrat PDF
 import React, { useEffect, useState } from 'react';
 import {
   Box, Button, Drawer, TextField, Table, TableBody, TableCell,
   TableHead, TableRow, IconButton, Pagination, InputAdornment, Paper, Typography, Avatar
 } from '@mui/material';
-import { Delete, Edit, Add, Search as SearchIcon, Handshake } from '@mui/icons-material';
+import { Delete, Edit, Add, Search as SearchIcon, Handshake, PictureAsPdf } from '@mui/icons-material';
 import axios from 'axios';
 import AdminLayout from '../../components/Layout';
 import { useTheme } from '@mui/material/styles';
@@ -19,13 +20,18 @@ interface Partenaire {
   email?: string;
   telephone?: string;
   logo?: string;
+  contrat?: string;
 }
 
 const PartenairesPage: React.FC = () => {
   const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editData, setEditData] = useState<Partenaire | null>(null);
-  const [form, setForm] = useState({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null as File | null });
+  const [form, setForm] = useState({
+    nom: '', ice: '', adresse: '', email: '', telephone: '',
+    logo: null as File | null,
+    contrat: null as File | null
+  });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const perPage = 5;
@@ -45,8 +51,8 @@ const PartenairesPage: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, files } = e.target;
-    if (name === 'logo' && files) {
-      setForm((prev) => ({ ...prev, logo: files[0] }));
+    if (files && files.length > 0) {
+      setForm((prev) => ({ ...prev, [name]: files[0] }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -61,6 +67,7 @@ const PartenairesPage: React.FC = () => {
       formData.append('email', form.email);
       formData.append('telephone', form.telephone);
       if (form.logo) formData.append('logo', form.logo);
+      if (form.contrat) formData.append('contrat', form.contrat);
 
       if (editData) {
         await axios.put(`${API}/partenaires/${editData._id}`, formData);
@@ -70,7 +77,7 @@ const PartenairesPage: React.FC = () => {
 
       setDrawerOpen(false);
       setEditData(null);
-      setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null });
+      setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null, contrat: null });
       fetchPartenaires();
     } catch (err) {
       console.error('Erreur lors de l\'enregistrement :', err);
@@ -116,27 +123,19 @@ const PartenairesPage: React.FC = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{
-                width: isMobile ? '100%' : '35%',
-                backgroundColor: 'white',
-                borderRadius: 1,
-              }}
+              sx={{ width: isMobile ? '100%' : '35%', backgroundColor: 'white', borderRadius: 1 }}
             />
             <Button
               variant="contained"
               startIcon={<Add />}
               onClick={() => {
                 setEditData(null);
-                setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null });
+                setForm({ nom: '', ice: '', adresse: '', email: '', telephone: '', logo: null, contrat: null });
                 setDrawerOpen(true);
               }}
               sx={{
-                backgroundColor: '#001e61',
-                borderRadius: 3,
-                textTransform: 'none',
-                fontWeight: 'bold',
-                px: 3,
-                boxShadow: 2,
+                backgroundColor: '#001e61', borderRadius: 3, textTransform: 'none',
+                fontWeight: 'bold', px: 3, boxShadow: 2,
                 '&:hover': { backgroundColor: '#001447' },
                 width: isMobile ? '100%' : 'auto'
               }}
@@ -150,7 +149,7 @@ const PartenairesPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                {['Logo', 'Nom', 'ICE', 'Adresse', 'Email', 'Téléphone', 'Actions'].map(h => (
+                {['Logo', 'Nom', 'ICE', 'Adresse', 'Email', 'Téléphone', 'Contrat', 'Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -160,12 +159,7 @@ const PartenairesPage: React.FC = () => {
                 <TableRow key={p._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd' }}>
                   <TableCell>
                     {p.logo ? (
-                      <Box
-                        component="img"
-                        src={`https://mme-backend.onrender.com/uploads/partenaires/${p.logo}`}
-                        alt="logo partenaire"
-                        sx={{ width: 70, height: 70, objectFit: 'contain', borderRadius: 2 }}
-                      />
+                      <Box component="img" src={`https://mme-backend.onrender.com/uploads/partenaires/${p.logo}`} alt="logo partenaire" sx={{ width: 70, height: 70, objectFit: 'contain', borderRadius: 2 }} />
                     ) : 'N/A'}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>{p.nom}</TableCell>
@@ -174,11 +168,18 @@ const PartenairesPage: React.FC = () => {
                   <TableCell>{p.email || '—'}</TableCell>
                   <TableCell>{p.telephone || '—'}</TableCell>
                   <TableCell>
+                    {p.contrat ? (
+                      <IconButton onClick={() => window.open(`https://mme-backend.onrender.com/uploads/partenaires/${p.contrat}`, '_blank')}>
+                        <PictureAsPdf sx={{ color: 'red' }} />
+                      </IconButton>
+                    ) : '—'}
+                  </TableCell>
+                  <TableCell>
                     <IconButton onClick={() => {
                       setEditData(p);
                       setForm({
                         nom: p.nom, ice: p.ice, adresse: p.adresse,
-                        email: p.email || '', telephone: p.telephone || '', logo: null
+                        email: p.email || '', telephone: p.telephone || '', logo: null, contrat: null
                       });
                       setDrawerOpen(true);
                     }} sx={{ color: '#001e61' }}><Edit /></IconButton>
@@ -195,22 +196,12 @@ const PartenairesPage: React.FC = () => {
         </Box>
 
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <Box p={3}  mt={10} width={isMobile ? '100vw' : 450}>
+          <Box p={3} mt={10} width={isMobile ? '100vw' : 450}>
             <Box display="flex" justifyContent="center" mb={3}>
               <label htmlFor="logo-input">
                 <Avatar
-                  src={
-                    form.logo instanceof File
-                      ? URL.createObjectURL(form.logo)
-                      : editData?.logo
-                      ? `https://mme-backend.onrender.com/uploads/partenaires/${editData.logo}`
-                      : undefined
-                  }
-                  sx={{
-                    width: 110, height: 110, borderRadius: '12px', objectFit: 'contain',
-                    backgroundColor: '#f0f0f0', cursor: 'pointer', boxShadow: 2, mt: 2,
-                    fontSize: 16, color: '#666'
-                  }}
+                  src={form.logo instanceof File ? URL.createObjectURL(form.logo) : editData?.logo ? `https://mme-backend.onrender.com/uploads/partenaires/${editData.logo}` : undefined}
+                  sx={{ width: 110, height: 110, borderRadius: '12px', objectFit: 'contain', backgroundColor: '#f0f0f0', cursor: 'pointer', boxShadow: 2, mt: 2, fontSize: 16, color: '#666' }}
                 >
                   {!form.logo && !editData?.logo && 'Logo'}
                 </Avatar>
@@ -219,13 +210,7 @@ const PartenairesPage: React.FC = () => {
             </Box>
 
             <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-              {[
-                { name: 'nom', label: 'Nom' },
-                { name: 'ice', label: 'ICE' },
-                { name: 'adresse', label: 'Adresse' },
-                { name: 'email', label: 'Email' },
-                { name: 'telephone', label: 'Téléphone' }
-              ].map(({ name, label }) => (
+              {[{ name: 'nom', label: 'Nom' }, { name: 'ice', label: 'ICE' }, { name: 'adresse', label: 'Adresse' }, { name: 'email', label: 'Email' }, { name: 'telephone', label: 'Téléphone' }].map(({ name, label }) => (
                 <Box key={name} flex="1 1 45%">
                   <TextField
                     fullWidth
@@ -239,15 +224,30 @@ const PartenairesPage: React.FC = () => {
               ))}
             </Box>
 
+            <Box mb={2}>
+              <Typography fontWeight={500} mb={1}>Contrat (PDF)</Typography>
+              <Button
+                component="label"
+                variant="outlined"
+                fullWidth
+                sx={{ borderRadius: '12px', backgroundColor: '#ffffff', textTransform: 'none', fontSize: '14px', py: 1 }}
+              >
+                {form.contrat instanceof File ? form.contrat.name : 'Choisir un fichier PDF'}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  hidden
+                  name="contrat"
+                  onChange={handleInputChange}
+                />
+              </Button>
+            </Box>
+
             <Button
               fullWidth
               variant="contained"
               onClick={handleSubmit}
-              sx={{
-                mt: 4, backgroundColor: '#001e61', borderRadius: '12px',
-                textTransform: 'none', fontWeight: 'bold', py: 1.5,
-                fontSize: '16px', '&:hover': { backgroundColor: '#001447' }
-              }}
+              sx={{ mt: 4, backgroundColor: '#001e61', borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', py: 1.5, fontSize: '16px', '&:hover': { backgroundColor: '#001447' } }}
             >
               {editData ? 'Mettre à jour' : 'Ajouter'}
             </Button>

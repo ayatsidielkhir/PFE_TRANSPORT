@@ -11,8 +11,14 @@ const router = express.Router();
 
 // Routes
 router.get('/', getAllPartenaires);
-router.post('/', upload.single('logo'), createPartenaire);  // ✅ upload depuis `uploads.ts`
-router.put('/:id', upload.single('logo'), updatePartenaire); // ✅ idem
-router.delete('/:id', deletePartenaire);
+router.post('/', upload.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'contrat', maxCount: 1 }
+]), createPartenaire);
+
+router.put('/:id', upload.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'contrat', maxCount: 1 }
+]), updatePartenaire);router.delete('/:id', deletePartenaire);
 
 export default router;

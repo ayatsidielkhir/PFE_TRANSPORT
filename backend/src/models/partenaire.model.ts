@@ -6,7 +6,8 @@ const partenaireSchema = new mongoose.Schema({
   adresse: { type: String, required: true },
   email: { type: String, required: false },
   telephone: { type: String, required: false },
-  logo: { type: String }
+  logo: { type: String },
+  contrat: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model('Partenaire', partenaireSchema);
