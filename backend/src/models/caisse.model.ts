@@ -8,7 +8,8 @@ const operationSchema = new mongoose.Schema({
   sujet: { type: String, required: true },
   modePaiement: { type: String, required: true },
   statut: { type: String, enum: ['Payé', 'Non payé'], required: true },
-  justificatif: { type: String }, // facultatif
+  justificatif: { type: String }, // facultatif,
+   motif: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model('Operation', operationSchema);

@@ -1,15 +1,27 @@
-import express from 'express';
-import { getDashboardStats, getCaisseMensuelle, getChargesParType,getChiffreAffaireMensuel } from '../controllers/Dashboard.controller';
-import { getNotifications } from '../controllers/Dashboard.controller';
+import { Router } from 'express';
+import {
+  getDashboardStats,
+  getCaisseMensuelle,
+  getChiffreAffaireMensuel,
+  getNotifications,
+  getChargesParType
+} from '../controllers/Dashboard.controller';
 
-const router = express.Router();
+const router = Router();
 
-// Route pour les statistiques générales du dashboard
-router.get('/', getDashboardStats);
+// Statistiques globales (cartes)
+router.get('/admin/dashboard', getDashboardStats);
 
-// Nouvelle route pour le graphique Entrées vs Sorties
-router.get('/caisse-mensuelle', getCaisseMensuelle);
-router.get('/charges-par-type', getChargesParType);
-router.get('/notifications', getNotifications);
-router.get('/chiffre-affaire-mensuel', getChiffreAffaireMensuel);
+// Chiffre d'affaires mensuel (revenus - charges)
+router.get('/dashboard/chiffre-affaire-mensuel', getChiffreAffaireMensuel);
+
+//  État de caisse (entrées vs sorties mensuelles)
+router.get('/dashboard/caisse-mensuelle', getCaisseMensuelle);
+
+//  Notifications du jour
+router.get('/dashboard/notifications', getNotifications);
+
+// Répartition des charges par type (pie chart)
+router.get('/dashboard/charges-par-type', getChargesParType);
+
 export default router;

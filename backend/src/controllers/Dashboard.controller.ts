@@ -1,124 +1,109 @@
 import { Request, Response } from 'express';
 import Chauffeur from '../models/Chauffeur';
 import Vehicule from '../models/Vehicule';
+import Facture from '../models/facture';
 import Trajet from '../models/trajet.model';
 import Caisse from '../models/caisse.model';
 import Charge from '../models/charge.model';
-import { isBefore, isAfter, addDays } from 'date-fns';
 
-
-
- export const getNotifications = async (_: Request, res: Response) => {
+// 1. Statistiques générales
+export const getDashboardStats = async (req: Request, res: Response) => {
   try {
-    const now = new Date();
-    const inSevenDays = addDays(now, 7);
+    const today = new Date().toISOString().slice(0, 10);
 
-    const chauffeurs = await Chauffeur.find({
-      $or: [
-        { dateExpirationCIN: { $exists: true } },
-        { dateExpirationPermis: { $exists: true } },
-        { dateExpirationVisa: { $exists: true } },
-        { dateExpirationCasier: { $exists: true } }
-      ]
+    const chauffeurs = await Chauffeur.countDocuments();
+    const vehicules = await Vehicule.countDocuments();
+    const factures = await Facture.countDocuments({ date: today });
+    const trajets = await Trajet.countDocuments({ date: today });
+
+    res.json({ chauffeurs, vehicules, factures, trajets });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération des statistiques' });
+  }
+};
+
+// 2. Graphique Caisse (Entrées vs Sorties par mois)
+export const getCaisseMensuelle = async (req: Request, res: Response) => {
+  try {
+    const caisseData = await Caisse.find();
+    const mois = Array.from({ length: 12 }, (_, i) =>
+      new Date(0, i).toLocaleString('fr-FR', { month: 'short' })
+    );
+    const entreesMensuelles = Array(12).fill(0);
+    const sortiesMensuelles = Array(12).fill(0);
+
+    caisseData.forEach((entry) => {
+      const m = new Date(entry.date).getMonth();
+      if (entry.type === 'Entrée') entreesMensuelles[m] += entry.montant;
+      if (entry.type === 'Sortie') sortiesMensuelles[m] += entry.montant;
     });
 
+    res.json({ mois, entreesMensuelles, sortiesMensuelles });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération de la caisse mensuelle' });
+  }
+};
+
+// 3. Graphique Chiffre d'affaires mensuel
+export const getChiffreAffaireMensuel = async (req: Request, res: Response) => {
+  try {
+    const revenuNetData = Array(12).fill(null).map((_, i) => ({
+      mois: new Date(0, i).toLocaleString('fr-FR', { month: 'short' }),
+      revenu: 0,
+      depenses: 0,
+      revenuNet: 0
+    }));
+
+    const factures = await Facture.find();
+    factures.forEach(f => {
+      const m = new Date(f.date).getMonth();
+      revenuNetData[m].revenu += f.totalTTC || 0;
+    });
+
+    const charges = await Charge.find();
+    charges.forEach(c => {
+      const m = new Date(c.date).getMonth();
+      revenuNetData[m].depenses += c.montant || 0;
+    });
+
+    revenuNetData.forEach(m => m.revenuNet = m.revenu - m.depenses);
+    res.json(revenuNetData);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération du chiffre d\'affaires mensuel' });
+  }
+};
+
+// 4. Notifications récentes
+export const getNotifications = async (req: Request, res: Response) => {
+  try {
     const notifications: string[] = [];
 
-    chauffeurs.forEach((c) => {
-      const docs = [
-        { label: '', date: c.dateExpirationCIN },
-      ];
+    const trajets = await Trajet.find().sort({ date: -1 }).limit(3).populate('partenaire');
+    trajets.forEach(t => {
+      const partenaireNom = typeof t.partenaire === 'object' && t.partenaire !== null && 'nom' in t.partenaire
+        ? (t.partenaire as any).nom
+        : '';
+      notifications.push(`TRAJET::${t.date}::Nouvelle trajet. ${t.depart} ➝ ${t.arrivee} par ${partenaireNom}`);
+    });
 
-      docs.forEach(({ label, date }) => {
-        if (!date) return;
+    const entrees = await Caisse.find({ type: 'entree' }).sort({ date: -1 }).limit(2);
+    entrees.forEach(c => {
+      notifications.push(`CAISSE::${c.date}::Entrée caisse : +${c.montant} MAD pour ${c.motif}`);
+    });
 
-        if (isBefore(date, now)) {
-          notifications.push(`❗ Le ${label} de ${c.nom} ${c.prenom} est expiré !`);
-        } else if (isBefore(date, inSevenDays)) {
-          notifications.push(`⚠️ Le ${label} de ${c.nom} ${c.prenom} expire bientôt (${date.toLocaleDateString()})`);
-        }
-      });
+    const charges = await Charge.find().sort({ date: -1 }).limit(2);
+    charges.forEach(c => {
+      notifications.push(`CHARGE::${c.date}::Charge "${c.type}" ajoutée : ${c.montant} MAD`);
     });
 
     res.json({ notifications });
-  } catch (err) {
-    console.error('Erreur notifications documents:', err);
-    res.status(500).json({ error: 'Erreur serveur notifications' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération des notifications' });
   }
 };
 
-
-// 📊 Statistiques globales
-export const getDashboardStats = async (_: Request, res: Response) => {
-  try {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const [chauffeurs, vehicules, trajets] = await Promise.all([
-      Chauffeur.countDocuments(),
-      Vehicule.countDocuments(),
-      Trajet.countDocuments({ date: { $gte: todayStart } }),
-    ]);
-
-    res.json({
-      chauffeurs,
-      vehicules,
-      factures: 0, // temporairement désactivé
-      trajets
-    });
-  } catch (err) {
-    console.error('Erreur dans le dashboard:', err);
-    res.status(500).json({ error: 'Erreur serveur dans le dashboard' });
-  }
-};
-
-// 📈 Route: /api/dashboard/caisse-mensuelle
-export const getCaisseMensuelle = async (_: Request, res: Response) => {
-  try {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-
-    const entreesMensuelles = Array(12).fill(0);
-    const sortiesMensuelles = Array(12).fill(0);
-    const mois = ['Jan', 'Fév', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
-
-    const entrees = await Caisse.find({
-      date: {
-        $gte: new Date(`${currentYear}-01-01`),
-        $lt: new Date(`${currentYear + 1}-01-01`)
-      }
-    });
-
-    const charges = await Charge.find({
-      date: {
-        $gte: new Date(`${currentYear}-01-01`),
-        $lt: new Date(`${currentYear + 1}-01-01`)
-      }
-    });
-
-    entrees.forEach((e) => {
-      const moisIndex = new Date(e.date).getMonth();
-      entreesMensuelles[moisIndex] += e.montant;
-    });
-
-    charges.forEach((c) => {
-      const moisIndex = new Date(c.date).getMonth();
-      sortiesMensuelles[moisIndex] += c.montant;
-    });
-
-    res.json({
-      entreesMensuelles,
-      sortiesMensuelles,
-      mois
-    });
-  } catch (err) {
-    console.error('Erreur agrégation caisse:', err);
-    res.status(500).json({ error: 'Erreur serveur dans les données caisse' });
-  }
-};
-
-// 🍩 Route: /api/dashboard/charges-par-type
-export const getChargesParType = async (_req: Request, res: Response) => {
+// 5. Répartition des charges par type (pour le Pie chart)
+export const getChargesParType = async (req: Request, res: Response) => {
   try {
     const charges = await Charge.aggregate([
       {
@@ -126,79 +111,11 @@ export const getChargesParType = async (_req: Request, res: Response) => {
           _id: '$type',
           total: { $sum: '$montant' }
         }
-      },
-      {
-        $project: {
-          type: '$_id',
-          total: 1,
-          _id: 0
-        }
       }
     ]);
-
-    res.json(charges);
-  } catch (err) {
-    console.error('Erreur agrégation des charges par type:', err);
-    res.status(500).json({ error: 'Erreur lors de l’agrégation des charges' });
-  }
-};
-
-// 📉 Route: /api/dashboard/chiffre-affaire-mensuel
-export const getChiffreAffaireMensuel = async (_: Request, res: Response) => {
-  try {
-    const now = new Date();
-    const year = now.getFullYear();
-
-    const months = Array.from({ length: 12 }, (_, i) => i); // Mois de 0 à 11
-
-    const chiffreAffaire = await Promise.all(
-      months.map(async (month) => {
-        const start = new Date(year, month, 1);
-        const end = new Date(year, month + 1, 1);
-
-        const [entrees, sorties, charges] = await Promise.all([
-          Caisse.aggregate([
-            {
-              $match: {
-                type: 'entrée',
-                date: { $gte: start, $lt: end },
-              },
-            },
-            { $group: { _id: null, total: { $sum: '$montant' } } },
-          ]),
-          Caisse.aggregate([
-            {
-              $match: {
-                type: 'sortie',
-                date: { $gte: start, $lt: end },
-              },
-            },
-            { $group: { _id: null, total: { $sum: '$montant' } } },
-          ]),
-          Charge.aggregate([
-            {
-              $match: {
-                date: { $gte: start, $lt: end },
-              },
-            },
-            { $group: { _id: null, total: { $sum: '$montant' } } },
-          ]),
-        ]);
-
-        const totalEntree = entrees[0]?.total || 0;
-        const totalSortie = sorties[0]?.total || 0;
-        const totalCharge = charges[0]?.total || 0;
-
-        return {
-          mois: start.toLocaleString('fr-FR', { month: 'short' }),
-          revenuNet: totalEntree - (totalSortie + totalCharge),
-        };
-      })
-    );
-
-    res.json(chiffreAffaire);
-  } catch (err) {
-    console.error('Erreur CA mensuel :', err);
-    res.status(500).json({ error: 'Erreur serveur CA mensuel' });
+    const formatted = charges.map(c => ({ type: c._id, total: c.total }));
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération des charges par type' });
   }
 };
