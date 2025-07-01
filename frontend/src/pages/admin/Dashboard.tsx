@@ -45,12 +45,13 @@
 
     useEffect(() => {
       const fetchData = async () => {
-        const [statsRes, notifRes, chiffreRes, caisseRes] = await Promise.all([
-          axios.get(`${API}/admin/dashboard`),
-          axios.get(`${API}/dashboard/notifications`),
-          axios.get(`${API}/dashboard/chiffre-affaire-mensuel`),
-          axios.get(`${API}/dashboard/caisse-mensuelle`)
-        ]);
+      const [statsRes, notifRes, chiffreRes, caisseRes] = await Promise.all([
+        axios.get(`${API}/dashboard/admin/dashboard`), // ✔️ corrigé ici
+        axios.get(`${API}/dashboard/notifications`),
+        axios.get(`${API}/dashboard/chiffre-affaire-mensuel`),
+        axios.get(`${API}/dashboard/caisse-mensuelle`)
+      ]);
+
 
         const parsedNotifs = notifRes.data.notifications.map((n: string) => {
           const [type, date, message] = n.split('::');
@@ -93,22 +94,6 @@
     return (
       <AdminLayout>
         <Box p={3}>
-
-          <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" mb={2}>
-            <FormControl sx={{ minWidth: 200 }} size="small">
-              <InputLabel>Mois</InputLabel>
-              <Select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} label="Mois">
-                {months.map((m) => (
-                  <MenuItem key={m} value={m}>{m === 'all' ? 'Tous les mois' : m}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Box display="flex" gap={1} mt={{ xs: 2, md: 0 }}>
-              <Button variant="outlined" onClick={handleExportExcel}>Exporter Excel</Button>
-              <Button variant="outlined" onClick={handleExportPDF}>Exporter PDF</Button>
-            </Box>
-          </Box>
 
           <ResponsiveRow>
             {[{ label: 'Nombre de chauffeurs', value: stats.chauffeurs, icon: <PeopleIcon />, color: '#1976d2' },
