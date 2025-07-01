@@ -359,13 +359,14 @@
                     <TableCell>{c.type}</TableCell>
                     <TableCell>{c.montant.toFixed(2)} MAD</TableCell>
                     <TableCell>{new Date(c.date).toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell>
-                      {c.chauffeur
+                   <TableCell>
+                      {c.vehicule
+                        ? `${c.vehicule.nom} - ${c.vehicule.matricule}`
+                        : c.chauffeur
                         ? `${c.chauffeur.nom} ${c.chauffeur.prenom}`
-                        : c.vehicule
-                        ? c.vehicule.nom
                         : '--'}
                     </TableCell>
+
 
 
                     <TableCell>

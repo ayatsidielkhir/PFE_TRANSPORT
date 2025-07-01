@@ -22,7 +22,8 @@ export const addVehicule: RequestHandler = async (req, res)=> {
       type,
       kilometrage,
       controle_technique,
-      chauffeur
+      chauffeur,
+      remorque
     } = req.body;
 
     const files = req.files as {
@@ -36,6 +37,7 @@ export const addVehicule: RequestHandler = async (req, res)=> {
       kilometrage: Number(kilometrage),
       controle_technique,
       chauffeur,
+      remorque,
       carteGrise: files?.carteGrise?.[0]?.filename || '',
       assurance: files?.assurance?.[0]?.filename || '',
       vignette: files?.vignette?.[0]?.filename || '',

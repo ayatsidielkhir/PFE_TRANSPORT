@@ -4,6 +4,7 @@ const vehiculeSchema = new mongoose.Schema(
   {
     nom: { type: String, required: true, trim: true },
     matricule: { type: String, required: true, trim: true, unique: true },
+    remorque: { type: String },
     type: {
       type: String,
       enum: ['Camion', 'Tracteur', 'Voiture'],
@@ -19,7 +20,7 @@ const vehiculeSchema = new mongoose.Schema(
     carteVerte: { type: String },
     extincteur: { type: String },
     chauffeur: { type: String },
-    photoVehicule: { type: String }, // ✅ au lieu de "photo"
+    photoVehicule: { type: String }, 
   },
   { timestamps: true }
 );

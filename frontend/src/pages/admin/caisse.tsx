@@ -306,7 +306,7 @@ const CaissePage: React.FC = () => {
             <TextField label="Date" name="date" type="date" fullWidth value={form.date ? new Date(form.date).toISOString().split('T')[0] : ''} onChange={handleChange} InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} />
             <Button component="label" variant="outlined" fullWidth sx={{ mb: 2 }}>
               Justificatif (PDF/Image)
-              <input hidden type="file" accept=".pdf,image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
+              <input hidden type="file" accept="application/pdf" onChange={e => setFile(e.target.files?.[0] || null)} />
             </Button>
             <Button variant="contained" fullWidth onClick={handleSubmit} sx={{ mt: 2, borderRadius: 3 }}>Enregistrer</Button>
           </Box>
@@ -317,9 +317,12 @@ const CaissePage: React.FC = () => {
           <DialogTitle>Visualisation PDF</DialogTitle>
           <DialogContent>
             <iframe src={dialogImageSrc} width="100%" height="600px" title="Justificatif PDF" style={{ border: 'none' }} />
-            <Button onClick={() => window.open(dialogImageSrc, '_blank')} variant="outlined" sx={{ mt: 2 }}>
-              Télécharger
-            </Button>
+           {isMobile && (
+              <Button onClick={() => window.open(dialogImageSrc, '_blank')} variant="outlined" sx={{ mt: 2 }}>
+                Télécharger
+              </Button>
+            )}
+
           </DialogContent>
         </Dialog>
       </Box>

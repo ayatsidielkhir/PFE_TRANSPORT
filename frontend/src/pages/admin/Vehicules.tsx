@@ -38,6 +38,7 @@
     extincteur?: string;
     chauffeur?: string;
     photoVehicule?: string;
+    remorque?: string;
   }
 
   interface Chauffeur {
@@ -53,9 +54,9 @@
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [form, setForm] = useState<Vehicule>({
-      nom: '', matricule: '', type: '', kilometrage: 0,
-      controle_technique: '', chauffeur: ''
-    });
+        nom: '', matricule: '', type: '', kilometrage: 0,
+        controle_technique: '', chauffeur: '', remorque: '' 
+      });
 
     const [assuranceFile, setAssuranceFile] = useState<File | null>(null);
     const [carteGriseFile, setCarteGriseFile] = useState<File | null>(null);
@@ -273,7 +274,7 @@
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
-                  {['Photo', 'Nom', 'Chauffeur', 'Matricule', 'Type', 'Km', 'CT','Documents', 'Actions'].map(h => (
+                  {['Photo', 'Nom', 'Chauffeur', 'Matricule','Remorque' ,'Type', 'Km', 'CT','Documents', 'Actions'].map(h => (
                     <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
                   ))}
 
@@ -386,6 +387,23 @@
                 )
               )}
             </Box>
+
+            <Box flex="1 1 45%" mb={2}>
+              <TextField
+                fullWidth
+                label="Remorque"
+                name="remorque"
+                value={form.remorque || ''}
+                onChange={(e) => handleChange('remorque', e.target.value)}
+                sx={{
+                  '& .MuiInputBase-root': {
+                    borderRadius: '12px',
+                    backgroundColor: '#f9fafb'
+                  }
+                }}
+              />
+            </Box>
+
 
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel>Chauffeur</InputLabel>

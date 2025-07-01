@@ -4,61 +4,84 @@
   <meta charset="UTF-8">
   <title>Facture <%= data.numeroFacture %></title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1, h2 { text-align: center; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      font-size: 14px;
+    }
+
+    .info {
+      text-align: right;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
+      margin-bottom: 30px;
     }
+
     th, td {
-      border: 1px solid #333;
+      border: 1px solid #000;
       padding: 8px;
       text-align: center;
     }
+
     th {
       background-color: #f2f2f2;
     }
+
     .totaux {
-      margin-top: 30px;
-      width: 100%;
+      width: 50%;
+      margin-left: auto;
+      margin-top: 20px;
     }
+
     .totaux td {
-      padding: 10px;
+      padding: 6px 10px;
       font-weight: bold;
     }
+
     .totaux td:last-child {
       text-align: right;
+    }
+
+    .signature {
+      margin-top: 60px;
+      text-align: right;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>FACTURE</h1>
-  <h2>Numéro : <%= data.numeroFacture %></h2>
 
-  <p><strong>Client :</strong> <%= data.client %></p>
-  <p><strong>ICE :</strong> <%= data.ice %></p>
-  <p><strong>Date :</strong> <%= data.date %></p>
-  <p><strong>Tracteur :</strong> <%= data.tracteur %></p>
+  <div class="info">
+    <p>Facture N°: <strong><%= data.numeroFacture %></strong></p>
+    <p>CLIENT : <strong><%= data.client %></strong></p>
+    <p>Date : <strong><%= data.date %></strong></p>
+    <p>ICE N° : <strong><%= data.ice %></strong></p>
+    <p>Tracteur : <strong><%= data.tracteur %></strong></p>
+  </div>
 
   <table>
     <thead>
       <tr>
-        <th>Date</th>
+        <th>DATE</th>
+        <th>REMORQUE</th>
         <th>Chargement</th>
         <th>Déchargement</th>
-        <th>Remorque</th>
-        <th>Montant HT</th>
+        <th>TOTAL HT (DH)</th>
       </tr>
     </thead>
     <tbody>
       <% data.lignes.forEach(ligne => { %>
         <tr>
           <td><%= new Date(ligne.date).toLocaleDateString() %></td>
+          <td><%= ligne.remorque %></td>
           <td><%= ligne.chargement %></td>
           <td><%= ligne.dechargement %></td>
-          <td><%= ligne.remorque %></td>
-          <td><%= ligne.totalHT.toFixed(2) %> DH</td>
+          <td><%= ligne.totalHT.toFixed(2) %></td>
         </tr>
       <% }); %>
     </tbody>
@@ -66,17 +89,24 @@
 
   <table class="totaux">
     <tr>
-      <td>Total HT</td>
-      <td><%= data.totalHT.toFixed(2) %> DH</td>
+      <td>Total en DH HT</td>
+      <td><%= data.totalHT.toFixed(2) %></td>
     </tr>
     <tr>
-      <td>TVA (10%)</td>
-      <td><%= data.tva.toFixed(2) %> DH</td>
+      <td>TVA 0%</td>
+      <td>0,00</td>
     </tr>
     <tr>
-      <td>Total TTC</td>
-      <td><%= data.totalTTC.toFixed(2) %> DH</td>
+      <td>Total en DH TTC</td>
+      <td><%= data.totalTTC.toFixed(2) %></td>
     </tr>
   </table>
+
+  <p style="margin-top: 30px;"><strong>Arrêtée la présente facture à la somme de :</strong></p>
+
+  <div class="signature">
+    SIGNATURE
+  </div>
+
 </body>
 </html>
