@@ -9,7 +9,7 @@ import authRoutes from './routes/auth.routes';
 import chauffeurRoutes from './routes/chauffeur.routes';
 import vehiculeRoutes from './routes/vehicule.routes';
 import trajetRoutes from './routes/trajet.routes';
-import dashboardRoutes from './routes/Dashboard..routes';
+import dashboardRoutes from './routes/Dashboard.routes';
 import partenaireRoutes from './routes/partenaire.routes';
 import dossierJuridiqueRoutes from './routes/dossierjuridique.routes';
 import platformRoutes from './routes/plateformes.routes';

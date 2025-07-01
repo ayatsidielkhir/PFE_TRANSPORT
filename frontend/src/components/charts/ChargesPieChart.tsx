@@ -9,6 +9,9 @@ import {
   Legend
 } from 'chart.js';
 
+  const API = process.env.REACT_APP_API_URL;
+
+
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const ChargesPieChart: React.FC = () => {
@@ -16,20 +19,27 @@ const ChargesPieChart: React.FC = () => {
   const [dataValues, setDataValues] = useState<number[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get('${API}/dashboard/charges-par-type');
-        const types = res.data.map((item: any) => item.type);
-        const values = res.data.map((item: any) => item.total);
-        setLabels(types);
-        setDataValues(values);
-      } catch (err) {
-        console.error('Erreur chargement charges par type:', err);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      const res = await axios.get(`${API}/dashboard/charges-par-type`);
 
-    fetchData();
-  }, []);
+      if (!Array.isArray(res.data)) {
+        console.error("Format de réponse inattendu :", res.data);
+        return;
+      }
+
+      const types = res.data.map((item: any) => item.type);
+      const values = res.data.map((item: any) => item.total);
+      setLabels(types);
+      setDataValues(values);
+    } catch (err) {
+      console.error('Erreur chargement charges par type:', err);
+    }
+  };
+
+  fetchData();
+}, []);
+
 
   const data = {
     labels,

@@ -1,20 +1,22 @@
 import React from 'react';
 import {
   Chart as ChartJS,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale,
-  BarElement,
   Title,
   Tooltip,
-  Legend,
+  Legend
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
-import { Box, Typography, Card } from '@mui/material';
+import { Line } from 'react-chartjs-2';
+import { Typography, Box } from '@mui/material';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend
@@ -23,47 +25,63 @@ ChartJS.register(
 interface Props {
   data: {
     mois: string;
+    revenu: number;
+    depenses: number;
     revenuNet: number;
   }[];
 }
 
 const ChiffreAffaireChart: React.FC<Props> = ({ data }) => {
   const labels = data.map(d => d.mois);
-  const revenus = data.map(d => d.revenuNet);
 
   const chartData = {
     labels,
     datasets: [
       {
-        label: 'Chiffre d’affaires (net)',
-        data: revenus,
+        label: 'Revenus',
+        data: data.map(d => d.revenu),
+        borderColor: '#42a5f5',
         backgroundColor: '#42a5f5',
+        tension: 0.4,
       },
-    ],
+      {
+        label: 'Dépenses',
+        data: data.map(d => d.depenses),
+        borderColor: '#ef5350',
+        backgroundColor: '#ef5350',
+        tension: 0.4,
+      },
+      {
+        label: 'Solde net',
+        data: data.map(d => d.revenuNet),
+        borderColor: '#66bb6a',
+        backgroundColor: '#66bb6a',
+        tension: 0.4,
+      }
+    ]
   };
 
   const options = {
     responsive: true,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: 'bottom' as const
       },
       title: {
         display: true,
-        text: 'Chiffre d’affaires mensuel net',
-      },
-    },
+        text: 'Chiffre d’affaires (Revenus – Dépenses)',
+        font: { size: 16 }
+      }
+    }
   };
 
   return (
-    <Card sx={{ p: 2, mb: 4 }}>
-      <Typography variant="h6" gutterBottom>
-        📊 Chiffre d’affaires
+    <Box>
+      <Typography variant="h6" fontWeight={600} gutterBottom>
+      Chiffre d'affaires mensuel
       </Typography>
-      <Box height={300}>
-        <Bar data={chartData} options={options} />
-      </Box>
-    </Card>
+      <Line data={chartData} options={options} />
+    </Box>
   );
 };
 
