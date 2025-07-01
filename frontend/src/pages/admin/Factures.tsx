@@ -3,7 +3,7 @@
   import {
     Box, Button, TextField, Typography, Paper, MenuItem, Select, Table, TableHead,
     TableBody, TableRow, TableCell, Pagination, IconButton, Tooltip, Snackbar,
-    Alert, Drawer, Fab, Chip
+    Alert, Drawer, Fab, Chip,Divider
   } from '@mui/material';
   import {
     PictureAsPdf, Delete, FileDownload, Add, Edit,
@@ -72,6 +72,10 @@
     );
     const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
+    const totalHT = formData.montantsHT.reduce((sum, m) => sum + (m || 0), 0);
+    const totalTTC = totalHT + totalHT * ((formData.tva || 0) / 100);
+
+
     useEffect(() => {
       axios.get(`${API}/trajets`).then(res => {
         const data = res.data.map((t: any) => ({
@@ -94,6 +98,32 @@
         setFormData(prev => ({ ...prev, numeroFacture: `${next.toString().padStart(3, '0')}/2025` }));
       });
     }, []);
+
+    const handleMultipleTrajetSelect = (ids: string[]) => {
+      const selected = trajets.filter(t => ids.includes(t._id));
+      setSelectedTrajets(selected);
+
+      if (selected.length > 0) {
+        const first = selected[0];
+        setFormData(prev => ({
+          ...prev,
+          client: first.partenaire?.nom || '',
+          ice: first.partenaire?.ice || '',
+          tracteur: first.vehicule?.matricule || '',
+          montantsHT: selected.map((_, i) => prev.montantsHT[i] || 0),
+          remorques: selected.map((_, i) => prev.remorques[i] || '')
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          client: '',
+          ice: '',
+          tracteur: '',
+          montantsHT: [],
+          remorques: []
+        }));
+      }
+    };
 
     const handleGeneratePDF = async () => {
       try {
@@ -185,22 +215,6 @@
       await axios.put(`${API}/factures/${facture._id}`, updated);
       setFactures(prev => prev.map(f => f._id === facture._id ? updated : f));
     };
-
-    const handleMultipleTrajetSelect = (ids: string[]) => {
-  const selected = trajets.filter(t => ids.includes(t._id));
-
-  const first = selected[0]; // on prend le premier trajet pour remplir les champs
-
-  setSelectedTrajets(selected);
-  setFormData(prev => ({
-    ...prev,
-    client: first?.partenaire?.nom || '',
-    ice: first?.partenaire?.ice || '',
-    tracteur: first?.vehicule?.matricule || '',
-    montantsHT: selected.map((_, i) => prev.montantsHT[i] || 0),
-    remorques: selected.map((_, i) => prev.remorques[i] || '')
-  }));
-};
 
 
     const handleFormDataChange = (index: number, field: 'remorques' | 'montantsHT', value: string | number) => {
@@ -388,7 +402,7 @@
           />
         </Box>
 
-        {/* ✅ Bouton FAB pour ouvrir drawer */}
+        {/* ✅ FAB pour Drawer */}
         <Fab
           color="primary"
           aria-label="Ajouter une facture"
@@ -402,128 +416,95 @@
           <Add />
         </Fab>
 
+        {/* ✅ Drawer pour formulaire */}
         <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-    <Box p={4} width={500} mt={10}>
-      <Typography variant="h6" textAlign="center" fontWeight="bold" mb={3}>
-        {editId ? '✏️ Modifier la facture' : '➕ Nouvelle facture'}
-      </Typography>
+          <Box p={4} width={500} mt={10}>
+            <Typography variant="h6" textAlign="center" fontWeight="bold" mb={3}>
+              {editId ? '✏️ Modifier la facture' : '➕ Nouvelle facture'}
+            </Typography>
 
-      {/* Sélection de plusieurs trajets */}
-      <Select
-        multiple
-        fullWidth
-        value={selectedTrajets.map(t => t._id)}
-        onChange={(e) => handleMultipleTrajetSelect(e.target.value as string[])}
-        displayEmpty
-        sx={{ mb: 3 }}
-        renderValue={(selected) =>
-          (selected as string[]).length === 0
-            ? "Sélectionner des trajets"
-            : selected
-                .map(id => {
-                  const t = trajets.find(tr => tr._id === id);
-                  return t ? `${t.depart} ➜ ${t.arrivee}` : id;
-                })
-                .join(", ")
-        }
-      >
-        {trajets
-          .filter(t => !usedTrajetIds.has(t._id) || selectedTrajets.find(sel => sel._id === t._id))
-          .map(t => (
-            <MenuItem key={t._id} value={t._id}>
-              {t.depart} ➜ {t.arrivee} ({formatDate(t.date)})
-            </MenuItem>
-          ))}
-      </Select>
-
-      {/* Champs de base */}
-      <TextField
-        label="Numéro de Facture"
-        fullWidth
-        disabled
-        value={formData.numeroFacture}
-        sx={{ mb: 2 }}
-      />
-      <TextField
-        label="Client"
-        fullWidth
-        value={formData.client}
-        onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-        sx={{ mb: 2 }}
-      />
-      <TextField
-        label="ICE"
-        fullWidth
-        value={formData.ice}
-        onChange={(e) => setFormData({ ...formData, ice: e.target.value })}
-        sx={{ mb: 2 }}
-      />
-      <TextField
-        label="Tracteur"
-        fullWidth
-        value={formData.tracteur}
-        onChange={(e) => setFormData({ ...formData, tracteur: e.target.value })}
-        sx={{ mb: 2 }}
-      />
-      <TextField
-        label="Date"
-        type="date"
-        fullWidth
-        value={formData.date}
-        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-        InputLabelProps={{ shrink: true }}
-        sx={{ mb: 2 }}
-      />
-      <TextField
-        label="TVA (%)"
-        type="number"
-        fullWidth
-        value={formData.tva}
-        onChange={(e) => setFormData({ ...formData, tva: parseFloat(e.target.value) })}
-        sx={{ mb: 3 }}
-      />
-
-      {/* Champs dynamiques pour chaque trajet */}
-      {selectedTrajets.map((trajet, index) => (
-        <Box key={trajet._id} mb={3} border="1px solid #ccc" borderRadius={2} p={2} bgcolor="#f9f9f9">
-          <Typography variant="subtitle2" fontWeight="bold" color="primary">
-            🚚 Trajet {index + 1} : {trajet.depart} ➜ {trajet.arrivee}
-          </Typography>
-          <Box display="flex" gap={2} mt={1}>
-            <TextField
-              label="Remorque"
-              value={formData.remorques[index] || ''}
-              onChange={(e) => handleFormDataChange(index, 'remorques', e.target.value)}
+            {/* Sélection de trajets */}
+            <Select
+              multiple
               fullWidth
-            />
-            <TextField
-              label="Montant HT"
-              type="number"
-              value={formData.montantsHT[index] || ''}
-              onChange={(e) => handleFormDataChange(index, 'montantsHT', parseFloat(e.target.value))}
-              sx={{ width: 150 }}
-            />
-          </Box>
-          <Box textAlign="right" mt={1}>
-            <Button size="small" color="error" onClick={() => removeTrajet(index)}>
-              🗑 Supprimer
+              value={selectedTrajets.map(t => t._id)}
+              onChange={(e) => handleMultipleTrajetSelect(e.target.value as string[])}
+              displayEmpty
+              sx={{ mb: 3 }}
+              renderValue={(selected) =>
+                (selected as string[]).length === 0
+                  ? "Sélectionner des trajets"
+                  : selected
+                      .map(id => {
+                        const t = trajets.find(tr => tr._id === id);
+                        return t ? `${t.depart} ➜ ${t.arrivee}` : id;
+                      })
+                      .join(", ")
+              }
+            >
+              {trajets
+                .filter(t => !usedTrajetIds.has(t._id) || selectedTrajets.find(sel => sel._id === t._id))
+                .map(t => (
+                  <MenuItem key={t._id} value={t._id}>
+                    {t.depart} ➜ {t.arrivee} ({formatDate(t.date)})
+                  </MenuItem>
+                ))}
+            </Select>
+
+            {/* Champs de formulaire */}
+            <TextField label="Numéro de Facture" fullWidth disabled value={formData.numeroFacture} sx={{ mb: 2 }} />
+            <TextField label="Client" fullWidth value={formData.client} onChange={(e) => setFormData({ ...formData, client: e.target.value })} sx={{ mb: 2 }} />
+            <TextField label="ICE" fullWidth value={formData.ice} onChange={(e) => setFormData({ ...formData, ice: e.target.value })} sx={{ mb: 2 }} />
+            <TextField label="Tracteur" fullWidth value={formData.tracteur} onChange={(e) => setFormData({ ...formData, tracteur: e.target.value })} sx={{ mb: 2 }} />
+            <TextField label="Date" type="date" fullWidth value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} />
+            <TextField label="TVA (%)" type="number" fullWidth value={formData.tva} onChange={(e) => setFormData({ ...formData, tva: parseFloat(e.target.value) })} sx={{ mb: 3 }} />
+
+            {/* Champs dynamiques par trajet */}
+            {selectedTrajets.map((trajet, index) => (
+              <Box key={trajet._id} mb={3} border="1px solid #ccc" borderRadius={2} p={2} bgcolor="#f9f9f9">
+                <Typography variant="subtitle2" fontWeight="bold" color="primary">
+                  🚚 Trajet {index + 1} : {trajet.depart} ➜ {trajet.arrivee}
+                </Typography>
+                <Box display="flex" gap={2} mt={1}>
+                  <TextField
+                    label="Remorque"
+                    value={formData.remorques[index] || ''}
+                    onChange={(e) => handleFormDataChange(index, 'remorques', e.target.value)}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Montant HT"
+                    type="number"
+                    value={formData.montantsHT[index] || ''}
+                    onChange={(e) => handleFormDataChange(index, 'montantsHT', parseFloat(e.target.value))}
+                    sx={{ width: 150 }}
+                  />
+                </Box>
+                <Box textAlign="right" mt={1}>
+                  <Button size="small" color="error" onClick={() => removeTrajet(index)}>
+                    🗑 Supprimer
+                  </Button>
+                </Box>
+              </Box>
+            ))}
+
+            {/* Résumé HT/TTC */}
+            <Divider sx={{ my: 3 }} />
+            <Typography variant="subtitle2" textAlign="center">
+              {selectedTrajets.length} trajet(s) – HT: {totalHT.toFixed(2)} DH – TTC: {totalTTC.toFixed(2)} DH
+            </Typography>
+
+            <Button
+              fullWidth
+              variant="contained"
+              disabled={selectedTrajets.length === 0}
+              sx={{ backgroundColor: '#001e61', mt: 3, py: 1.2 }}
+              onClick={handleGeneratePDF}
+            >
+              {editId ? 'Mettre à jour' : 'Générer la facture'}
             </Button>
           </Box>
-        </Box>
-      ))}
-
-      {/* Bouton d'action */}
-      <Button
-        fullWidth
-        variant="contained"
-        sx={{ backgroundColor: '#001e61', mt: 3, py: 1.2 }}
-        onClick={handleGeneratePDF}
-      >
-        {editId ? 'Mettre à jour' : 'Générer la facture'}
-      </Button>
-    </Box>
-  </Drawer>
-
+        </Drawer>
 
         {/* ✅ Snackbar */}
         <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={() => setSnackbarOpen(false)}>

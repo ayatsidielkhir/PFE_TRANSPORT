@@ -22,6 +22,10 @@ const chauffeurSchema = new mongoose.Schema({
   type: Date,
   required: false
 },
+autresDocs: [{
+  nom: String,
+  fichier: String
+}],
   scanPermis: { type: String },
   scanVisa: { type: String },
   scanCIN: { type: String },

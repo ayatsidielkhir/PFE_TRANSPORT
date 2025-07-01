@@ -1,7 +1,7 @@
- import { RequestHandler } from 'express';
+import { RequestHandler } from 'express';
 import Chauffeur from '../models/Chauffeur';
 
-// ✅ Récupérer la liste des chauffeurs
+// ✅ Récupérer tous les chauffeurs
 export const getChauffeurs: RequestHandler = async (_req, res) => {
   try {
     const list = await Chauffeur.find();
@@ -21,6 +21,64 @@ export const deleteChauffeur: RequestHandler = async (req, res) => {
   }
 };
 
+// ✅ Ajouter un chauffeur
+export const addChauffeur: RequestHandler = async (req, res) => {
+  try {
+    const {
+      nom, prenom, telephone, cin, adresse, observations,
+      permis_date_expiration, contrat_type, contrat_date_expiration,
+      visa_actif, visa_date_expiration
+    } = req.body;
+
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const getFile = (field: string) =>
+      files?.[field]?.[0]?.filename || '';
+
+    // ✅ Gérer les autres documents
+    const autresDocs: { nom: string; fichier: string }[] = [];
+
+    Object.keys(req.body).forEach(key => {
+      const match = key.match(/^autresDocs\[(\d+)]\[(nom|file)]$/);
+      if (match) {
+        const index = parseInt(match[1], 10);
+        const prop = match[2];
+        if (!autresDocs[index]) autresDocs[index] = { nom: '', fichier: '' };
+        if (prop === 'nom') autresDocs[index].nom = req.body[key];
+        if (prop === 'file' && files?.[key]) autresDocs[index].fichier = files[key][0].filename;
+      }
+    });
+
+    const chauffeur = new Chauffeur({
+      nom,
+      prenom,
+      telephone,
+      cin,
+      adresse,
+      observations,
+      permis: { date_expiration: permis_date_expiration },
+      contrat: { type: contrat_type, date_expiration: contrat_date_expiration },
+      visa: { actif: visa_actif === 'true' || visa_actif === true, date_expiration: visa_date_expiration },
+      scanPermis: getFile('scanPermis'),
+      scanVisa: getFile('scanVisa'),
+      scanCIN: getFile('scanCIN'),
+      photo: getFile('photo'),
+      certificatBonneConduite: getFile('certificatBonneConduite'),
+      autresDocs
+    });
+
+    await chauffeur.save();
+    res.status(201).json(chauffeur);
+  } catch (err: any) {
+    console.error('❌ Erreur lors de la création du chauffeur :', err);
+    if (err.code === 11000) {
+      res.status(400).json({ message: "Un chauffeur avec ce CIN existe déjà." });
+    } else {
+      res.status(500).json({ message: 'Erreur serveur', error: err.message });
+    }
+  }
+};
+
 // ✅ Modifier un chauffeur
 export const updateChauffeur: RequestHandler = async (req, res) => {
   try {
@@ -35,81 +93,36 @@ export const updateChauffeur: RequestHandler = async (req, res) => {
       if (files['certificatBonneConduite']) updates.certificatBonneConduite = files['certificatBonneConduite'][0].filename;
     }
 
+    // 🔁 Champs imbriqués
     if ('visa_actif' in updates) {
       updates['visa.actif'] = updates.visa_actif === 'true' || updates.visa_actif === true;
       delete updates.visa_actif;
     }
-
     if (updates.permis_date_expiration) updates['permis.date_expiration'] = updates.permis_date_expiration;
     if (updates.contrat_type) updates['contrat.type'] = updates.contrat_type;
     if (updates.contrat_date_expiration) updates['contrat.date_expiration'] = updates.contrat_date_expiration;
     if (updates.visa_date_expiration) updates['visa.date_expiration'] = updates.visa_date_expiration;
 
-    await Chauffeur.findByIdAndUpdate(req.params.id, updates, { new: true });
+    // ✅ Gérer les autresDocs dynamiques
+    const autresDocs: { nom: string; fichier: string }[] = [];
 
+    Object.keys(req.body).forEach(key => {
+      const match = key.match(/^autresDocs\[(\d+)]\[(nom|file)]$/);
+      if (match) {
+        const index = parseInt(match[1], 10);
+        const prop = match[2];
+        if (!autresDocs[index]) autresDocs[index] = { nom: '', fichier: '' };
+        if (prop === 'nom') autresDocs[index].nom = req.body[key];
+        if (prop === 'file' && files?.[key]) autresDocs[index].fichier = files[key][0].filename;
+      }
+    });
+
+    updates.autresDocs = autresDocs;
+
+    await Chauffeur.findByIdAndUpdate(req.params.id, updates, { new: true });
     res.json({ message: 'Chauffeur modifié avec succès.' });
   } catch (err) {
     console.error('❌ Erreur modification chauffeur :', err);
     res.status(500).json({ message: 'Erreur lors de la modification.' });
-  }
-};
-
-// ✅ Ajouter un chauffeur
-export const addChauffeur: RequestHandler = async (req, res) => {
-  try {
-    const {
-      nom,
-      prenom,
-      telephone,
-      cin,
-      adresse,
-      observations,
-      permis_date_expiration,
-      contrat_type,
-      contrat_date_expiration,
-      visa_actif,
-      visa_date_expiration
-    } = req.body;
-
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-
-    const getFile = (field: string) =>
-      files?.[field]?.[0]?.filename || '';
-
-    const chauffeur = new Chauffeur({
-  nom,
-  prenom,
-  telephone,
-  cin,
-  adresse,
-  observations,
-  permis: {
-    date_expiration: permis_date_expiration
-  },
-  contrat: {
-    type: contrat_type,
-    date_expiration: contrat_date_expiration
-  },
-  visa: {
-    actif: visa_actif === 'true' || visa_actif === true,
-    date_expiration: visa_date_expiration
-  },
-  scanPermis: getFile('scanPermis'),
-  scanVisa: getFile('scanVisa'),
-  scanCIN: getFile('scanCIN'),
-  photo: getFile('photo'),
-  certificatBonneConduite: getFile('certificatBonneConduite')
-});
-
-
-    await chauffeur.save();
-    res.status(201).json(chauffeur); // 🔁 Très important de renvoyer les bonnes valeurs
-  } catch (err: any) {
-    console.error('❌ Erreur lors de la création du chauffeur :', err);
-    if (err.code === 11000) {
-      res.status(400).json({ message: "Un chauffeur avec ce CIN existe déjà." });
-    } else {
-      res.status(500).json({ message: 'Erreur serveur', error: err.message });
-    }
   }
 };
