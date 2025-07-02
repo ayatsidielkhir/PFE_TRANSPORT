@@ -121,10 +121,6 @@ export const deleteFacture = requestHandler(async (req, res) => {
   // Supprimer le fichier PDF de la facture
   const filePath = path.join('/mnt/data', facture.pdfPath || '');
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-
-  // Supprimer les trajets associés à cette facture
-  await Trajet.deleteMany({ _id: { $in: facture.trajetIds } });
-
   // Supprimer la facture
   await Facture.findByIdAndDelete(req.params.id);
 
