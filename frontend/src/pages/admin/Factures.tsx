@@ -123,6 +123,12 @@ useEffect(() => {
   const usedTrajetIds = new Set(
     factures.flatMap(f => (Array.isArray(f.trajetIds) ? f.trajetIds : []))
   );
+useEffect(() => {
+  const usedIds = new Set(factures.flatMap(f => f.trajetIds || []));
+  const visibles = trajets.filter(t => !usedIds.has(t._id));
+  console.log("📦 Factures réelles :", factures);
+  console.log("🧠 Trajets visibles dans le Select :", visibles.map(t => t._id));
+}, [factures, trajets]);
 
   console.log(
     "🔍 Trajets réels récupérés :", trajets.map(t => t._id),
@@ -247,15 +253,14 @@ const deleteFacture = async (id: string) => {
   try {
     await axios.delete(`${API}/factures/${id}`);
 
-    // ✅ Recharge à jour
     const res = await axios.get(`${API}/factures`);
     setFactures(res.data);
     console.log("📦 Factures après suppression :", res.data);
 
-    // ✅ Important pour libérer les trajets dans le filtre
-    setSelectedTrajets([]);
+      setSelectedTrajets([]); 
+      setTrajets([]);         
+    
 
-    // ✅ Recharge les trajets (libérés)
     await fetchTrajets();
   } catch (err) {
     console.error("❌ Erreur suppression :", err);
