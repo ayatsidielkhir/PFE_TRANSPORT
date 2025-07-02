@@ -63,6 +63,13 @@
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const perPage = 5;
     const usedTrajetIds = new Set(factures.flatMap(f => f.trajetIds || []));
+    console.log("🧠 usedTrajetIds :", Array.from(usedTrajetIds));
+    console.log("📦 Tous les trajets :", trajets.map(t => t._id));
+    console.log("✅ Trajets visibles dans le Select :", trajets
+      .filter(t => !usedTrajetIds.has(t._id))
+      .map(t => `${t.depart} ➜ ${t.arrivee}`)
+    );
+
 
     const formatDate = (d: string) => new Date(d).toLocaleDateString('fr-FR');
 
@@ -100,7 +107,33 @@
     const next = Math.max(...nums, 0) + 1;
     setFormData(prev => ({ ...prev, numeroFacture: `${next.toString().padStart(3, '0')}/2025` }));
   });
+  console.log(
+  "🔍 Trajets réels récupérés :", trajets.map(t => t._id),
+  "\n🧠 Trajets filtrés (non utilisés) :",
+  trajets
+    .filter(t => !usedTrajetIds.has(t._id))
+    .map(t => `${t._id} – ${t.depart} ➜ ${t.arrivee}`)
+);
+
 }, []);
+
+useEffect(() => {
+  if (trajets.length === 0) return;
+
+  const usedTrajetIds = new Set(
+    factures.flatMap(f => (Array.isArray(f.trajetIds) ? f.trajetIds : []))
+  );
+
+  console.log(
+    "🔍 Trajets réels récupérés :", trajets.map(t => t._id),
+    "\n🧠 Trajets filtrés (non utilisés) :",
+    trajets
+      .filter(t => !usedTrajetIds.has(t._id))
+      .map(t => `${t._id} – ${t.depart} ➜ ${t.arrivee}`)
+  );
+}, [trajets, factures]);
+
+
 
 
     const handleMultipleTrajetSelect = (ids: string[]) => {
@@ -208,13 +241,29 @@
       setDrawerOpen(true);
     };
 
-    const deleteFacture = async (id: string) => {
-      if (!window.confirm("Supprimer cette facture ?")) return;
-      await axios.get(`${API}/factures`).then(res => setFactures(res.data));
-      setFactures(prev => prev.filter(f => f._id !== id));
+const deleteFacture = async (id: string) => {
+  if (!window.confirm("Supprimer cette facture ?")) return;
 
-      fetchTrajets();
-    };
+  try {
+    await axios.delete(`${API}/factures/${id}`);
+
+    // ✅ Recharge à jour
+    const res = await axios.get(`${API}/factures`);
+    setFactures(res.data);
+    console.log("📦 Factures après suppression :", res.data);
+
+    // ✅ Important pour libérer les trajets dans le filtre
+    setSelectedTrajets([]);
+
+    // ✅ Recharge les trajets (libérés)
+    await fetchTrajets();
+  } catch (err) {
+    console.error("❌ Erreur suppression :", err);
+  }
+};
+
+
+
 
     const toggleStatutPayee = async (facture: Facture) => {
       const updated = { ...facture, payee: !facture.payee };
