@@ -75,29 +75,33 @@
     const totalHT = formData.montantsHT.reduce((sum, m) => sum + (m || 0), 0);
     const totalTTC = totalHT + totalHT * ((formData.tva || 0) / 100);
 
+    const fetchTrajets = async () => {
+    const res = await axios.get(`${API}/trajets`);
+    const data = res.data.map((t: any) => ({
+      ...t,
+      partenaire: t.partenaire || { nom: '', ice: '' },
+      vehicule: typeof t.vehicule === 'object' ? t.vehicule : { matricule: t.vehicule }
+    }));
+    setTrajets(data);
+  };
 
-    useEffect(() => {
-      axios.get(`${API}/trajets`).then(res => {
-        const data = res.data.map((t: any) => ({
-          ...t,
-          partenaire: t.partenaire || { nom: '', ice: '' },
-          vehicule: typeof t.vehicule === 'object' ? t.vehicule : { matricule: t.vehicule }
-        }));
-        setTrajets(data);
-      });
 
-      axios.get(`${API}/factures`).then(res => {
-        const factures = res.data.map((f: any) => ({
-          ...f,
-          payee: f.payee ?? false
-        }));
-        setFactures(factures);
 
-        const nums = factures.map((f: Facture) => parseInt(f.numero)).filter(Boolean);
-        const next = Math.max(...nums, 0) + 1;
-        setFormData(prev => ({ ...prev, numeroFacture: `${next.toString().padStart(3, '0')}/2025` }));
-      });
-    }, []);
+   useEffect(() => {
+  fetchTrajets();
+  axios.get(`${API}/factures`).then(res => {
+    const factures = res.data.map((f: any) => ({
+      ...f,
+      payee: f.payee ?? false
+    }));
+    setFactures(factures);
+
+    const nums = factures.map((f: Facture) => parseInt(f.numero)).filter(Boolean);
+    const next = Math.max(...nums, 0) + 1;
+    setFormData(prev => ({ ...prev, numeroFacture: `${next.toString().padStart(3, '0')}/2025` }));
+  });
+}, []);
+
 
     const handleMultipleTrajetSelect = (ids: string[]) => {
       const selected = trajets.filter(t => ids.includes(t._id));
@@ -206,8 +210,10 @@
 
     const deleteFacture = async (id: string) => {
       if (!window.confirm("Supprimer cette facture ?")) return;
-      await axios.delete(`${API}/factures/${id}`);
+      await axios.get(`${API}/factures`).then(res => setFactures(res.data));
       setFactures(prev => prev.filter(f => f._id !== id));
+
+      fetchTrajets();
     };
 
     const toggleStatutPayee = async (facture: Facture) => {
