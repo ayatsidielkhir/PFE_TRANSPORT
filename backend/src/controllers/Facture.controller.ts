@@ -115,12 +115,18 @@ export const getAllFactures = requestHandler(async (_req, res) => {
 });
 
 export const deleteFacture = requestHandler(async (req, res) => {
-  const facture = await Facture.findById(req.params.id);
+  const facture = await Facture.findById(req.params.id).populate('trajetIds');
   if (!facture) return res.status(404).json({ message: 'Facture non trouvée' });
 
+  // Supprimer le fichier PDF de la facture
   const filePath = path.join('/mnt/data', facture.pdfPath || '');
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
+  // Supprimer les trajets associés à cette facture
+  await Trajet.deleteMany({ _id: { $in: facture.trajetIds } });
+
+  // Supprimer la facture
   await Facture.findByIdAndDelete(req.params.id);
-  return res.status(200).json({ message: 'Facture supprimée avec succès' });
+
+  return res.status(200).json({ message: 'Facture et trajets associés supprimés avec succès' });
 });

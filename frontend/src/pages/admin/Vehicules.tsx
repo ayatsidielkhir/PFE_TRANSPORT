@@ -295,6 +295,7 @@
                     <TableCell>{v.nom}</TableCell>
                     <TableCell>{chauffeurs.find(c => c._id === v.chauffeur)?.nom || '—'}</TableCell>
                     <TableCell>{v.matricule}</TableCell>
+                    <TableCell>{v.remorque}</TableCell>
                     <TableCell>{v.type}</TableCell>
                     <TableCell>{v.kilometrage}</TableCell>
                     <TableCell>{v.controle_technique}</TableCell>
