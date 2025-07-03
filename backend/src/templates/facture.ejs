@@ -6,20 +6,30 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 30px;
+      padding: 50px;
       font-size: 14px;
+      position: relative;
+      background-image: url("file://mnt/data/logoMme-.png");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 400px;
+      opacity: 0.98;
     }
 
-    .info {
-      text-align: right;
+    .header {
       margin-bottom: 30px;
-      line-height: 1.5;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .header p {
+      margin: 4px 0;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 30px;
+      margin-top: 20px;
     }
 
     th, td {
@@ -56,13 +66,22 @@
 </head>
 <body>
 
-  <div class="info">
-    <p>Facture N°: <strong><%= data.numeroFacture %></strong></p>
-    <p>CLIENT : <strong><%= data.client %></strong></p>
-    <p>Date : <strong><%= data.date %></strong></p>
-    <p>ICE N° : <strong><%= data.ice %></strong></p>
-    <p>Tracteur : <strong><%= data.tracteur %></strong></p>
-  </div>
+<div class="header">
+  <table style="width: 100%; line-height: 1.7;">
+    <tr>
+      <td><strong>Facture N° :</strong> <%= data.numeroFacture %></td>
+      <td style="text-align: right;"><strong>CLIENT :</strong> <%= data.client %></td>
+    </tr>
+    <tr>
+      <td><strong>Tanger le :</strong> <%= data.date %></td>
+      <td style="text-align: right;"><strong>ICE N° :</strong> <%= data.ice %></td>
+    </tr>
+    <tr>
+      <td><strong>Tracteur :</strong> <%= data.tracteur %></td>
+    </tr>
+  </table>
+</div>
+
 
   <table>
     <thead>
@@ -92,10 +111,11 @@
       <td>Total en DH HT</td>
       <td><%= data.totalHT.toFixed(2) %></td>
     </tr>
-    <tr>
-      <td>TVA 0%</td>
-      <td>0,00</td>
+   <tr>
+      <td>TVA <%= data.tva %>%</td>
+      <td><%= (data.totalHT * (data.tva / 100)).toFixed(2) %></td>
     </tr>
+
     <tr>
       <td>Total en DH TTC</td>
       <td><%= data.totalTTC.toFixed(2) %></td>
