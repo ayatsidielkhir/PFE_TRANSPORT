@@ -46,6 +46,7 @@ interface Trajet {
   distanceKm: number;
   consommationL: number;
   consommationMAD?: number;
+  remorque?: string;
   importExport?: 'import' | 'export';
 }
 
@@ -58,7 +59,7 @@ const TrajetsPage: React.FC = () => {
   const [form, setForm] = useState<Trajet>({
     depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '',
     distanceKm: 0, consommationL: 0, consommationMAD: 0,
-    partenaire: '', importExport: undefined
+    partenaire: '', importExport: undefined , remorque: ''
   });
   const [filters, setFilters] = useState({ mois: '', partenaire: '' });
   const [page, setPage] = useState(1);
@@ -87,7 +88,9 @@ const TrajetsPage: React.FC = () => {
       partenaire: t.partenaire && typeof t.partenaire === 'object' ? t.partenaire._id : t.partenaire,
     }));
 
-    setTrajets(trajets);
+    setTrajets(
+      trajets.sort((a: Trajet, b: Trajet) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    );
     setChauffeurs(chaufRes.data);
     setVehicules(vehicRes.data);
     setPartenaires(partRes.data);
@@ -173,9 +176,10 @@ const TrajetsPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                {['Itinéraire', 'Date', 'Chauffeur', 'Véhicule', 'Distance', 'Conso. L', 'Conso. MAD', 'Partenaire', 'Type', 'Actions'].map(h => (
+                  {['Itinéraire', 'Date', 'Chauffeur', 'Véhicule', 'Remorque', 'Trajet', 'Partenaire', 'Type', 'Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
                 ))}
+
               </TableRow>
             </TableHead>
             <TableBody>
@@ -190,9 +194,17 @@ const TrajetsPage: React.FC = () => {
                     <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
                     <TableCell>{getChauffeurName(t.chauffeur)}</TableCell>
                     <TableCell>{getVehiculeMatricule(t.vehicule)}</TableCell>
-                    <TableCell>{t.distanceKm} km</TableCell>
-                    <TableCell>{t.consommationL} L</TableCell>
-                    <TableCell>{t.consommationMAD} MAD</TableCell>
+                    <TableCell>{t.remorque}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">{t.distanceKm} km</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {t.consommationL} L 
+                          <br />
+                          {t.consommationMAD} MAD
+                        </Typography>
+                      </Box>
+                    </TableCell>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={1}>
                           {part?.logo && (
@@ -300,6 +312,7 @@ const TrajetsPage: React.FC = () => {
                 <MenuItem key={c._id} value={c._id}>{`${c.nom} ${c.prenom}`}</MenuItem>
               ))}
             </Select>
+           
             <Select
               name="vehicule"
               value={form.vehicule}
@@ -313,6 +326,16 @@ const TrajetsPage: React.FC = () => {
                 <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
               ))}
             </Select>
+
+            <TextField
+              name="remorque"
+              label="Remorque"
+              value={form.remorque}
+              onChange={handleInputChange}
+              fullWidth
+              sx={{ flex: '1 1 45%' }}
+            />
+
             <TextField
               name="distanceKm"
               label="Distance (km)"

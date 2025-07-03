@@ -1,88 +1,96 @@
-  // ✅ FacturesPage.tsx – Version complète stylisée et fonctionnelle corrigée
-  import React, { useEffect, useState } from 'react';
-  import {
-    Box, Button, TextField, Typography, Paper, MenuItem, Select, Table, TableHead,
-    TableBody, TableRow, TableCell, Pagination, IconButton, Tooltip, Snackbar,
-    Alert, Drawer, Fab, Chip,Divider
-  } from '@mui/material';
-  import {
-    PictureAsPdf, Delete, FileDownload, Add, Edit,
-    FactCheck, Savings, CheckCircle, Cancel
-  } from '@mui/icons-material';
-  import axios from 'axios';
-  import * as XLSX from 'xlsx';
-  import AdminLayout from '../../components/Layout';
-  import { useTheme } from '@mui/material/styles';
-  import useMediaQuery from '@mui/material/useMediaQuery';
+// ✅ FacturesPage.tsx – Version finale corrigée avec filtres fonctionnels
+import React, { useEffect, useState } from 'react';
+import {
+  Box, Button, TextField, Typography, Paper, MenuItem, Select, Table, TableHead,
+  TableBody, TableRow, TableCell, Pagination, IconButton, Tooltip, Snackbar,
+  Alert, Drawer, Fab, Chip, Divider
+} from '@mui/material';
+import {
+  PictureAsPdf, Delete, FileDownload, Add, Edit,
+  FactCheck, Savings, CheckCircle, Cancel
+} from '@mui/icons-material';
+import axios from 'axios';
+import * as XLSX from 'xlsx';
+import AdminLayout from '../../components/Layout';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useMemo } from 'react';
 
 
-  const API = process.env.REACT_APP_API_URL;
+const API = process.env.REACT_APP_API_URL;
 
-  interface Facture {
-    _id: string;
-    numero: string;
-    client: string;
-    date: string;
-    totalTTC: number;
-    pdfPath: string;
-    payee: boolean;
-    trajetIds?: string[];
-    montantsHT?: number[];
-    remorques?: string[];
-    tracteur?: string;
-    ice?: string;
-  }
+interface Facture {
+  _id: string;
+  numero: string;
+  client: string;
+  date: string;
+  totalTTC: number;
+  pdfPath: string;
+  payee: boolean;
+  trajetIds?: string[];
+  montantsHT?: number[];
+  remorques?: string[];
+  tracteur?: string;
+  ice?: string;
+}
 
-  interface Trajet {
-    _id: string;
-    depart: string;
-    arrivee: string;
-    date: string;
-    vehicule: { matricule: string };
-    partenaire: { _id: string; nom: string; ice: string };
-  }
+interface Trajet {
+  _id: string;
+  depart: string;
+  arrivee: string;
+  date: string;
+  vehicule: { matricule: string };
+  partenaire: { _id: string; nom: string; ice: string };
+}
+
+const FacturesPage: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const [trajets, setTrajets] = useState<Trajet[]>([]);
+  const [factures, setFactures] = useState<Facture[]>([]);
+  const [selectedTrajets, setSelectedTrajets] = useState<Trajet[]>([]);
+  const [formData, setFormData] = useState({
+    numeroFacture: '', client: '', ice: '', tracteur: '',
+    date: new Date().toISOString().slice(0, 10), tva: 10,
+    montantsHT: [] as number[], remorques: [] as string[]
+  });
+  const [editId, setEditId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [filters, setFilters] = useState({ client: '', date: '' });
+  const [page, setPage] = useState(1);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const perPage = 5;
+
+const usedTrajetIds = useMemo(() => {
+  return new Set(
+    factures.flatMap(f => Array.isArray(f.trajetIds) ? f.trajetIds : [])
+  );
+}, [factures]);
+
+ const trajetsVisibles = useMemo(() => {
+  return trajets.filter(
+    t => !usedTrajetIds.has(t._id) || selectedTrajets.some(sel => sel._id === t._id)
+  );
+}, [trajets, usedTrajetIds, selectedTrajets]);
 
 
+  useEffect(() => {
+    console.log("📦 Factures :", factures);
+    console.log("🚛 Trajets récupérés :", trajets.map(t => t._id));
+    console.log("✅ Trajets visibles dans le Select :", trajetsVisibles.map(t => `${t._id} – ${t.depart} ➜ ${t.arrivee}`));
+  }, [factures, trajets]);
 
-  const FacturesPage: React.FC = () => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('fr-FR');
+  const filtered = factures.filter(f =>
+    (!filters.client || f.client.toLowerCase().includes(filters.client.toLowerCase())) &&
+    (!filters.date || f.date.startsWith(filters.date))
+  );
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  const totalHT = formData.montantsHT.reduce((sum, m) => sum + (m || 0), 0);
+  const totalTTC = totalHT + totalHT * ((formData.tva || 0) / 100);
 
-    const [trajets, setTrajets] = useState<Trajet[]>([]);
-    const [factures, setFactures] = useState<Facture[]>([]);
-    const [selectedTrajets, setSelectedTrajets] = useState<Trajet[]>([]);
-    const [formData, setFormData] = useState({
-      numeroFacture: '', client: '', ice: '', tracteur: '',
-      date: new Date().toISOString().slice(0, 10), tva: 10,
-      montantsHT: [] as number[], remorques: [] as string[]
-    });
-    const [editId, setEditId] = useState<string | null>(null);
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const [filters, setFilters] = useState({ client: '', date: '' });
-    const [page, setPage] = useState(1);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const perPage = 5;
-    const usedTrajetIds = new Set(factures.flatMap(f => f.trajetIds || []));
-    console.log("🧠 usedTrajetIds :", Array.from(usedTrajetIds));
-    console.log("📦 Tous les trajets :", trajets.map(t => t._id));
-    console.log("✅ Trajets visibles dans le Select :", trajets
-      .filter(t => !usedTrajetIds.has(t._id))
-      .map(t => `${t.depart} ➜ ${t.arrivee}`)
-    );
-
-
-    const formatDate = (d: string) => new Date(d).toLocaleDateString('fr-FR');
-
-    const filtered = factures.filter(f =>
-      (!filters.client || f.client.toLowerCase().includes(filters.client.toLowerCase())) &&
-      (!filters.date || f.date.startsWith(filters.date))
-    );
-    const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-
-    const totalHT = formData.montantsHT.reduce((sum, m) => sum + (m || 0), 0);
-    const totalTTC = totalHT + totalHT * ((formData.tva || 0) / 100);
-
-    const fetchTrajets = async () => {
+  const fetchTrajets = async () => {
     const res = await axios.get(`${API}/trajets`);
     const data = res.data.map((t: any) => ({
       ...t,
@@ -92,53 +100,20 @@
     setTrajets(data);
   };
 
+  useEffect(() => {
+    fetchTrajets();
+    axios.get(`${API}/factures`).then(res => {
+      const factures = res.data.map((f: any) => ({
+        ...f,
+        payee: f.payee ?? false
+      }));
+      setFactures(factures);
 
-
-   useEffect(() => {
-  fetchTrajets();
-  axios.get(`${API}/factures`).then(res => {
-    const factures = res.data.map((f: any) => ({
-      ...f,
-      payee: f.payee ?? false
-    }));
-    setFactures(factures);
-
-    const nums = factures.map((f: Facture) => parseInt(f.numero)).filter(Boolean);
-    const next = Math.max(...nums, 0) + 1;
-    setFormData(prev => ({ ...prev, numeroFacture: `${next.toString().padStart(3, '0')}/2025` }));
-  });
-  console.log(
-  "🔍 Trajets réels récupérés :", trajets.map(t => t._id),
-  "\n🧠 Trajets filtrés (non utilisés) :",
-  trajets
-    .filter(t => !usedTrajetIds.has(t._id))
-    .map(t => `${t._id} – ${t.depart} ➜ ${t.arrivee}`)
-);
-
-}, []);
-
-useEffect(() => {
-  if (trajets.length === 0) return;
-
-  const usedTrajetIds = new Set(
-    factures.flatMap(f => (Array.isArray(f.trajetIds) ? f.trajetIds : []))
-  );
-useEffect(() => {
-  const usedIds = new Set(factures.flatMap(f => f.trajetIds || []));
-  const visibles = trajets.filter(t => !usedIds.has(t._id));
-  console.log("📦 Factures réelles :", factures);
-  console.log("🧠 Trajets visibles dans le Select :", visibles.map(t => t._id));
-}, [factures, trajets]);
-
-  console.log(
-    "🔍 Trajets réels récupérés :", trajets.map(t => t._id),
-    "\n🧠 Trajets filtrés (non utilisés) :",
-    trajets
-      .filter(t => !usedTrajetIds.has(t._id))
-      .map(t => `${t._id} – ${t.depart} ➜ ${t.arrivee}`)
-  );
-}, [trajets, factures]);
-
+      const nums = factures.map((f: Facture) => parseInt(f.numero)).filter(Boolean);
+      const next = Math.max(...nums, 0) + 1;
+      setFormData(prev => ({ ...prev, numeroFacture: `${next.toString().padStart(3, '0')}/2025` }));
+    });
+  }, []);
 
 
 

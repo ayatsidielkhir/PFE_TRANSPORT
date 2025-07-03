@@ -12,8 +12,8 @@ const FactureSchema = new mongoose.Schema({
   pdfPath: String,
   payee: { type: Boolean, default: false },
   trajetIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Trajet' }],
-  chargement: String,
-  dechargement: String,
+  //chargement: String,
+  //dechargement: String,
   montantsHT: [Number],
   remorques: [String],
 });

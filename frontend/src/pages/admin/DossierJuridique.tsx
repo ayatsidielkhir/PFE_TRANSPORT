@@ -229,64 +229,66 @@ const handleUpload = async () => {
 
         <Dialog open={!!previewFile} onClose={() => setPreviewFile(null)} maxWidth="md" fullWidth>
           <DialogTitle>Prévisualisation</DialogTitle>
-          <DialogContent>
-           {previewFile && previewFile.match(/\.pdf$/i) ? (
-              <Box>
-                <Box
-                  component="iframe"
-                  src={previewFile}
-                  width="100%"
-                  height="600px"
-                  style={{ border: 'none' }}
-                />
-                <Box mt={2} textAlign="center">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    href={previewFile}
-                    download
-                    target="_blank"
-                    fullWidth
-                    sx={{
-                      textTransform: 'none',
-                      fontWeight: 'bold',
-                      fontSize: 15,
-                      maxWidth: 300,
-                      mx: 'auto'
-                    }}
-                  >
-                    Télécharger le fichier
-                  </Button>
-                </Box>
-              </Box>
-            ) : (
-              <Box display="flex" flexDirection="column" alignItems="center">
-                <Box
-                  component="img"
-                  src={previewFile || ''}
-                  sx={{
-                    maxHeight: '80vh',
-                    maxWidth: '100%',
-                    objectFit: 'contain',
-                    mb: 2,
-                    borderRadius: 2,
-                    boxShadow: 2
-                  }}
-                />
+                <DialogContent sx={{ p: 2 }}>
+          {previewFile && previewFile.match(/\.pdf$/i) ? (
+            <Box>
+              <Box
+                component="iframe"
+                src={previewFile}
+                sx={{
+                  width: '100%',
+                  height: '80vh',
+                  border: 'none',
+                }}
+              />
+              <Box mt={2} textAlign="center">
                 <Button
                   variant="contained"
                   color="primary"
-                  href={previewFile || '#'}
+                  href={previewFile}
                   download
                   target="_blank"
-                  sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                  fullWidth
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 'bold',
+                    fontSize: 15,
+                    maxWidth: 300,
+                    mx: 'auto',
+                  }}
                 >
-                  Télécharger l’image
+                  Télécharger le fichier
                 </Button>
               </Box>
-            )}
+            </Box>
+          ) : (
+            <Box display="flex" flexDirection="column" alignItems="center">
+              <Box
+                component="img"
+                src={previewFile || ''}
+                sx={{
+                  maxHeight: '80vh',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  mb: 2,
+                  borderRadius: 2,
+                  boxShadow: 2,
+                }}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                href={previewFile || '#'}
+                download
+                target="_blank"
+                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              >
+                Télécharger l’image
+              </Button>
+            </Box>
+          )}
+        </DialogContent>
 
-          </DialogContent>
         </Dialog>
       </Box>
     </Layout>

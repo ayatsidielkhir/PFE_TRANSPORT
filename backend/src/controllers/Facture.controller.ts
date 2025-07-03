@@ -1,131 +1,146 @@
- import { Request, Response, NextFunction } from 'express';
-import path from 'path';
-import fs from 'fs';
-import { chromium } from 'playwright';
-import ejs from 'ejs';
-import Facture from '../models/facture';
-import Trajet from '../models/trajet.model';
+  import { Request, Response, NextFunction } from 'express';
+  import path from 'path';
+  import fs from 'fs';
+  import { chromium } from 'playwright';
+  import ejs from 'ejs';
+  import Facture from '../models/facture';
+  import Trajet from '../models/trajet.model';
 
 
 
-export const requestHandler = (
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
-) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    fn(req, res, next).catch(next);
-  };
-};
-
-// ✅ Générer une facture manuellement
-const generate = async (req: Request, res: Response): Promise<Response> => {
-  let {
-    numeroFacture, client, ice, tracteur, date,
-    trajetIds, remorques, montantsHT
-  } = req.body;
-
-  const trajets = await Trajet.find({ _id: { $in: trajetIds } }).populate('vehicule partenaire');
-  if (!trajets.length) return res.status(404).json({ message: 'Aucun trajet trouvé' });
-
-  const partenaire = trajets[0].partenaire as any;
-  if (!ice && partenaire?.ice) ice = partenaire.ice;
-  if (!client && partenaire?.nom) client = partenaire.nom;
-
-  if (!ice || !client) {
-    return res.status(400).json({ message: 'Le champ ICE ou Client est manquant.' });
-  }
-
-  let totalHT = 0;
-  const lignes = trajets.map((trajet, index) => {
-    const montant = Number(montantsHT?.[index] || 0);
-    totalHT += montant;
-    return {
-      date: trajet.date,
-      chargement: trajet.depart,
-      dechargement: trajet.arrivee,
-      totalHT: montant,
-      remorque: remorques?.[index] || ''
+  export const requestHandler = (
+    fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  ) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      fn(req, res, next).catch(next);
     };
-  });
-
-  const tva = totalHT * 0.1;
-  const totalTTC = totalHT + tva;
-
-  const factureData = {
-    numeroFacture, client, ice, tracteur, date,
-    totalHT, tva, totalTTC, lignes
   };
 
-  const html = await ejs.renderFile(
-    path.join(__dirname, '../templates/facture.ejs'),
-    { data: factureData }
-  );
+  // ✅ Générer une facture manuellement
+  const generate = async (req: Request, res: Response): Promise<Response> => {
+    let {
+      numeroFacture, client, ice, tracteur, date,
+      trajetIds, remorques, montantsHT
+    } = req.body;
 
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-  const page = await (await browser.newContext()).newPage();
-  await page.setContent(html, { waitUntil: 'load' });
+    const trajets = await Trajet.find({ _id: { $in: trajetIds } }).populate('vehicule partenaire');
+    if (!trajets.length) return res.status(404).json({ message: 'Aucun trajet trouvé' });
 
-  const fileName = `facture_${numeroFacture.replace('/', '-')}_${Date.now()}.pdf`;
-  const outputDir = '/mnt/data/uploads/factures';
-  const outputPath = path.join(outputDir, fileName);
-  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+    const partenaire = trajets[0].partenaire as any;
+    if (!ice && partenaire?.ice) ice = partenaire.ice;
+    if (!client && partenaire?.nom) client = partenaire.nom;
 
-  await page.pdf({ path: outputPath, format: 'A4' });
-  await browser.close();
+    if (!ice || !client) {
+      return res.status(400).json({ message: 'Le champ ICE ou Client est manquant.' });
+    }
 
-  const facture = new Facture({
-    numero: numeroFacture,
-    client,
-    ice,
-    tracteur,
-    date,
-    totalHT,
-    tva,
-    totalTTC,
-    trajetIds: trajets.map(t => t._id),
-    pdfPath: `/uploads/factures/${fileName}`,
-    payee: false,
-    chargement: trajets[0].depart,
-    dechargement: trajets[0].arrivee,
-    montantsHT,
-    remorques
+    let totalHT = 0;
+  const lignes = trajets.map((trajet, index) => {
+  const montant = Number(montantsHT?.[index] || 0);
+  totalHT += montant;
+  return {
+    date: trajet.date,
+    chargement: trajet.depart,
+    dechargement: trajet.arrivee,
+    remorque: remorques?.[index] || '',
+    totalHT: montant
+  };
+});
+
+    console.log('✅ Trajets reçus :', trajets.length);
+    console.log('✅ Lignes générées pour PDF :', lignes);
+    
+
+    const tva = totalHT * 0.1;
+    const totalTTC = totalHT + tva;
+
+    const factureData = {
+      numeroFacture,
+      client,
+      ice,
+      tracteur,
+      date,
+      totalHT,
+      tva,
+      totalTTC,
+      lignes // ✅ très important
+    };
+
+
+
+
+
+    const html = await ejs.renderFile(
+      path.join(__dirname, '../templates/facture.ejs'),
+      { data: factureData }
+    );
+
+    const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    const page = await (await browser.newContext()).newPage();
+    await page.setContent(html, { waitUntil: 'load' });
+
+    const fileName = `facture_${numeroFacture.replace('/', '-')}_${Date.now()}.pdf`;
+    const outputDir = '/mnt/data/uploads/factures';
+    const outputPath = path.join(outputDir, fileName);
+    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+    await page.pdf({ path: outputPath, format: 'A4' });
+    await browser.close();
+
+    const facture = new Facture({
+      numero: numeroFacture,
+      client,
+      ice,
+      tracteur,
+      date,
+      totalHT,
+      tva,
+      totalTTC,
+      trajetIds: trajets.map(t => t._id),
+      pdfPath: `/uploads/factures/${fileName}`,
+      payee: false,
+      chargement: trajets[0].depart,
+      dechargement: trajets[0].arrivee,
+      montantsHT,
+      remorques
+    });
+
+    await facture.save();
+
+    return res.status(201).json({
+      message: 'Facture générée',
+      url: facture.pdfPath,
+      _id: facture._id,
+      payee: facture.payee
+    });
+  };
+
+  // ✅ Exporté avec le handler
+  export const generateManualFacture = requestHandler(generate);
+
+  export const updateFacture = requestHandler(async (req, res) => {
+    const updated = await Facture.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Facture non trouvée' });
+    return res.status(200).json(updated);
   });
 
-  await facture.save();
-
-  return res.status(201).json({
-    message: 'Facture générée',
-    url: facture.pdfPath,
-    _id: facture._id,
-    payee: facture.payee
+  export const getAllFactures = requestHandler(async (_req, res) => {
+    const factures = await Facture.find().sort({ date: -1 });
+    return res.status(200).json(factures);
   });
-};
 
-// ✅ Exporté avec le handler
-export const generateManualFacture = requestHandler(generate);
+  export const deleteFacture = requestHandler(async (req, res) => {
+    const facture = await Facture.findById(req.params.id);
+    if (!facture) return res.status(404).json({ message: 'Facture non trouvée' });
 
-export const updateFacture = requestHandler(async (req, res) => {
-  const updated = await Facture.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  if (!updated) return res.status(404).json({ message: 'Facture non trouvée' });
-  return res.status(200).json(updated);
-});
+    const filePath = path.join('/mnt/data', facture.pdfPath || '');
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-export const getAllFactures = requestHandler(async (_req, res) => {
-  const factures = await Facture.find().sort({ date: -1 });
-  return res.status(200).json(factures);
-});
+    await Facture.findByIdAndDelete(req.params.id);
 
-export const deleteFacture = requestHandler(async (req, res) => {
-  const facture = await Facture.findById(req.params.id);
-  if (!facture) return res.status(404).json({ message: 'Facture non trouvée' });
+    // ⏱️ Attendre brièvement pour que la suppression soit reflétée
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-  const filePath = path.join('/mnt/data', facture.pdfPath || '');
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-
-  await Facture.findByIdAndDelete(req.params.id);
-
-  // ⏱️ Attendre brièvement pour que la suppression soit reflétée
-  await new Promise(resolve => setTimeout(resolve, 300));
-
-  return res.status(200).json({ message: 'Facture supprimée' });
-});
+    return res.status(200).json({ message: 'Facture supprimée' });
+  });
 

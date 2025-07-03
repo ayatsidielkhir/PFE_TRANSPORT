@@ -274,7 +274,7 @@
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f1f8ff' }}>
-                  {['Photo', 'Nom', 'Chauffeur', 'Matricule','Remorque' ,'Type', 'Km', 'CT','Documents', 'Actions'].map(h => (
+                  {['Photo', 'Nom', 'Chauffeur', 'Matricule' ,'Type', 'Km', 'CT','Documents', 'Actions'].map(h => (
                     <TableCell key={h} sx={{ fontWeight: 'bold', color: '#2D2D90' }}>{h}</TableCell>
                   ))}
 
@@ -295,7 +295,6 @@
                     <TableCell>{v.nom}</TableCell>
                     <TableCell>{chauffeurs.find(c => c._id === v.chauffeur)?.nom || '—'}</TableCell>
                     <TableCell>{v.matricule}</TableCell>
-                    <TableCell>{v.remorque}</TableCell>
                     <TableCell>{v.type}</TableCell>
                     <TableCell>{v.kilometrage}</TableCell>
                     <TableCell>{v.controle_technique}</TableCell>
