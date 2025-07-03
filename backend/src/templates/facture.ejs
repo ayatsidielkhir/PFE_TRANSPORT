@@ -8,28 +8,26 @@
       font-family: Arial, sans-serif;
       padding: 50px;
       font-size: 14px;
-      position: relative;
-      background-image: url("file://mnt/data/logoMme-.png");
+      background-image: url("file:///mnt/data/logoMme-.png");
       background-repeat: no-repeat;
       background-position: center;
       background-size: 400px;
-      opacity: 0.98;
     }
 
-    .header {
+    .header table {
+      width: 100%;
+      line-height: 1.7;
       margin-bottom: 30px;
-      display: flex;
-      justify-content: space-between;
     }
 
-    .header p {
-      margin: 4px 0;
+    .header td {
+      vertical-align: top;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 10px;
     }
 
     th, td {
@@ -51,6 +49,7 @@
     .totaux td {
       padding: 6px 10px;
       font-weight: bold;
+      border: 1px solid #000;
     }
 
     .totaux td:last-child {
@@ -66,23 +65,24 @@
 </head>
 <body>
 
-<div class="header">
-  <table style="width: 100%; line-height: 1.7;">
-    <tr>
-      <td><strong>Facture N° :</strong> <%= data.numeroFacture %></td>
-      <td style="text-align: right;"><strong>CLIENT :</strong> <%= data.client %></td>
-    </tr>
-    <tr>
-      <td><strong>Tanger le :</strong> <%= data.date %></td>
-      <td style="text-align: right;"><strong>ICE N° :</strong> <%= data.ice %></td>
-    </tr>
-    <tr>
-      <td><strong>Tracteur :</strong> <%= data.tracteur %></td>
-    </tr>
-  </table>
-</div>
+  <!-- ✅ ENTÊTE ALIGNÉE EN DEUX COLONNES -->
+  <div class="header">
+    <table>
+      <tr>
+        <td><strong>Facture N° :</strong> <%= data.numeroFacture %></td>
+        <td style="text-align: right;"><strong>CLIENT :</strong> <%= data.client %></td>
+      </tr>
+      <tr>
+        <td><strong>Tanger le :</strong> <%= data.date %></td>
+        <td style="text-align: right;"><strong>ICE N° :</strong> <%= data.ice %></td>
+      </tr>
+      <tr>
+        <td><strong>Tracteur :</strong> <%= data.tracteur %></td>
+      </tr>
+    </table>
+  </div>
 
-
+  <!-- ✅ TABLEAU DES LIGNES -->
   <table>
     <thead>
       <tr>
@@ -96,7 +96,7 @@
     <tbody>
       <% data.lignes.forEach(ligne => { %>
         <tr>
-          <td><%= new Date(ligne.date).toLocaleDateString() %></td>
+          <td><%= new Date(ligne.date).toLocaleDateString('fr-FR') %></td>
           <td><%= ligne.remorque %></td>
           <td><%= ligne.chargement %></td>
           <td><%= ligne.dechargement %></td>
@@ -106,22 +106,23 @@
     </tbody>
   </table>
 
+  <!-- ✅ TOTAUX CALCULÉS -->
   <table class="totaux">
     <tr>
       <td>Total en DH HT</td>
       <td><%= data.totalHT.toFixed(2) %></td>
     </tr>
-   <tr>
+    <tr>
       <td>TVA <%= data.tva %>%</td>
-      <td><%= (data.totalHT * (data.tva / 100)).toFixed(2) %></td>
+      <td><%= (data.totalHT * data.tva / 100).toFixed(2) %></td>
     </tr>
-
     <tr>
       <td>Total en DH TTC</td>
       <td><%= data.totalTTC.toFixed(2) %></td>
     </tr>
   </table>
 
+  <!-- ✅ LIGNE D'ARRÊTÉE -->
   <p style="margin-top: 30px;"><strong>Arrêtée la présente facture à la somme de :</strong></p>
 
   <div class="signature">
