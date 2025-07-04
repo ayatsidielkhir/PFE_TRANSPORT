@@ -1,447 +1,447 @@
-// ✅ TrajetsPage.tsx - Version améliorée avec Drawer compact, filtres stylisés, et affichage correct
+  // ✅ TrajetsPage.tsx - Version améliorée avec Drawer compact, filtres stylisés, et affichage correct
 
-import React, { useEffect, useState } from 'react';
-import {
-  Box, Button, Drawer, TextField, Table, TableBody, TableCell,
-  TableHead, TableRow, Select, MenuItem, Typography, IconButton,
-  Tooltip, Pagination, Avatar, useMediaQuery, Paper
-} from '@mui/material';
-import { Add, Edit, Delete, Person } from '@mui/icons-material';
-import axios from 'axios';
-import AdminLayout from '../../components/Layout';
-import { useTheme } from '@mui/material/styles';
-import { Route } from '@mui/icons-material';
+  import React, { useEffect, useState } from 'react';
+  import {
+    Box, Button, Drawer, TextField, Table, TableBody, TableCell,
+    TableHead, TableRow, Select, MenuItem, Typography, IconButton,
+    Tooltip, Pagination, Avatar, useMediaQuery, Paper
+  } from '@mui/material';
+  import { Add, Edit, Delete, Person } from '@mui/icons-material';
+  import axios from 'axios';
+  import AdminLayout from '../../components/Layout';
+  import { useTheme } from '@mui/material/styles';
+  import { Route } from '@mui/icons-material';
 
-const API = process.env.REACT_APP_API_URL;
-
-
+  const API = process.env.REACT_APP_API_URL;
 
 
 
-interface Chauffeur {
-  _id: string;
-  nom: string;
-  prenom: string;
-}
 
-interface Vehicule {
-  _id: string;
-  matricule: string;
-}
 
-interface Partenaire {
-  _id: string;
-  nom: string;
-  logo?: string;
-}
+  interface Chauffeur {
+    _id: string;
+    nom: string;
+    prenom: string;
+  }
 
-interface Trajet {
-  _id?: string;
-  depart: string;
-  arrivee: string;
-  date: string;
-  chauffeur: string;
-  vehicule: string;
-  partenaire?: string;
-  distanceKm: number;
-  consommationL: number;
-  consommationMAD?: number;
-  remorque?: string;
-  importExport?: 'import' | 'export';
-}
+  interface Vehicule {
+    _id: string;
+    matricule: string;
+  }
 
-const TrajetsPage: React.FC = () => {
-  const [trajets, setTrajets] = useState<Trajet[]>([]);
-  const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
-  const [vehicules, setVehicules] = useState<Vehicule[]>([]);
-  const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [form, setForm] = useState<Trajet>({
-    depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '',
-    distanceKm: 0, consommationL: 0, consommationMAD: 0,
-    partenaire: '', importExport: undefined , remorque: ''
-  });
-  const [filters, setFilters] = useState({ mois: '', partenaire: '' });
-  const [page, setPage] = useState(1);
-  const perPage = 5;
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  interface Partenaire {
+    _id: string;
+    nom: string;
+    logo?: string;
+  }
 
-  useEffect(() => { fetchData(); }, [filters]);
+  interface Trajet {
+    _id?: string;
+    depart: string;
+    arrivee: string;
+    date: string;
+    chauffeur: string;
+    vehicule: string;
+    partenaire?: string;
+    distanceKm: number;
+    consommationL: number;
+    consommationMAD?: number;
+    remorque?: string;
+    importExport?: 'import' | 'export';
+  }
 
-    const fetchData = async () => {
-      const query = new URLSearchParams();
-      if (filters.mois) query.append('mois', filters.mois);
-      if (filters.partenaire) query.append('partenaire', filters.partenaire);
+  const TrajetsPage: React.FC = () => {
+    const [trajets, setTrajets] = useState<Trajet[]>([]);
+    const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
+    const [vehicules, setVehicules] = useState<Vehicule[]>([]);
+    const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [form, setForm] = useState<Trajet>({
+      depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '',
+      distanceKm: 0, consommationL: 0, consommationMAD: 0,
+      partenaire: '', importExport: undefined , remorque: ''
+    });
+    const [filters, setFilters] = useState({ mois: '', partenaire: '' });
+    const [page, setPage] = useState(1);
+    const perPage = 5;
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-      const [trajetRes, chaufRes, vehicRes, partRes] = await Promise.all([
-        axios.get(`${API}/trajets?${query.toString()}`),
-        axios.get(`${API}/chauffeurs`),
-        axios.get(`${API}/vehicules`),
-        axios.get(`${API}/partenaires`)
-      ]);
+    useEffect(() => { fetchData(); }, [filters]);
 
-    const trajets = trajetRes.data.map((t: any) => ({
-      ...t,
-      chauffeur: t.chauffeur && typeof t.chauffeur === 'object' ? t.chauffeur._id : t.chauffeur,
-      vehicule: t.vehicule && typeof t.vehicule === 'object' ? t.vehicule._id : t.vehicule,
-      partenaire: t.partenaire && typeof t.partenaire === 'object' ? t.partenaire._id : t.partenaire,
-    }));
+      const fetchData = async () => {
+        const query = new URLSearchParams();
+        if (filters.mois) query.append('mois', filters.mois);
+        if (filters.partenaire) query.append('partenaire', filters.partenaire);
 
-    setTrajets(
-      trajets.sort((a: Trajet, b: Trajet) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    );
-    setChauffeurs(chaufRes.data);
-    setVehicules(vehicRes.data);
-    setPartenaires(partRes.data);
+        const [trajetRes, chaufRes, vehicRes, partRes] = await Promise.all([
+          axios.get(`${API}/trajets?${query.toString()}`),
+          axios.get(`${API}/chauffeurs`),
+          axios.get(`${API}/vehicules`),
+          axios.get(`${API}/partenaires`)
+        ]);
+
+      const trajets = trajetRes.data.map((t: any) => ({
+        ...t,
+        chauffeur: t.chauffeur && typeof t.chauffeur === 'object' ? t.chauffeur._id : t.chauffeur,
+        vehicule: t.vehicule && typeof t.vehicule === 'object' ? t.vehicule._id : t.vehicule,
+        partenaire: t.partenaire && typeof t.partenaire === 'object' ? t.partenaire._id : t.partenaire,
+      }));
+
+      setTrajets(
+        trajets.sort((a: Trajet, b: Trajet) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      );
+      setChauffeurs(chaufRes.data);
+      setVehicules(vehicRes.data);
+      setPartenaires(partRes.data);
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSelectChange = (e: any) => {
+      const { name, value } = e.target;
+      setForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async () => {
+    const url = form._id
+      ? `${API}/trajets/${form._id}`
+      : `${API}/trajets`;
+    const method = form._id ? 'put' : 'post';
+
+    await axios[method](url, form);
+    setDrawerOpen(false);
+    fetchData();
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
 
-  const handleSelectChange = (e: any) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+    const getChauffeurName = (id?: string) => {
+      if (!id) return '';
+      const ch = chauffeurs.find(c => c._id === id);
+      return ch ? `${ch.nom} ${ch.prenom}` : '';
+    };
 
-  const handleSubmit = async () => {
-  const url = form._id
-    ? `${API}/trajets/${form._id}`
-    : `${API}/trajets`;
-  const method = form._id ? 'put' : 'post';
+    const getVehiculeMatricule = (id?: string) => {
+      if (!id) return '';
+      const v = vehicules.find(v => v._id === id);
+      return v ? v.matricule : '';
+    };
 
-  await axios[method](url, form);
-  setDrawerOpen(false);
-  fetchData();
-};
+    const getPartenaire = (id?: string) => partenaires.find(p => p._id === id);
 
+    const paginated = trajets.slice((page - 1) * perPage, page * perPage);
 
-  const getChauffeurName = (id?: string) => {
-    if (!id) return '';
-    const ch = chauffeurs.find(c => c._id === id);
-    return ch ? `${ch.nom} ${ch.prenom}` : '';
-  };
+    return (
+      <AdminLayout>
+        <Box p={3} maxWidth="1400px" mx="auto">
+            <Typography variant="h5" fontWeight="bold" color="#001e61" mb={3} display="flex" alignItems="center" gap={1}>
+              <Route sx={{ fontSize: 32 }} />
+              Gestion des Trajets
+            </Typography>
 
-  const getVehiculeMatricule = (id?: string) => {
-    if (!id) return '';
-    const v = vehicules.find(v => v._id === id);
-    return v ? v.matricule : '';
-  };
+          <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+            <Box display="flex" gap={2} flexWrap="wrap">
+              <TextField
+                  type="month"
+                  size="small"
+                  label="Filtrer par mois"
+                  value={filters.mois}
+                  onChange={(e) => setFilters({ ...filters, mois: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{
+                    minWidth: 200,
+                    backgroundColor: 'white',
+                    borderRadius: 1,
+                    '& input': {
+                      fontFamily: 'inherit',
+                      padding: '8.5px 14px',
+                      letterSpacing: '0.03em',
+                    }
+                  }}
+                />
 
-  const getPartenaire = (id?: string) => partenaires.find(p => p._id === id);
+              <Select size="small" value={filters.partenaire} onChange={(e) => setFilters({ ...filters, partenaire: e.target.value })} displayEmpty sx={{ minWidth: 200, backgroundColor: 'white', borderRadius: 1 }}>
+                <MenuItem value="">Tous les partenaires</MenuItem>
+                {partenaires.map(p => (<MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>))}
+              </Select>
+            </Box>
+            <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: '#001e61', '&:hover': { backgroundColor: '#001447' }, borderRadius: 2, fontWeight: 'bold', height: 40 }} onClick={async () => { await fetchData(); setForm({ depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '',remorque: '', distanceKm: 0, consommationL: 0, consommationMAD: 0, partenaire: '', importExport: undefined }); setDrawerOpen(true); }}>Ajouter Trajet</Button>
+          </Paper>
 
-  const paginated = trajets.slice((page - 1) * perPage, page * perPage);
+          {/* Tableau */}
+          <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
+                    {['Itinéraire', 'Date', 'Chauffeur', 'Véhicule', 'Remorque', 'Trajet', 'Partenaire', 'Type', 'Actions'].map(h => (
+                    <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
+                  ))}
 
-  return (
-    <AdminLayout>
-      <Box p={3} maxWidth="1400px" mx="auto">
-          <Typography variant="h5" fontWeight="bold" color="#001e61" mb={3} display="flex" alignItems="center" gap={1}>
-            <Route sx={{ fontSize: 32 }} />
-            Gestion des Trajets
-          </Typography>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginated.map((t, i) => {
+                  const part = getPartenaire(t.partenaire);
+                  const isExport = t.importExport === 'export';
+                  return (
+                    <TableRow key={t._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                      <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>
+                        {t.depart} – {t.arrivee}
+                      </TableCell>
+                      <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{getChauffeurName(t.chauffeur)}</TableCell>
+                      <TableCell>{getVehiculeMatricule(t.vehicule)}</TableCell>
+                      <TableCell>{t.remorque}</TableCell>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2" fontWeight="bold">{t.distanceKm} km</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {t.consommationL} L 
+                            <br />
+                            {t.consommationMAD} MAD
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                            {part?.logo && (
+                              <Avatar
+                                src={`https://mme-backend.onrender.com/uploads/partenaires/${part.logo}`}
+                                sx={{ width: 28, height: 28 }}
+                              />
+                            )}
+                          <Typography variant="body2">{part?.nom}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                      <Box
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          sx={{
+                            px: 1.5,
+                            py: 0.5,
+                            backgroundColor: isExport ? '#d0f2d8' : '#e3f2fd',
+                            borderRadius: 20,
+                            fontWeight: 500,
+                            color: isExport ? '#2e7d32' : '#1565c0',
+                            width: 'fit-content'
+                          }}
+                        >
+                          <span>
+                            {isExport ? '⬇️' : '⬆️'}
+                          </span>
+                          {isExport ? 'Export' : 'Import'}
+                        </Box>
 
-        <Paper elevation={2} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <TextField
-                type="month"
-                size="small"
-                label="Filtrer par mois"
-                value={filters.mois}
-                onChange={(e) => setFilters({ ...filters, mois: e.target.value })}
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title="Modifier">
+                          <IconButton onClick={() => { setForm(t); setDrawerOpen(true); }} sx={{ color: '#001e61' }}>
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Supprimer">
+                          <IconButton onClick={async () => {
+                            if (window.confirm('Supprimer ce trajet ?')) {
+                              await axios.delete(`${API}/trajets/${t._id}`);
+                              fetchData();
+                            }
+                          }} sx={{ color: '#d32f2f' }}>
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+
+            </Table>
+            <Box display="flex" justifyContent="center" mt={2}>
+              <Pagination count={Math.ceil(trajets.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
+            </Box>
+          </Paper>
+        </Box>
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box p={3}  mt={10} width={isMobile ? '100vw' : 500}>
+            <Typography variant="h6" fontWeight="bold" color="#001e61" mb={3}>
+              {form._id ? 'Modifier le trajet' : 'Ajouter un trajet'}
+            </Typography>
+
+            <Box display="flex" flexWrap="wrap" gap={2}>
+              <TextField
+                name="depart"
+                label="Ville de départ"
+                value={form.depart}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ flex: '1 1 45%' }}
+              />
+              <TextField
+                name="arrivee"
+                label="Ville d'arrivée"
+                value={form.arrivee}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ flex: '1 1 45%' }}
+              />
+              <TextField
+                name="date"
+                label="Date"
+                type="date"
+                value={form.date}
+                onChange={handleInputChange}
                 InputLabelProps={{ shrink: true }}
-                sx={{
-                  minWidth: 200,
-                  backgroundColor: 'white',
-                  borderRadius: 1,
-                  '& input': {
-                    fontFamily: 'inherit',
-                    padding: '8.5px 14px',
-                    letterSpacing: '0.03em',
-                  }
-                }}
+                fullWidth
+                sx={{ flex: '1 1 45%' }}
+              />
+              <Select
+                name="chauffeur"
+                value={form.chauffeur}
+                onChange={handleSelectChange}
+                displayEmpty
+                fullWidth
+                sx={{ flex: '1 1 40%' }}
+              >
+                <MenuItem value="">Chauffeur</MenuItem>
+                {chauffeurs.map(c => (
+                  <MenuItem key={c._id} value={c._id}>{`${c.nom} ${c.prenom}`}</MenuItem>
+                ))}
+              </Select>
+            
+              <Select
+                name="vehicule"
+                value={form.vehicule}
+                onChange={handleSelectChange}
+                displayEmpty
+                fullWidth
+                sx={{ flex: '1 1 45%' }}
+              >
+                <MenuItem value="">Véhicule</MenuItem>
+                {vehicules.map(v => (
+                  <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
+                ))}
+              </Select>
+
+              <TextField
+                name="remorque"
+                label="Remorque"
+                value={form.remorque}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ flex: '1 1 45%' }}
               />
 
-            <Select size="small" value={filters.partenaire} onChange={(e) => setFilters({ ...filters, partenaire: e.target.value })} displayEmpty sx={{ minWidth: 200, backgroundColor: 'white', borderRadius: 1 }}>
-              <MenuItem value="">Tous les partenaires</MenuItem>
-              {partenaires.map(p => (<MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>))}
-            </Select>
-          </Box>
-          <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: '#001e61', '&:hover': { backgroundColor: '#001447' }, borderRadius: 2, fontWeight: 'bold', height: 40 }} onClick={async () => { await fetchData(); setForm({ depart: '', arrivee: '', date: '', chauffeur: '', vehicule: '', distanceKm: 0, consommationL: 0, consommationMAD: 0, partenaire: '', importExport: undefined }); setDrawerOpen(true); }}>Ajouter Trajet</Button>
-        </Paper>
-
-        {/* Tableau */}
-        <Paper elevation={3} sx={{ borderRadius: 2, p: 2, backgroundColor: 'white', boxShadow: 3 }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                  {['Itinéraire', 'Date', 'Chauffeur', 'Véhicule', 'Remorque', 'Trajet', 'Partenaire', 'Type', 'Actions'].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 'bold', color: '#001e61' }}>{h}</TableCell>
+              <TextField
+                name="distanceKm"
+                label="Distance (km)"
+                type="number"
+                value={form.distanceKm}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ flex: '1 1 45%' }}
+              />
+              <TextField
+                name="consommationL"
+                label="Consommation (L)"
+                type="number"
+                value={form.consommationL}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ flex: '1 1 45%' }}
+              />
+              <TextField
+                name="consommationMAD"
+                label="Consommation (MAD)"
+                type="number"
+                value={form.consommationMAD}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ flex: '1 1 100%' }}
+              />
+              <Select
+                name="partenaire"
+                value={form.partenaire || ''}
+                onChange={handleSelectChange}
+                displayEmpty
+                fullWidth
+                sx={{ flex: '1 1 100%' }}
+              >
+                <MenuItem value="">Sélectionner un partenaire</MenuItem>
+                {partenaires.map(p => (
+                  <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>
                 ))}
+              </Select>
 
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginated.map((t, i) => {
-                const part = getPartenaire(t.partenaire);
-                const isExport = t.importExport === 'export';
-                return (
-                  <TableRow key={t._id} sx={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9fbfd', '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#001e61' }}>
-                      {t.depart} – {t.arrivee}
-                    </TableCell>
-                    <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{getChauffeurName(t.chauffeur)}</TableCell>
-                    <TableCell>{getVehiculeMatricule(t.vehicule)}</TableCell>
-                    <TableCell>{t.remorque}</TableCell>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" fontWeight="bold">{t.distanceKm} km</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {t.consommationL} L 
-                          <br />
-                          {t.consommationMAD} MAD
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                          {part?.logo && (
-                            <Avatar
-                              src={`https://mme-backend.onrender.com/uploads/partenaires/${part.logo}`}
-                              sx={{ width: 28, height: 28 }}
-                            />
-                          )}
-                        <Typography variant="body2">{part?.nom}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                     <Box
-                        display="flex"
-                        alignItems="center"
-                        gap={1}
-                        sx={{
-                          px: 1.5,
-                          py: 0.5,
-                          backgroundColor: isExport ? '#d0f2d8' : '#e3f2fd',
-                          borderRadius: 20,
-                          fontWeight: 500,
-                          color: isExport ? '#2e7d32' : '#1565c0',
-                          width: 'fit-content'
-                        }}
-                      >
-                        <span>
-                          {isExport ? '⬇️' : '⬆️'}
-                        </span>
-                        {isExport ? 'Export' : 'Import'}
-                      </Box>
+              {/* Boutons dynamiques pour Import / Export */}
+                  <Box display="flex" gap={2} width="100%">
+                    <Button
+                      onClick={() =>
+                        setForm(prev => ({
+                          ...prev,
+                          importExport: prev.importExport === 'import' ? undefined : 'import'
+                        }))
+                      }
+                      variant={form.importExport === 'import' ? 'contained' : 'outlined'}
+                      startIcon={<span>⬆️</span>}
+                      sx={{
+                        flex: 1,
+                        backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
+                        color: form.importExport === 'import' ? 'white' : undefined,
+                        borderRadius: 2,
+                        textTransform: 'none'
+                      }}
+                    >
+                      Import
+                    </Button>
 
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip title="Modifier">
-                        <IconButton onClick={() => { setForm(t); setDrawerOpen(true); }} sx={{ color: '#001e61' }}>
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Supprimer">
-                        <IconButton onClick={async () => {
-                          if (window.confirm('Supprimer ce trajet ?')) {
-                            await axios.delete(`${API}/trajets/${t._id}`);
-                            fetchData();
-                          }
-                        }} sx={{ color: '#d32f2f' }}>
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
+                    <Button
+                      onClick={() =>
+                        setForm(prev => ({
+                          ...prev,
+                          importExport: prev.importExport === 'export' ? undefined : 'export'
+                        }))
+                      }
+                      variant={form.importExport === 'export' ? 'contained' : 'outlined'}
+                      startIcon={<span>⬇️</span>}
+                      sx={{
+                        flex: 1,
+                        backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
+                        color: form.importExport === 'export' ? 'white' : undefined,
+                        borderRadius: 2,
+                        textTransform: 'none'
+                      }}
+                    >
+                      Export
+                    </Button>
+                  </Box>
 
-          </Table>
-          <Box display="flex" justifyContent="center" mt={2}>
-            <Pagination count={Math.ceil(trajets.length / perPage)} page={page} onChange={(_, val) => setPage(val)} color="primary" />
+
+
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                fullWidth
+                sx={{
+                  mt: 2,
+                  backgroundColor: '#001e61',
+                  '&:hover': { backgroundColor: '#001447' },
+                  fontWeight: 'bold',
+                  borderRadius: 2
+                }}
+              >
+                {form._id ? 'Mettre à jour' : 'Ajouter'}
+              </Button>
+            </Box>
           </Box>
-        </Paper>
-      </Box>
-      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box p={3}  mt={10} width={isMobile ? '100vw' : 500}>
-          <Typography variant="h6" fontWeight="bold" color="#001e61" mb={3}>
-            {form._id ? 'Modifier le trajet' : 'Ajouter un trajet'}
-          </Typography>
+        </Drawer>
 
-          <Box display="flex" flexWrap="wrap" gap={2}>
-            <TextField
-              name="depart"
-              label="Ville de départ"
-              value={form.depart}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ flex: '1 1 45%' }}
-            />
-            <TextField
-              name="arrivee"
-              label="Ville d'arrivée"
-              value={form.arrivee}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ flex: '1 1 45%' }}
-            />
-            <TextField
-              name="date"
-              label="Date"
-              type="date"
-              value={form.date}
-              onChange={handleInputChange}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              sx={{ flex: '1 1 45%' }}
-            />
-            <Select
-              name="chauffeur"
-              value={form.chauffeur}
-              onChange={handleSelectChange}
-              displayEmpty
-              fullWidth
-              sx={{ flex: '1 1 45%' }}
-            >
-              <MenuItem value="">Chauffeur</MenuItem>
-              {chauffeurs.map(c => (
-                <MenuItem key={c._id} value={c._id}>{`${c.nom} ${c.prenom}`}</MenuItem>
-              ))}
-            </Select>
-           
-            <Select
-              name="vehicule"
-              value={form.vehicule}
-              onChange={handleSelectChange}
-              displayEmpty
-              fullWidth
-              sx={{ flex: '1 1 45%' }}
-            >
-              <MenuItem value="">Véhicule</MenuItem>
-              {vehicules.map(v => (
-                <MenuItem key={v._id} value={v._id}>{v.matricule}</MenuItem>
-              ))}
-            </Select>
+      </AdminLayout>
+    );
+  };
 
-            <TextField
-              name="remorque"
-              label="Remorque"
-              value={form.remorque}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ flex: '1 1 45%' }}
-            />
-
-            <TextField
-              name="distanceKm"
-              label="Distance (km)"
-              type="number"
-              value={form.distanceKm}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ flex: '1 1 45%' }}
-            />
-            <TextField
-              name="consommationL"
-              label="Consommation (L)"
-              type="number"
-              value={form.consommationL}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ flex: '1 1 45%' }}
-            />
-            <TextField
-              name="consommationMAD"
-              label="Consommation (MAD)"
-              type="number"
-              value={form.consommationMAD}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ flex: '1 1 100%' }}
-            />
-            <Select
-              name="partenaire"
-              value={form.partenaire || ''}
-              onChange={handleSelectChange}
-              displayEmpty
-              fullWidth
-              sx={{ flex: '1 1 100%' }}
-            >
-              <MenuItem value="">Sélectionner un partenaire</MenuItem>
-              {partenaires.map(p => (
-                <MenuItem key={p._id} value={p._id}>{p.nom}</MenuItem>
-              ))}
-            </Select>
-
-            {/* Boutons dynamiques pour Import / Export */}
-                <Box display="flex" gap={2} width="100%">
-                  <Button
-                    onClick={() =>
-                      setForm(prev => ({
-                        ...prev,
-                        importExport: prev.importExport === 'import' ? undefined : 'import'
-                      }))
-                    }
-                    variant={form.importExport === 'import' ? 'contained' : 'outlined'}
-                    startIcon={<span>⬆️</span>}
-                    sx={{
-                      flex: 1,
-                      backgroundColor: form.importExport === 'import' ? '#1976d2' : undefined,
-                      color: form.importExport === 'import' ? 'white' : undefined,
-                      borderRadius: 2,
-                      textTransform: 'none'
-                    }}
-                  >
-                    Import
-                  </Button>
-
-                  <Button
-                    onClick={() =>
-                      setForm(prev => ({
-                        ...prev,
-                        importExport: prev.importExport === 'export' ? undefined : 'export'
-                      }))
-                    }
-                    variant={form.importExport === 'export' ? 'contained' : 'outlined'}
-                    startIcon={<span>⬇️</span>}
-                    sx={{
-                      flex: 1,
-                      backgroundColor: form.importExport === 'export' ? '#2e7d32' : undefined,
-                      color: form.importExport === 'export' ? 'white' : undefined,
-                      borderRadius: 2,
-                      textTransform: 'none'
-                    }}
-                  >
-                    Export
-                  </Button>
-                </Box>
-
-
-
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              fullWidth
-              sx={{
-                mt: 2,
-                backgroundColor: '#001e61',
-                '&:hover': { backgroundColor: '#001447' },
-                fontWeight: 'bold',
-                borderRadius: 2
-              }}
-            >
-              {form._id ? 'Mettre à jour' : 'Ajouter'}
-            </Button>
-          </Box>
-        </Box>
-      </Drawer>
-
-    </AdminLayout>
-  );
-};
-
-export default TrajetsPage;
+  export default TrajetsPage;

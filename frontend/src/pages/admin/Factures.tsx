@@ -41,6 +41,7 @@ interface Trajet {
   date: string;
   vehicule: { matricule: string };
   partenaire: { _id: string; nom: string; ice: string };
+  remorque?: string;
 }
 
 const FacturesPage: React.FC = () => {
@@ -95,7 +96,8 @@ const usedTrajetIds = useMemo(() => {
     const data = res.data.map((t: any) => ({
       ...t,
       partenaire: t.partenaire || { nom: '', ice: '' },
-      vehicule: typeof t.vehicule === 'object' ? t.vehicule : { matricule: t.vehicule }
+      vehicule: typeof t.vehicule === 'object' ? t.vehicule : { matricule: t.vehicule },
+      remorque: t.remorque || ''
     }));
     setTrajets(data);
   };
@@ -129,7 +131,8 @@ const usedTrajetIds = useMemo(() => {
           ice: first.partenaire?.ice || '',
           tracteur: first.vehicule?.matricule || '',
           montantsHT: selected.map((_, i) => prev.montantsHT[i] || 0),
-          remorques: selected.map((_, i) => prev.remorques[i] || '')
+          remorques: selected.map((trajet, i) => trajet.remorque || prev.remorques[i] || '')     
+        
         }));
       } else {
         setFormData(prev => ({
